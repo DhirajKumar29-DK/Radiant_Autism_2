@@ -9,16 +9,43 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
+  const defaultNavLinks = [
+    { name: "Home", path: "/" },
+    { name: "About Us", path: "/about" },
+    { name: "Services", path: "/services" },
+    { name: "Gallery", path: "/gallery" },
+    { name: "Articles", path: "/blogs" },
+    { name: "Contact Us", path: "/contact" },
+  ];
+
+  const [navLinks, setNavLinks] = useState(defaultNavLinks);
+
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
   }, [pathname]);
 
-  const navLinks = [
-    { name: "Home", path: "/" },
-    { name: "About Us", path: "/about" },
-    { name: "Services", path: "/services" },
-    { name: "Contact Us", path: "/contact" },
-  ];
+  useEffect(() => {
+    const fetchNav = async () => {
+      try {
+        const res = await fetch("/api/admin/navigation");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.navItems && Array.isArray(data.navItems)) {
+            const visible = data.navItems
+              .filter((item: any) => item.isVisible)
+              .map((item: any) => ({
+                name: item.label,
+                path: item.href,
+              }));
+            if (visible.length > 0) setNavLinks(visible);
+          }
+        }
+      } catch (err) {
+        // Fallback to defaultNavLinks
+      }
+    };
+    fetchNav();
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 bg-slate-50/95 backdrop-blur-md border-b-2 border-slate-200/90 shadow-sm relative overflow-hidden">

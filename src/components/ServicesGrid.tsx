@@ -1,12 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Brain,
   MessageCircle,
   Activity,
   Compass,
+  Smile,
+  ShieldCheck,
   Calendar,
   ArrowRight,
   CheckCircle2,
@@ -14,8 +16,16 @@ import {
 import ScrollReveal from "@/common/ScrollReveal";
 import SectionHeading from "@/common/SectionHeading";
 
-export default function ServicesGrid({ limit }: { limit?: number }) {
-  const services = [
+const iconMap: Record<string, any> = {
+  Brain,
+  MessageCircle,
+  Activity,
+  Compass,
+  Smile,
+  ShieldCheck,
+};
+
+const DEFAULT_SERVICES = [
     {
       id: "aba-therapy",
       title: "ABA Therapy (Applied Behavior Analysis)",
@@ -89,6 +99,60 @@ export default function ServicesGrid({ limit }: { limit?: number }) {
       ],
     },
   ];
+
+export default function ServicesGrid({ limit }: { limit?: number }) {
+  const [services, setServices] = useState<any[]>(DEFAULT_SERVICES);
+
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const res = await fetch("/api/admin/services");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.services && Array.isArray(data.services) && data.services.length > 0) {
+            const activeOnly = data.services
+              .filter((s: any) => s.isActive)
+              .map((s: any) => {
+                let parsedFeatures: string[] = [];
+                try {
+                  if (s.features) {
+                    const parsed = JSON.parse(s.features);
+                    parsedFeatures = Array.isArray(parsed) ? parsed : [];
+                  }
+                } catch {
+                  parsedFeatures = [];
+                }
+
+                return {
+                  id: s.slug,
+                  title: s.title,
+                  badge: s.badge || "Clinical Care",
+                  badgeBg: s.badgeBg || "bg-blue-600",
+                  iconBg: s.iconBg || s.badgeBg || "bg-blue-600",
+                  bulletColor: s.bulletColor || "text-blue-600",
+                  icon: iconMap[s.iconName || "Brain"] || Brain,
+                  image: s.image || "/hero_child_therapy.jpg",
+                  imgAlt: s.title,
+                  description: s.shortDescription || s.tagline || "",
+                  features:
+                    parsedFeatures.length > 0
+                      ? parsedFeatures
+                      : ["Clinical Supervision", "Individualized Goals"],
+                };
+              });
+
+            if (activeOnly.length > 0) {
+              setServices(activeOnly);
+            }
+          }
+        }
+      } catch (err) {
+        // Fallback to DEFAULT_SERVICES
+      }
+    };
+
+    loadServices();
+  }, []);
 
   const displayedServices = limit ? services.slice(0, limit) : services;
 
@@ -166,7 +230,7 @@ export default function ServicesGrid({ limit }: { limit?: number }) {
 
                       {/* Feature Bullet Points */}
                       <ul className="space-y-2 pt-2 border-t border-slate-100">
-                        {svc.features.map((feat, fIdx) => (
+                        {svc.features.map((feat: string, fIdx: number) => (
                           <li key={fIdx} className="flex items-center gap-2.5 text-xs font-bold text-slate-700">
                             <CheckCircle2 className={`w-4 h-4 shrink-0 ${svc.bulletColor}`} />
                             <span>{feat}</span>

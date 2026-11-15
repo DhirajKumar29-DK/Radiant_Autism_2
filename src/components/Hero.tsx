@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 export default function Hero() {
-  const slides = [
+  const defaultSlides = [
     {
       id: 1,
       badge: "OAP COVERED & RBA SUPERVISED",
@@ -45,7 +45,39 @@ export default function Hero() {
     },
   ];
 
+  const [slides, setSlides] = useState(defaultSlides);
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const fetchHero = async () => {
+      try {
+        const res = await fetch("/api/admin/hero?pageKey=home");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.hero && data.hero.slidesJson) {
+            const parsed = JSON.parse(data.hero.slidesJson);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const mapped = parsed.map((s: any, idx: number) => ({
+                id: s.id || idx + 1,
+                badge: data.hero.badgeText || "OAP COVERED & RBA SUPERVISED",
+                title: s.title || data.hero.title,
+                subtitle: s.desc || data.hero.subtitle || "",
+                ctaPrimary: data.hero.primaryBtnText || "BOOK APPOINTMENT",
+                ctaPrimaryLink: data.hero.primaryBtnLink || "/contact",
+                ctaSecondary: data.hero.secondaryBtnText || "OUR SERVICES",
+                ctaSecondaryLink: data.hero.secondaryBtnLink || "/services",
+                bgImage: s.image || "/hero_bg_aba.jpg",
+              }));
+              setSlides(mapped);
+            }
+          }
+        }
+      } catch (err) {
+        // Fallback to defaultSlides
+      }
+    };
+    fetchHero();
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {

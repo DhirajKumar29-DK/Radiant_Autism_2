@@ -21,6 +21,7 @@ import {
   LucideIcon
 } from "lucide-react";
 import { SERVICES_DATA, ServiceDetail } from "@/data/servicesData";
+import { getServiceBySlug } from "@/lib/services";
 import ScrollReveal from "@/common/ScrollReveal";
 import SectionHeading from "@/common/SectionHeading";
 
@@ -40,7 +41,7 @@ const iconMap: Record<string, LucideIcon> = {
 export async function generateMetadata({ params }: ServicePageProps) {
   const resolvedParams = await Promise.resolve(params);
   const id = resolvedParams?.id || "";
-  const service = SERVICES_DATA[id];
+  const service = await getServiceBySlug(id);
   if (!service) return { title: "Service Not Found - Radiant Autism Center" };
 
   return {
@@ -72,7 +73,7 @@ export async function generateMetadata({ params }: ServicePageProps) {
 export default async function ServiceDetailPage({ params }: ServicePageProps) {
   const resolvedParams = await Promise.resolve(params);
   const id = resolvedParams?.id || "";
-  const service: ServiceDetail | undefined = SERVICES_DATA[id];
+  const service = await getServiceBySlug(id);
 
   if (!service) {
     notFound();

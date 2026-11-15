@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,6 +31,26 @@ export async function POST(req: NextRequest) {
     }
 
     const ticketId = `RAC-${Math.floor(10000 + Math.random() * 90000)}`;
+
+    // 1. Save appointment record in database
+    try {
+      await prisma.appointment.create({
+        data: {
+          ticketId,
+          fullName,
+          email,
+          phone: phone || null,
+          service,
+          preferredDate,
+          preferredTime: preferredTime || null,
+          message: message || null,
+          status: "NEW",
+        },
+      });
+    } catch (dbErr) {
+      console.error("Failed to save appointment to database:", dbErr);
+      // continue so email or error is reported cleanly
+    }
 
     const userEmail = process.env.EMAIL_USER;
     const userPass = process.env.EMAIL_PASS;

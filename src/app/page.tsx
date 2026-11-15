@@ -1,11 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
-import Hero from "@/components/Hero";
-import AboutSection from "@/components/AboutSection";
-import CareApproachSection from "@/components/CareApproachSection";
-import OurApproachProcess from "@/components/OurApproachProcess";
-import ServicesGrid from "@/components/ServicesGrid";
-import HomeGalleryPreview from "@/components/HomeGalleryPreview";
+import HomeSectionsContainer from "@/components/HomeSectionsContainer";
 
 export const metadata: Metadata = {
   title: "Radiant Autism Center | ABA & Skill Therapy",
@@ -17,14 +12,5 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  return (
-    <div className="space-y-0">
-      <Hero />
-      <AboutSection />
-      <CareApproachSection />
-      <ServicesGrid limit={4} />
-      <OurApproachProcess />
-      <HomeGalleryPreview />
-    </div>
-  );
+  return <HomeSectionsContainer />;
 }

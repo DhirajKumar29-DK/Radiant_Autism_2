@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum AppointmentStatus {
+  NEW
+  CONTACTED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model Admin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("ADMIN")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Appointment {
+  id            String            @id @default(uuid())
+  ticketId      String            @unique
+  fullName      String
+  email         String
+  phone         String?
+  service       String
+  preferredDate String
+  preferredTime String?
+  message       String?           @db.Text
+  status        AppointmentStatus @default(NEW)
+  notes         String?           @db.Text
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model Service {
+  id                 String   @id @default(uuid())
+  slug               String   @unique
+  title              String
+  tagline            String?  @db.Text
+  badge              String?
+  badgeBg            String?
+  iconBg             String?
+  bulletColor        String?
+  iconName           String?
+  image              String?
+  shortDescription   String?  @db.Text
+  overviewParagraphs String?  @db.LongText
+  ageGroup           String?
+  sessionFormat      String?
+  duration           String?
+  clinicalLead       String?
+  features           String?  @db.LongText
+  whoNeedsThis       String?  @db.LongText
+  keyBenefits        String?  @db.LongText
+  faqs               String?  @db.LongText
+  isActive           Boolean  @default(true)
+  order              Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model PageHero {
+  id               String   @id @default(uuid())
+  pageKey          String   @unique
+  badgeText        String?
+  title            String   @db.Text
+  subtitle         String?  @db.Text
+  bgImage          String?
+  slidesJson       String?  @db.LongText
+  primaryBtnText   String?
+  primaryBtnLink   String?
+  secondaryBtnText String?
+  secondaryBtnLink String?
+  updatedAt        DateTime @updatedAt
+}
+
+model AboutSection {
+  id              String   @id @default(uuid())
+  badgeText       String?
+  title           String   @db.Text
+  description1    String?  @db.Text
+  description2    String?  @db.Text
+  centerImage     String?
+  highlightsJson  String?  @db.LongText
+  facilityHeading String?  @db.Text
+  facilityDesc    String?  @db.Text
+  facilityImage   String?
+  updatedAt       DateTime @updatedAt
+}
+
+model TeamMember {
+  id        String   @id @default(uuid())
+  name      String
+  role      String
+  badge     String?
+  image     String?
+  bio       String?  @db.Text
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GalleryItem {
+  id         String   @id @default(uuid())
+  title      String
+  category   String
+  image      String
+  tag        String?
+  isFeatured Boolean  @default(false)
+  order      Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model BlogPost {
+  id              String    @id @default(uuid())
+  title           String
+  slug            String    @unique
+  excerpt         String?   @db.Text
+  content         String    @db.LongText
+  coverImage      String?
+  category        String
+  tags            String?
+  authorName      String
+  authorRole      String?
+  status          String    @default("PUBLISHED")
+  views           Int       @default(0)
+  metaTitle       String?
+  metaDescription String?   @db.Text
+  publishedAt     DateTime? @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model SiteNavigation {
+  id                     String   @id @default(uuid())
+  navItemsJson           String   @db.LongText
+  sectionsVisibilityJson String?  @db.LongText
+  updatedAt              DateTime @updatedAt
+}
