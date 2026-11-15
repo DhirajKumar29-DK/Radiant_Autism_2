@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import AppShell from "@/components/layout/AppShell";
 import JsonLd from "@/components/JsonLd";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -98,9 +97,7 @@ export default function RootLayout({
         <JsonLd />
       </head>
       <body className="font-sans bg-slate-50 text-slate-900 antialiased selection:bg-sky-500 selection:text-white min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );
