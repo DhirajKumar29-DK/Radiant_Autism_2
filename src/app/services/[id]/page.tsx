@@ -6,7 +6,7 @@ import {
   MessageCircle,
   Activity,
   Smile,
-  Sparkles,
+  Compass,
   ShieldCheck,
   ArrowRight,
   CheckCircle2,
@@ -33,7 +33,7 @@ const iconMap: Record<string, LucideIcon> = {
   MessageCircle,
   Activity,
   Smile,
-  Sparkles,
+  Compass,
   ShieldCheck,
 };
 
@@ -185,10 +185,11 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
               <ScrollReveal direction="up" delay={250}>
                 <div className="flex flex-wrap items-center gap-4 pt-4">
                   <Link
-                    href="/contact"
+                    href={`/contact?service=${encodeURIComponent(service.title)}`}
                     className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-lg shadow-blue-600/25 transition-all group"
                   >
-                    <span>Book Assessment Consultation</span>
+                    <Calendar className="w-4 h-4" />
+                    <span>Book an Appointment</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Link>
 
@@ -424,10 +425,11 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
               </p>
               <div className="flex flex-wrap gap-4 pt-2">
                 <Link
-                  href="/contact"
+                  href={`/contact?service=${encodeURIComponent(service.title)}`}
                   className="px-7 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-sm shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2"
                 >
-                  <span>Book Consultation Now</span>
+                  <Calendar className="w-4 h-4" />
+                  <span>Book an Appointment</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 <a

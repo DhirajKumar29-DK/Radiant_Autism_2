@@ -158,11 +158,10 @@ export default function GalleryClient() {
                     setSelectedIndex(null);
                   }}
                   type="button"
-                  className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold transition-all duration-300 ${
-                    activeTab === cat
+                  className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold transition-all duration-300 ${activeTab === cat
                       ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25 scale-105"
                       : "bg-white text-slate-700 hover:bg-slate-200/80 border border-slate-200/90 shadow-2xs"
-                  }`}
+                    }`}
                 >
                   {cat}
                 </button>
@@ -203,7 +202,7 @@ export default function GalleryClient() {
                 Would You Like To Visit Our Center In Person?
               </h3>
               <p className="text-slate-300 text-sm max-w-xl mx-auto">
-                Schedule a guided walkthrough of our sensory gym, therapy rooms, and meet our certified BCBA clinicians.
+                Schedule a guided walkthrough of our sensory gym, therapy rooms, and meet our registered RBA clinicians.
               </p>
               <div className="pt-2">
                 <Link

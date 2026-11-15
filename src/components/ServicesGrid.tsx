@@ -6,13 +6,10 @@ import {
   Brain,
   MessageCircle,
   Activity,
-  Smile,
-  ShieldCheck,
+  Compass,
+  Calendar,
   ArrowRight,
-  Sparkles,
   CheckCircle2,
-  Users,
-  FileText,
 } from "lucide-react";
 import ScrollReveal from "@/common/ScrollReveal";
 import SectionHeading from "@/common/SectionHeading";
@@ -21,35 +18,25 @@ export default function ServicesGrid({ limit }: { limit?: number }) {
   const services = [
     {
       id: "aba-therapy",
-      title: "ABA / IBI Therapy",
+      title: "ABA Therapy (Applied Behavior Analysis)",
       badge: "OAP Covered",
       badgeBg: "bg-blue-600",
       iconBg: "bg-blue-600",
       bulletColor: "text-blue-600",
       icon: Brain,
       image: "/hero_child_therapy.jpg",
-      imgAlt: "ABA IBI Therapy session",
+      imgAlt: "ABA Therapy session",
       description:
-        "Applied Behaviour Analysis (ABA) autism therapy using research-based methods to target verbal skills, self-help, play, social skills, and socially significant goals for ages 2 to 20.",
-      features: ["Ages 2 to 20 Years", "Registered Behaviour Analyst", "Target Verbal & Life Skills"],
-    },
-    {
-      id: "group-programs",
-      title: "Group Programs",
-      badge: "Social & Emotional",
-      badgeBg: "bg-purple-600",
-      iconBg: "bg-purple-600",
-      bulletColor: "text-purple-600",
-      icon: Users,
-      image: "/gallery_group_play.jpg",
-      imgAlt: "Peer group social skills program",
-      description:
-        "Structured group sessions (RoboSocials, PEERS®, Emotional ABCs®, Mood Masters, Study Buddies) for ages 4-24 to build social skills, emotional regulation, and lasting peer relationships.",
-      features: ["Ages 4 to 24 Years", "PEERS® & Emotional ABCs®", "Social Skills & Peer Groups"],
+        "Evidence-based Applied Behaviour Analysis (ABA) targeting functional communication, positive behavior reinforcement, play skills, self-help, and individualized developmental milestones for ages 2 to 20.",
+      features: [
+        "RBA Supervised Clinical Care",
+        "Ages 2 to 20 Years",
+        "Target Verbal & Daily Life Skills",
+      ],
     },
     {
       id: "speech-therapy",
-      title: "Speech Therapy",
+      title: "Speech and Language Service (SLP)",
       badge: "Communication Care",
       badgeBg: "bg-teal-600",
       iconBg: "bg-teal-600",
@@ -58,78 +45,48 @@ export default function ServicesGrid({ limit }: { limit?: number }) {
       image: "/hero_speech_therapy.jpg",
       imgAlt: "Speech and language therapy session",
       description:
-        "Trusted standardized assessments and individualized treatment combining Speech-Language Pathology (SLP) and ABA practices to make communication fun and effective.",
-      features: ["Registered SLP Lead", "Language & Articulation", "Combined SLP + ABA Methods"],
+        "Comprehensive Speech-Language Pathology (SLP) assessments and individualized therapy targeting verbal articulation, early vocalizations, receptive language, and alternative communication (AAC).",
+      features: [
+        "Registered SLP Clinical Lead",
+        "Language & Articulation Skills",
+        "Combined SLP + ABA Methods",
+      ],
     },
     {
       id: "occupational-therapy",
-      title: "Occupational Therapy",
+      title: "Occupational Therapy (OT)",
       badge: "Motor & Sensory",
       badgeBg: "bg-indigo-600",
       iconBg: "bg-indigo-600",
       bulletColor: "text-indigo-600",
       icon: Activity,
       image: "/gallery_sensory_gym.jpg",
-      imgAlt: "Indoor sensory gym occupational therapy",
+      imgAlt: "Sensory gym occupational therapy",
       description:
-        "Tailored occupational therapy focusing on fine & gross motor skills, sensory regulation, core strength, handwriting, and building essential daily living independence.",
-      features: ["Registered OT Lead", "Sensory Regulation", "Fine & Gross Motor Skills"],
-    },
-    {
-      id: "behaviour-consultation",
-      title: "Behaviour Consultation",
-      badge: "Parent & Professional",
-      badgeBg: "bg-amber-600",
-      iconBg: "bg-amber-600",
-      bulletColor: "text-amber-600",
-      icon: ShieldCheck,
-      image: "/about_center_photo.jpg",
-      imgAlt: "Behaviour consultation and parent training",
-      description:
-        "Personalized behaviour consultations (in-person & online) and self-paced video training modules for parents and professionals to manage problem behaviors, toilet training, and feeding.",
-      features: ["In-Person & Online", "Self-Paced Parent Courses", "Toilet Training & Behaviour"],
-    },
-    {
-      id: "psychoeducational-assessments",
-      title: "Psychoeducational Assessments",
-      badge: "Academic & IQ",
-      badgeBg: "bg-rose-600",
-      iconBg: "bg-rose-600",
-      bulletColor: "text-rose-600",
-      icon: FileText,
-      image: "/service_physio.jpg",
-      imgAlt: "Psychoeducational testing session",
-      description:
-        "Comprehensive assessments in collaboration with The PsychoEd Clinic to identify learning disabilities, academic challenges, ADHD, IQ levels, and academic strengths for ages 7+.",
-      features: ["Collaboration with PsychoEd Clinic", "Ages 7+", "Identifies ADHD & Learning Profiles"],
-    },
-    {
-      id: "psychotherapy-services",
-      title: "Psychotherapy Services",
-      badge: "Mental Health",
-      badgeBg: "bg-emerald-600",
-      iconBg: "bg-emerald-600",
-      bulletColor: "text-emerald-600",
-      icon: Smile,
-      image: "/hero_bg_speech.jpg",
-      imgAlt: "Individual psychotherapy consultation",
-      description:
-        "Evidence-based CBT, DBT, and Emotion-Focused Therapy for pre-teens, adolescents, and young adults facing anxiety, OCD, depression, or ADHD, with active parent involvement.",
-      features: ["Registered Psychotherapist", "CBT, DBT & EFT Techniques", "Anxiety & Mood Management"],
+        "Targeted occupational therapy directly addressing fine and gross motor development, sensory regulation, core coordination, handwriting, and essential daily living independence.",
+      features: [
+        "Fine & Gross Motor Skills",
+        "Sensory Processing & Regulation",
+        "Daily Living Independence",
+      ],
     },
     {
       id: "life-skills",
-      title: "Life Skills",
-      badge: "Independence",
-      badgeBg: "bg-sky-600",
-      iconBg: "bg-sky-600",
-      bulletColor: "text-sky-600",
-      icon: Sparkles,
-      image: "/hero_bg_aba.jpg",
-      imgAlt: "Community life skills training",
+      title: "Life Skills & Group Programs",
+      badge: "Ages 9–18 & Groups",
+      badgeBg: "bg-purple-600",
+      iconBg: "bg-purple-600",
+      bulletColor: "text-purple-600",
+      icon: Compass,
+      image: "/gallery_group_play.jpg",
+      imgAlt: "Life skills and social peer group session",
       description:
-        "Empowering neurodivergent teens and young adults with real-world skills: public transit, grocery shopping, meal prep, cleaning, self-advocacy, resume building, and job/school applications.",
-      features: ["Community Navigation", "Job & School Applications", "Self-Advocacy & Meal Prep"],
+        "Integrated peer social groups and practical life skills training for ages 9–18, plus pre-employment readiness to build lasting friendship, independence, and career exploration.",
+      features: [
+        "Ages 9–18 Dedicated Focus",
+        "Structured Peer Social Groups",
+        "Pre-Employment Skills (Prerequisite Needed)",
+      ],
     },
   ];
 
@@ -148,52 +105,58 @@ export default function ServicesGrid({ limit }: { limit?: number }) {
         {/* Header */}
         <ScrollReveal direction="up">
           <SectionHeading
-            badgeText="Our Specialized Care Services"
-            badgeVariant="blue"
-            title="Comprehensive Therapy Programs Designed For Every Developmental Need"
-            subtitle="All programs are 100% personalized, evidence-based, and delivered by registered clinicians with compassion."
+            badgeText="OUR CORE PROGRAMS"
+            title="Evidence-Based Clinical Services"
+            subtitle="Explore our 4 core clinical offerings designed to empower communication, motor independence, and social confidence."
+            align="center"
           />
         </ScrollReveal>
 
-        {/* Uniform Card Container & Link Button Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* 2:2 Ratio Grid (2 Cards Per Row) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10 pt-10 items-stretch max-w-5xl mx-auto">
           {displayedServices.map((svc, idx) => {
             const Icon = svc.icon;
-            const serviceUrl = `/services/${svc.id}`;
+            // On homepage, clicking the card directs to /services. On /services, it directs to /services/[id]
+            const cardUrl = limit ? "/services" : `/services/${svc.id}`;
+            const detailUrl = `/services/${svc.id}`;
 
             return (
-              <ScrollReveal key={svc.id} delay={(idx % 3) * 150} direction="up">
+              <ScrollReveal key={svc.id} delay={(idx % 2) * 120} direction="up">
                 <div className="bg-white rounded-3xl overflow-hidden border-2 border-slate-200/90 shadow-md hover:shadow-2xl hover:shadow-blue-600/10 hover:border-blue-600 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between h-full group">
                   <div>
-                    {/* Image Frame */}
-                    <div className="relative aspect-16/10 w-full overflow-hidden bg-slate-100">
+                    {/* Clickable Image Frame */}
+                    <Link href={cardUrl} className="block relative aspect-16/10 w-full overflow-hidden bg-slate-100 group/img">
                       <img
                         src={svc.image}
                         alt={svc.imgAlt}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
 
-                      {/* Premium Category Badge */}
+                      {/* Category Badge */}
                       <span
                         className={`absolute top-4 left-4 text-white text-[11px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full shadow-md ${svc.badgeBg}`}
                       >
                         {svc.badge}
                       </span>
-                    </div>
+                    </Link>
 
                     {/* Content Section */}
-                    <div className="p-6 space-y-4">
+                    <div className="p-6 sm:p-7 space-y-4">
                       {/* Icon + Title */}
                       <div className="flex items-start gap-3.5">
-                        <div
-                          className={`w-11 h-11 rounded-2xl ${svc.iconBg} text-white flex items-center justify-center shrink-0 shadow-md group-hover:scale-110 transition-transform duration-300`}
-                        >
-                          <Icon className="w-5.5 h-5.5 stroke-[2.5]" />
-                        </div>
-                        <h3 className="text-xl font-black text-slate-900 group-hover:text-blue-600 transition-colors leading-tight pt-0.5">
-                          {svc.title}
-                        </h3>
+                        <Link href={cardUrl} className="shrink-0">
+                          <div
+                            className={`w-11 h-11 rounded-2xl ${svc.iconBg} text-white flex items-center justify-center shrink-0 shadow-md group-hover:scale-110 transition-transform duration-300`}
+                          >
+                            <Icon className="w-5.5 h-5.5 stroke-[2.5]" />
+                          </div>
+                        </Link>
+                        <Link href={cardUrl} className="group-hover:text-blue-600 transition-colors">
+                          <h3 className="text-xl font-black text-slate-900 group-hover:text-blue-600 transition-colors leading-tight pt-0.5">
+                            {svc.title}
+                          </h3>
+                        </Link>
                       </div>
 
                       {/* Short Description */}
@@ -213,15 +176,37 @@ export default function ServicesGrid({ limit }: { limit?: number }) {
                     </div>
                   </div>
 
-                  {/* Bottom Action Footer */}
-                  <div className="px-6 pb-6 pt-2">
-                    <Link
-                      href={serviceUrl}
-                      className="w-full py-3 px-4 rounded-2xl bg-slate-100 group-hover:bg-blue-600 text-slate-800 group-hover:text-white font-extrabold text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-xs group-hover:shadow-md"
-                    >
-                      <span>Explore Program Details</span>
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </Link>
+                  {/* Actions: On Homepage -> 1 button to /services. On /services page -> 2 buttons: Book Appointment & View Program Details */}
+                  <div className="px-6 pb-6 sm:px-7 sm:pb-7 pt-3">
+                    {limit ? (
+                      /* Homepage Card Button -> Redirects to /services */
+                      <Link
+                        href="/services"
+                        className="w-full py-3.5 px-5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-md shadow-blue-600/20 hover:shadow-lg hover:shadow-blue-600/30 transform hover:-translate-y-0.5 text-center group/btn"
+                      >
+                        <span>Explore In Services</span>
+                        <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                      </Link>
+                    ) : (
+                      /* Services Page Card Buttons: 1 for Appointment, 1 for Opening Program Page */
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Link
+                          href={`/contact?service=${encodeURIComponent(svc.title)}`}
+                          className="py-3 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-md shadow-blue-600/20 hover:shadow-lg hover:shadow-blue-600/30 transform hover:-translate-y-0.5 text-center"
+                        >
+                          <Calendar className="w-4 h-4 shrink-0" />
+                          <span>Book Appointment</span>
+                        </Link>
+
+                        <Link
+                          href={detailUrl}
+                          className="py-3 px-4 rounded-2xl bg-slate-100 hover:bg-blue-50 text-slate-800 hover:text-blue-700 border border-slate-200 hover:border-blue-300 font-extrabold text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-1.5 text-center group/btn"
+                        >
+                          <span>View Details</span>
+                          <ArrowRight className="w-3.5 h-3.5 shrink-0 group-hover/btn:translate-x-1 transition-transform" />
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 </div>
               </ScrollReveal>
@@ -229,14 +214,14 @@ export default function ServicesGrid({ limit }: { limit?: number }) {
           })}
         </div>
 
-        {/* View All Programs Button (if limit is active) */}
+        {/* View All / Explore Services Button on Homepage */}
         {limit && (
           <div className="text-center pt-12">
             <Link
               href="/services"
               className="inline-flex items-center gap-2.5 px-8 py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg hover:shadow-xl transition-all group"
             >
-              <span>View All 8 Clinical Programs</span>
+              <span>Explore All Clinical Services</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform text-sky-400" />
             </Link>
           </div>

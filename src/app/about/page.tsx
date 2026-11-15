@@ -4,19 +4,19 @@ import Link from "next/link";
 import AboutCentreDetail from "@/components/AboutCentreDetail";
 import OurTeamSection from "@/components/OurTeamSection";
 import ClinicalPillars from "@/components/ClinicalPillars";
-import { Sparkles, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "About Us | Radiant Autism Center",
   description:
-    "Learn about Radiant Autism Center, our certified BCBA leadership, clinical standards, and compassionate child skill development in Ontario.",
+    "Learn about Radiant Autism Center, our registered RBA clinical leadership, clinical standards, and compassionate child skill development in Ontario.",
   alternates: {
     canonical: "/about",
   },
   openGraph: {
     title: "About Us | Radiant Autism Center",
     description:
-      "Learn about Radiant Autism Center, our certified BCBA leadership, clinical standards, and compassionate child skill development in Ontario.",
+      "Learn about Radiant Autism Center, our registered RBA clinical leadership, clinical standards, and compassionate child skill development in Ontario.",
     images: ["/about_center_photo.jpg"],
   },
 };
@@ -39,14 +39,13 @@ export default function AboutPage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 space-y-4">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 backdrop-blur-md text-blue-300 border border-blue-500/30 text-xs font-extrabold uppercase tracking-wider shadow-lg">
-            <Sparkles className="w-4 h-4 text-blue-400" />
             <span>About Radiant Autism Center</span>
           </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight text-white">
             Dedicated To Empowering Exceptional Children
           </h1>
           <p className="text-slate-200 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed">
-            Learn about our clinical standards, certified BCBA leadership, and compassionate approach to child skill development.
+            Learn about our clinical standards, registered RBA clinical leadership, and compassionate approach to child skill development.
           </p>
         </div>
       </section>

@@ -10,9 +10,12 @@ import {
   MapPin,
   MessageSquare,
   Loader2,
-  Sparkles,
   RotateCcw,
-  FileText
+  FileText,
+  Calendar,
+  Clock,
+  User,
+  AlertCircle,
 } from "lucide-react";
 
 export default function ContactForm() {
@@ -20,22 +23,25 @@ export default function ContactForm() {
   const preselectedService = searchParams?.get("service") || "";
   const formCardRef = useRef<HTMLDivElement>(null);
 
+  // Today's date in YYYY-MM-DD for datepicker minimum value
+  const [minDate, setMinDate] = useState("");
+  useEffect(() => {
+    const today = new Date().toISOString().split("T")[0];
+    setMinDate(today);
+  }, []);
+
   const [formData, setFormData] = useState({
-    parentFirstName: "",
-    parentLastName: "",
-    childFirstName: "",
-    childLastName: "",
-    childAge: "",
+    fullName: "",
     email: "",
     phone: "",
-    postalCode: "",
     service: preselectedService || "",
-    referralSource: "",
+    preferredDate: "",
+    preferredTime: "",
     message: "",
   });
 
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isServiceFocused, setIsServiceFocused] = useState(false);
-  const [isReferralFocused, setIsReferralFocused] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [ticketId, setTicketId] = useState("");
@@ -43,6 +49,11 @@ export default function ContactForm() {
   useEffect(() => {
     if (preselectedService) {
       setFormData((prev) => ({ ...prev, service: preselectedService }));
+      setErrors((prev) => {
+        const copy = { ...prev };
+        delete copy.service;
+        return copy;
+      });
     }
   }, [preselectedService]);
 
@@ -52,10 +63,66 @@ export default function ContactForm() {
     }, 100);
   };
 
+  // Modern Inline Form Validation
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    // 1. Full Name
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = "Please enter parent or guardian's full name.";
+    } else if (formData.fullName.trim().length < 2) {
+      newErrors.fullName = "Name must be at least 2 characters.";
+    }
+
+    // 2. Email Address
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      newErrors.email = "Please enter your email address.";
+    } else if (!emailRegex.test(formData.email.trim())) {
+      newErrors.email = "Please enter a valid email format (e.g. name@example.com).";
+    }
+
+    // 3. Phone / Mobile (Optional, but if filled, must have valid length/digits)
+    if (formData.phone.trim()) {
+      const phoneDigits = formData.phone.replace(/[\s\-\(\)\.]/g, "");
+      if (phoneDigits.length < 7 || !/^\+?\d+$/.test(phoneDigits)) {
+        newErrors.phone = "Please enter a valid phone number (minimum 7 digits).";
+      }
+    }
+
+    // 4. Clinical Service
+    if (!formData.service) {
+      newErrors.service = "Please select the clinical service you are interested in.";
+    }
+
+    // 5. Calendar Date
+    if (!formData.preferredDate) {
+      newErrors.preferredDate = "Please choose a preferred appointment date.";
+    } else if (minDate && formData.preferredDate < minDate) {
+      newErrors.preferredDate = "Appointment date cannot be in the past.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Clear inline error on change
+    if (errors[field]) {
+      setErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[field];
+        return copy;
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.parentFirstName || !formData.phone || !formData.email) {
-      alert("Please fill in all required fields marked with *.");
+
+    if (!validateForm()) {
+      scrollToCard();
       return;
     }
 
@@ -79,7 +146,7 @@ export default function ContactForm() {
       }
     } catch (err) {
       console.error("Submission error:", err);
-      // Fallback ticket generation if offline or network error
+      // Fallback ticket generation if offline or demo mode
       setTicketId(`RAC-${Math.floor(10000 + Math.random() * 90000)}`);
       setSubmitted(true);
       scrollToCard();
@@ -90,17 +157,14 @@ export default function ContactForm() {
 
   const handleResetForm = () => {
     setSubmitted(false);
+    setErrors({});
     setFormData({
-      parentFirstName: "",
-      parentLastName: "",
-      childFirstName: "",
-      childLastName: "",
-      childAge: "",
+      fullName: "",
       email: "",
       phone: "",
-      postalCode: "",
       service: "",
-      referralSource: "",
+      preferredDate: "",
+      preferredTime: "",
       message: "",
     });
   };
@@ -129,7 +193,7 @@ export default function ContactForm() {
             </h2>
 
             <p className="text-slate-600 text-base leading-relaxed font-medium">
-              Have questions about our OAP approved services, BCBA supervision, or assessment scheduling? Reach out to us today.
+              Have questions about our OAP covered services, RBA supervision, or appointment scheduling? Book an appointment or call our care staff today.
             </p>
 
             <div className="space-y-4 pt-2">
@@ -199,306 +263,283 @@ export default function ContactForm() {
             </div>
           </div>
 
-          {/* Right Column: Comprehensive Clinical Intake Form */}
+          {/* Right Column: 6-Field Appointment & Booking Form with Robust Validation */}
           <div className="lg:col-span-7">
             <div ref={formCardRef} className="bg-white text-slate-900 rounded-3xl p-6 sm:p-10 border-2 border-slate-200/90 shadow-xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-sky-100/50 rounded-full blur-2xl pointer-events-none" />
 
               {submitted ? (
-                /* Animated Premium Success Screen (Minimal Clean Ticket Reference) */
-                <div className="text-center py-10 px-4 space-y-7 animate-fadeIn select-none">
-                  {/* Glowing Animated Emerald Check Circle & Sparkles */}
+                /* Animated Premium Success Screen */
+                <div className="text-center py-8 px-4 space-y-6 animate-fadeIn select-none">
                   <div className="relative inline-block">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-500 text-white flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/30 ring-8 ring-emerald-100 animate-bounce">
-                      <CheckCircle2 className="w-14 h-14 stroke-[2.5]" />
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-500 text-white flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/30 ring-8 ring-emerald-100 animate-bounce">
+                      <CheckCircle2 className="w-12 h-12 stroke-[2.5]" />
                     </div>
-                    <Sparkles className="w-7 h-7 text-amber-400 absolute -top-1 -right-1 animate-pulse" />
-                    <Sparkles className="w-5 h-5 text-sky-400 absolute -bottom-1 -left-1 animate-pulse" />
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 uppercase tracking-wider shadow-2xs">
-                      <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                      Request Received Successfully
+                      Appointment Request Received
                     </span>
-                    <h3 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-                      Thank You!
+                    <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                      Thank You, {formData.fullName || "Valued Parent"}!
                     </h3>
-                    <p className="text-slate-600 text-sm max-w-md mx-auto font-medium leading-relaxed">
-                      Our clinical care staff will review your inquiry and contact you within 2 business days.
+                    <p className="text-slate-600 text-xs sm:text-sm max-w-md mx-auto font-medium leading-relaxed">
+                      Our clinical care coordinator will review your preferred schedule and confirm your appointment within 1 business day.
                     </p>
                   </div>
 
-                  {/* Clean Minimal Inquiry Reference Ticket Badge (No personal details) */}
-                  <div className="bg-gradient-to-br from-slate-50 via-sky-50/50 to-slate-50 border-2 border-blue-200/80 rounded-3xl p-6 max-w-sm mx-auto shadow-md space-y-2">
-                    <div className="flex items-center justify-between">
+                  {/* Clean Appointment Summary Box */}
+                  <div className="bg-slate-50 border-2 border-blue-200/80 rounded-2xl p-5 max-w-md mx-auto shadow-sm space-y-3 text-left">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
                       <span className="font-extrabold text-slate-600 text-xs uppercase tracking-wider flex items-center gap-1.5">
                         <FileText className="w-4 h-4 text-blue-600" />
-                        Inquiry Reference
+                        Booking Reference
                       </span>
-                      <span className="font-black text-blue-700 text-base font-mono bg-white px-3.5 py-1 rounded-xl border border-blue-200 shadow-sm">
+                      <span className="font-black text-blue-700 text-sm font-mono bg-white px-3 py-1 rounded-xl border border-blue-200 shadow-xs">
                         #{ticketId}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-500 font-semibold text-left pt-1">
-                      Please keep this reference code for your records when speaking with our clinic team.
-                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-slate-500 font-semibold block">Selected Program:</span>
+                        <span className="font-bold text-slate-800">{formData.service}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 font-semibold block">Preferred Date:</span>
+                        <span className="font-bold text-slate-800">{formData.preferredDate}</span>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <span className="text-slate-500 font-semibold block">Prefer Time to Reach (EST):</span>
+                        <span className="font-bold text-slate-800">{formData.preferredTime ? `${formData.preferredTime} EST` : "Flexible / First Available"}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="pt-3 flex justify-center">
+                  <div className="pt-2 flex justify-center">
                     <button
                       onClick={handleResetForm}
                       type="button"
-                      className="px-8 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer"
+                      className="px-7 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer"
                     >
                       <RotateCcw className="w-4 h-4 text-sky-400" />
-                      <span>Submit Another Consultation Request</span>
+                      <span>Book Another Appointment</span>
                     </button>
                   </div>
                 </div>
               ) : (
-                /* Clinical Intake Form */
-                <form onSubmit={handleSubmit} className="space-y-5">
+                /* 6-Field Booking Form with Visible Inline Error Highlighting */
+                <form onSubmit={handleSubmit} noValidate className="space-y-4 sm:space-y-5">
                   <div className="space-y-1">
                     <h3 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
-                      Book a Free Consultation
+                      Book an Appointment
                     </h3>
                     <p className="text-slate-600 text-xs font-semibold leading-relaxed">
-                      Please complete the following information and our staff will contact you in 2 business days.
+                      Please enter your contact details and preferred date. Our clinical staff will confirm promptly.
                     </p>
                   </div>
 
-                  {/* 1. Parent Name (First Name + Last Name) */}
+                  {/* Field 1: Full Name (Parent / Guardian) */}
+                  <div className="space-y-1">
+                    <div className="relative pt-2">
+                      <input
+                        type="text"
+                        id="fullName"
+                        placeholder=" "
+                        value={formData.fullName}
+                        onChange={(e) => handleChange("fullName", e.target.value)}
+                        className={`peer w-full px-4 py-3.5 rounded-2xl border transition-all text-sm font-bold text-slate-800 outline-none bg-white placeholder-transparent ${
+                          errors.fullName
+                            ? "border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/15"
+                            : "border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15"
+                        }`}
+                      />
+                      <label
+                        htmlFor="fullName"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-semibold transition-all duration-200 pointer-events-none peer-focus:top-0 peer-focus:translate-y-0 peer-focus:text-[11px] peer-focus:font-extrabold peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-extrabold peer-[:not(:placeholder-shown)]:text-blue-700 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1.5 flex items-center gap-1"
+                      >
+                        <User className="w-3.5 h-3.5" />
+                        <span>Parent / Guardian Full Name <span className="text-red-500">*</span></span>
+                      </label>
+                    </div>
+                    {errors.fullName && (
+                      <p className="text-red-600 text-xs font-bold pl-2 flex items-center gap-1 animate-fadeIn">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{errors.fullName}</span>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Field 2 & Field 3: Email ID & Mobile Number */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div className="relative pt-2">
-                      <input
-                        type="text"
-                        id="parentFirstName"
-                        required
-                        placeholder=" "
-                        value={formData.parentFirstName}
-                        onChange={(e) => setFormData({ ...formData, parentFirstName: e.target.value })}
-                        className="peer w-full px-4 py-3.5 rounded-2xl border border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15 bg-white text-sm font-bold text-slate-800 outline-none transition-all placeholder-transparent"
-                      />
-                      <label
-                        htmlFor="parentFirstName"
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-semibold transition-all duration-200 pointer-events-none peer-focus:top-0 peer-focus:translate-y-0 peer-focus:text-[11px] peer-focus:font-extrabold peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-extrabold peer-[:not(:placeholder-shown)]:text-blue-700 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1.5"
-                      >
-                        Your First Name <span className="text-red-500">*</span>
-                      </label>
+                    {/* Email Field */}
+                    <div className="space-y-1">
+                      <div className="relative pt-2">
+                        <input
+                          type="email"
+                          id="email"
+                          placeholder=" "
+                          value={formData.email}
+                          onChange={(e) => handleChange("email", e.target.value)}
+                          className={`peer w-full px-4 py-3.5 rounded-2xl border transition-all text-sm font-bold text-slate-800 outline-none bg-white placeholder-transparent ${
+                            errors.email
+                              ? "border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/15"
+                              : "border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15"
+                          }`}
+                        />
+                        <label
+                          htmlFor="email"
+                          className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-semibold transition-all duration-200 pointer-events-none peer-focus:top-0 peer-focus:translate-y-0 peer-focus:text-[11px] peer-focus:font-extrabold peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-extrabold peer-[:not(:placeholder-shown)]:text-blue-700 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1.5 flex items-center gap-1"
+                        >
+                          <Mail className="w-3.5 h-3.5" />
+                          <span>Email Address <span className="text-red-500">*</span></span>
+                        </label>
+                      </div>
+                      {errors.email && (
+                        <p className="text-red-600 text-xs font-bold pl-2 flex items-center gap-1 animate-fadeIn">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          <span>{errors.email}</span>
+                        </p>
+                      )}
                     </div>
 
-                    <div className="relative pt-2">
-                      <input
-                        type="text"
-                        id="parentLastName"
-                        placeholder=" "
-                        value={formData.parentLastName}
-                        onChange={(e) => setFormData({ ...formData, parentLastName: e.target.value })}
-                        className="peer w-full px-4 py-3.5 rounded-2xl border border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15 bg-white text-sm font-bold text-slate-800 outline-none transition-all placeholder-transparent"
-                      />
-                      <label
-                        htmlFor="parentLastName"
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-semibold transition-all duration-200 pointer-events-none peer-focus:top-0 peer-focus:translate-y-0 peer-focus:text-[11px] peer-focus:font-extrabold peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-extrabold peer-[:not(:placeholder-shown)]:text-blue-700 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1.5"
-                      >
-                        Your Last Name
-                      </label>
+                    {/* Mobile Field (Optional) */}
+                    <div className="space-y-1">
+                      <div className="relative pt-2">
+                        <input
+                          type="tel"
+                          id="phone"
+                          placeholder=" "
+                          value={formData.phone}
+                          onChange={(e) => handleChange("phone", e.target.value)}
+                          className={`peer w-full px-4 py-3.5 rounded-2xl border transition-all text-sm font-bold text-slate-800 outline-none bg-white placeholder-transparent ${
+                            errors.phone
+                              ? "border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/15"
+                              : "border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15"
+                          }`}
+                        />
+                        <label
+                          htmlFor="phone"
+                          className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-semibold transition-all duration-200 pointer-events-none peer-focus:top-0 peer-focus:translate-y-0 peer-focus:text-[11px] peer-focus:font-extrabold peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-extrabold peer-[:not(:placeholder-shown)]:text-blue-700 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1.5 flex items-center gap-1"
+                        >
+                          <Phone className="w-3.5 h-3.5" />
+                          <span>Mobile / Phone Number</span>
+                        </label>
+                      </div>
+                      {errors.phone && (
+                        <p className="text-red-600 text-xs font-bold pl-2 flex items-center gap-1 animate-fadeIn">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          <span>{errors.phone}</span>
+                        </p>
+                      )}
                     </div>
                   </div>
 
-                  {/* 2. Child's Name (First Name + Last Name) */}
+                  {/* Field 4: Interested Service (Dropdown of 4 core services) */}
+                  <div className="space-y-1">
+                    <div className="relative pt-2">
+                      <select
+                        id="service"
+                        value={formData.service}
+                        onFocus={() => setIsServiceFocused(true)}
+                        onBlur={() => setIsServiceFocused(false)}
+                        onChange={(e) => handleChange("service", e.target.value)}
+                        className={`w-full px-4 py-3.5 rounded-2xl border transition-all outline-none bg-white text-sm font-bold cursor-pointer ${
+                          errors.service
+                            ? "border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/15"
+                            : isServiceFocused || formData.service !== ""
+                            ? "text-slate-800 border-blue-600 ring-4 ring-blue-600/15"
+                            : "text-transparent border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15"
+                        }`}
+                      >
+                        <option value="" disabled hidden></option>
+                        <option value="ABA Therapy (Applied Behavior Analysis)">ABA Therapy (Applied Behavior Analysis)</option>
+                        <option value="Speech and Language Service (SLP)">Speech and Language Service (SLP)</option>
+                        <option value="Occupational Therapy (OT)">Occupational Therapy (OT - Motor & Sensory)</option>
+                        <option value="Life Skills & Group Programs">Life Skills & Group Programs (Ages 9–18)</option>
+                      </select>
+                      <label
+                        htmlFor="service"
+                        className={`absolute left-4 transition-all duration-200 pointer-events-none ${
+                          isServiceFocused || formData.service !== ""
+                            ? "top-0 translate-y-0 text-[11px] font-extrabold text-blue-600 bg-white px-1.5"
+                            : "top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-500"
+                        }`}
+                      >
+                        Service Interested In <span className="text-red-500">*</span>
+                      </label>
+                    </div>
+                    {errors.service && (
+                      <p className="text-red-600 text-xs font-bold pl-2 flex items-center gap-1 animate-fadeIn">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{errors.service}</span>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Field 5: Calendar Date & Preferred Time to Reach (EST) */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div className="relative pt-2">
-                      <input
-                        type="text"
-                        id="childFirstName"
-                        placeholder=" "
-                        value={formData.childFirstName}
-                        onChange={(e) => setFormData({ ...formData, childFirstName: e.target.value })}
-                        className="peer w-full px-4 py-3.5 rounded-2xl border border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15 bg-white text-sm font-bold text-slate-800 outline-none transition-all placeholder-transparent"
-                      />
-                      <label
-                        htmlFor="childFirstName"
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-semibold transition-all duration-200 pointer-events-none peer-focus:top-0 peer-focus:translate-y-0 peer-focus:text-[11px] peer-focus:font-extrabold peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-extrabold peer-[:not(:placeholder-shown)]:text-blue-700 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1.5"
-                      >
-                        Child's First Name
-                      </label>
+                    {/* Calendar Date Picker */}
+                    <div className="space-y-1">
+                      <div className="relative pt-2">
+                        <input
+                          type="date"
+                          id="preferredDate"
+                          min={minDate}
+                          value={formData.preferredDate}
+                          onChange={(e) => handleChange("preferredDate", e.target.value)}
+                          className={`w-full px-4 py-3.5 rounded-2xl border transition-all text-sm font-bold text-slate-800 outline-none bg-white cursor-pointer ${
+                            errors.preferredDate
+                              ? "border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/15"
+                              : "border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15"
+                          }`}
+                        />
+                        <label
+                          htmlFor="preferredDate"
+                          className="absolute left-4 top-0 translate-y-0 text-[11px] font-extrabold text-blue-600 bg-white px-1.5 flex items-center gap-1"
+                        >
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>Calendar Date <span className="text-red-500">*</span></span>
+                        </label>
+                      </div>
+                      {errors.preferredDate && (
+                        <p className="text-red-600 text-xs font-bold pl-2 flex items-center gap-1 animate-fadeIn">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          <span>{errors.preferredDate}</span>
+                        </p>
+                      )}
                     </div>
 
-                    <div className="relative pt-2">
-                      <input
-                        type="text"
-                        id="childLastName"
-                        placeholder=" "
-                        value={formData.childLastName}
-                        onChange={(e) => setFormData({ ...formData, childLastName: e.target.value })}
-                        className="peer w-full px-4 py-3.5 rounded-2xl border border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15 bg-white text-sm font-bold text-slate-800 outline-none transition-all placeholder-transparent"
-                      />
-                      <label
-                        htmlFor="childLastName"
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-semibold transition-all duration-200 pointer-events-none peer-focus:top-0 peer-focus:translate-y-0 peer-focus:text-[11px] peer-focus:font-extrabold peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-extrabold peer-[:not(:placeholder-shown)]:text-blue-700 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1.5"
-                      >
-                        Child's Last Name
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* 3. Child Age & Postal Code */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div className="relative pt-2">
-                      <input
-                        type="text"
-                        id="childAge"
-                        placeholder=" "
-                        value={formData.childAge}
-                        onChange={(e) => setFormData({ ...formData, childAge: e.target.value })}
-                        className="peer w-full px-4 py-3.5 rounded-2xl border border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15 bg-white text-sm font-bold text-slate-800 outline-none transition-all placeholder-transparent"
-                      />
-                      <label
-                        htmlFor="childAge"
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-semibold transition-all duration-200 pointer-events-none peer-focus:top-0 peer-focus:translate-y-0 peer-focus:text-[11px] peer-focus:font-extrabold peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-extrabold peer-[:not(:placeholder-shown)]:text-blue-700 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1.5"
-                      >
-                        Child's Age (e.g. 4 Years)
-                      </label>
-                    </div>
-
-                    <div className="relative pt-2">
-                      <input
-                        type="text"
-                        id="postalCode"
-                        placeholder=" "
-                        value={formData.postalCode}
-                        onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
-                        className="peer w-full px-4 py-3.5 rounded-2xl border border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15 bg-white text-sm font-bold text-slate-800 outline-none transition-all placeholder-transparent"
-                      />
-                      <label
-                        htmlFor="postalCode"
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-semibold transition-all duration-200 pointer-events-none peer-focus:top-0 peer-focus:translate-y-0 peer-focus:text-[11px] peer-focus:font-extrabold peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-extrabold peer-[:not(:placeholder-shown)]:text-blue-700 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1.5"
-                      >
-                        Postal Code / Zip Code
-                      </label>
+                    {/* Preferred Time to Reach (EST) Picker */}
+                    <div className="space-y-1">
+                      <div className="relative pt-2">
+                        <input
+                          type="time"
+                          id="preferredTime"
+                          value={formData.preferredTime}
+                          onChange={(e) => handleChange("preferredTime", e.target.value)}
+                          className="w-full px-4 py-3.5 rounded-2xl border border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15 bg-white text-sm font-bold text-slate-800 outline-none transition-all cursor-pointer"
+                        />
+                        <label
+                          htmlFor="preferredTime"
+                          className="absolute left-4 top-0 translate-y-0 text-[11px] font-extrabold text-blue-600 bg-white px-1.5 flex items-center gap-1"
+                        >
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>Prefer Time to Reach (EST)</span>
+                        </label>
+                      </div>
                     </div>
                   </div>
 
-                  {/* 4. Email & Phone */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div className="relative pt-2">
-                      <input
-                        type="email"
-                        id="email"
-                        required
-                        placeholder=" "
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="peer w-full px-4 py-3.5 rounded-2xl border border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15 bg-white text-sm font-bold text-slate-800 outline-none transition-all placeholder-transparent"
-                      />
-                      <label
-                        htmlFor="email"
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-semibold transition-all duration-200 pointer-events-none peer-focus:top-0 peer-focus:translate-y-0 peer-focus:text-[11px] peer-focus:font-extrabold peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-extrabold peer-[:not(:placeholder-shown)]:text-blue-700 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1.5"
-                      >
-                        Email Address <span className="text-red-500">*</span>
-                      </label>
-                    </div>
-
-                    <div className="relative pt-2">
-                      <input
-                        type="tel"
-                        id="phone"
-                        required
-                        placeholder=" "
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="peer w-full px-4 py-3.5 rounded-2xl border border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15 bg-white text-sm font-bold text-slate-800 outline-none transition-all placeholder-transparent"
-                      />
-                      <label
-                        htmlFor="phone"
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-semibold transition-all duration-200 pointer-events-none peer-focus:top-0 peer-focus:translate-y-0 peer-focus:text-[11px] peer-focus:font-extrabold peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-extrabold peer-[:not(:placeholder-shown)]:text-blue-700 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1.5"
-                      >
-                        Phone Number <span className="text-red-500">*</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* 5. Service Interested In (Dropdown) */}
-                  <div className="relative pt-2">
-                    <select
-                      id="service"
-                      required
-                      value={formData.service}
-                      onFocus={() => setIsServiceFocused(true)}
-                      onBlur={() => setIsServiceFocused(false)}
-                      onChange={(e) => setFormData({ ...formData, service: e.target.value })}
-                      className={`w-full px-4 py-3.5 rounded-2xl border transition-all outline-none bg-white text-sm font-bold cursor-pointer ${
-                        isServiceFocused || formData.service !== ""
-                          ? "text-slate-800 border-blue-600 ring-4 ring-blue-600/15"
-                          : "text-transparent border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15"
-                      }`}
-                    >
-                      <option value="" disabled hidden></option>
-                      <option value="IBI Therapy (ABA)">IBI Therapy (Applied Behavior Analysis)</option>
-                      <option value="Social Programs">Social Programs & Peer Groups</option>
-                      <option value="Occupational Therapy">Occupational Therapy & Sensory Care</option>
-                      <option value="Speech Therapy">Speech & Language Therapy</option>
-                      <option value="Private School">Private School / Transition Prep</option>
-                      <option value="Respite Care">Respite Care</option>
-                      <option value="Vocational Training">Vocational Training Program</option>
-                      <option value="Focused ABA">Focused ABA (Sleeping, Eating, Behaviour, Tutoring)</option>
-                      <option value="Other Service">Other Service</option>
-                    </select>
-                    <label
-                      htmlFor="service"
-                      className={`absolute left-4 transition-all duration-200 pointer-events-none ${
-                        isServiceFocused || formData.service !== ""
-                          ? "top-0 translate-y-0 text-[11px] font-extrabold text-blue-600 bg-white px-1.5"
-                          : "top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-500"
-                      }`}
-                    >
-                      Service you are interested in <span className="text-red-500">*</span>
-                    </label>
-                  </div>
-
-                  {/* 6. How Did You Hear About Us? (Dropdown) */}
-                  <div className="relative pt-2">
-                    <select
-                      id="referralSource"
-                      value={formData.referralSource}
-                      onFocus={() => setIsReferralFocused(true)}
-                      onBlur={() => setIsReferralFocused(false)}
-                      onChange={(e) => setFormData({ ...formData, referralSource: e.target.value })}
-                      className={`w-full px-4 py-3.5 rounded-2xl border transition-all outline-none bg-white text-sm font-bold cursor-pointer ${
-                        isReferralFocused || formData.referralSource !== ""
-                          ? "text-slate-800 border-blue-600 ring-4 ring-blue-600/15"
-                          : "text-transparent border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15"
-                      }`}
-                    >
-                      <option value="" disabled hidden></option>
-                      <option value="Search Engine">Search Engine (Google / Bing)</option>
-                      <option value="Referred by friends & family">Referred by friends & family</option>
-                      <option value="Ministry Website">Ministry / OAP Website</option>
-                      <option value="Other agency">Other agency / Doctor Referral</option>
-                      <option value="Social Media">Social Media (Instagram / Facebook)</option>
-                      <option value="Other">Other</option>
-                    </select>
-                    <label
-                      htmlFor="referralSource"
-                      className={`absolute left-4 transition-all duration-200 pointer-events-none ${
-                        isReferralFocused || formData.referralSource !== ""
-                          ? "top-0 translate-y-0 text-[11px] font-extrabold text-blue-600 bg-white px-1.5"
-                          : "top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-500"
-                      }`}
-                    >
-                      How did you hear about Radiant?
-                    </label>
-                  </div>
-
-                  {/* 7. Additional Notes / Message (Optional) */}
+                  {/* Field 6: Additional Message / Notes (Optional) */}
                   <div className="relative pt-2">
                     <textarea
                       id="message"
                       rows={3}
                       placeholder=" "
                       value={formData.message}
-                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                      onChange={(e) => handleChange("message", e.target.value)}
                       className="peer w-full px-4 py-3 rounded-2xl border border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15 bg-white text-sm font-bold text-slate-800 outline-none transition-all placeholder-transparent resize-none"
                     />
                     <label
@@ -519,12 +560,13 @@ export default function ContactForm() {
                       {isSubmitting ? (
                         <>
                           <Loader2 className="w-5 h-5 animate-spin" />
-                          <span>Processing Request...</span>
+                          <span>Booking Appointment...</span>
                         </>
                       ) : (
                         <>
-                          <Send className="w-4.5 h-4.5 group-hover:translate-x-1 transition-transform" />
-                          <span>Submit Request</span>
+                          <Calendar className="w-4.5 h-4.5" />
+                          <span>Confirm & Book Appointment</span>
+                          <Send className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                         </>
                       )}
                     </button>

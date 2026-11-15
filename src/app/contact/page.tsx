@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import type { Metadata } from "next";
 import ContactForm from "@/components/ContactForm";
-import { Sparkles, MapPin, Clock, MessageSquare } from "lucide-react";
+import { MapPin, Clock, MessageSquare } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Contact Us | Radiant Autism Center",
@@ -36,7 +36,6 @@ export default function ContactPage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 space-y-4">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 backdrop-blur-md text-blue-300 border border-blue-500/30 text-xs font-extrabold uppercase tracking-wider shadow-lg">
-            <Sparkles className="w-4 h-4 text-blue-400" />
             <span>Contact Radiant Care Team</span>
           </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight text-white">

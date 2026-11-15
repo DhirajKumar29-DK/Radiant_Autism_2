@@ -12,7 +12,6 @@ import {
   FileCheck2,
   HandHeart,
   ArrowRight,
-  Sparkles,
   CheckCircle2,
 } from "lucide-react";
 import ScrollReveal from "@/common/ScrollReveal";
@@ -42,14 +41,14 @@ export default function CareApproachSection() {
     },
     {
       icon: Brain,
-      title: "In-House BCBA Supervision",
-      desc: "Direct supervision by Board Certified Behavior Analysts (BCBA) for every program.",
+      title: "In-House RBA Supervision",
+      desc: "Direct supervision by Registered Behaviour Analysts (RBA, Ontario) for every program.",
       color: "from-purple-600 to-pink-600",
       shadow: "shadow-pink-500/20",
     },
     {
       icon: ShieldCheck,
-      title: "OAP Approved & Transparent",
+      title: "OAP Covered & Transparent",
       desc: "100% OAP funding eligible services with transparent rates and accessible care.",
       color: "from-emerald-500 to-teal-600",
       shadow: "shadow-emerald-500/20",
@@ -88,24 +87,23 @@ export default function CareApproachSection() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
+
         {/* Header Section */}
         <ScrollReveal direction="up">
           <div className="text-center max-w-3xl mx-auto space-y-4">
             {/* Top Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100/80 text-blue-700 border border-blue-200/80 text-xs font-black uppercase tracking-wider shadow-2xs">
-              <Sparkles className="w-4 h-4 text-blue-600" />
               <span>Our Care Philosophy</span>
             </div>
 
             <h3 className="text-2xl sm:text-4xl font-serif text-[#2b4c7e] font-medium tracking-tight">
               The RADIANT Approach To Care
             </h3>
-            
+
             <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 bg-clip-text text-transparent">
               Going Above & Beyond For Every Child
             </h2>
-            
+
             <p className="text-slate-600 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto font-medium">
               High-quality, individualized, multidisciplinary, and evidence-based clinical support designed to empower your child's developmental journey.
             </p>
@@ -120,7 +118,7 @@ export default function CareApproachSection() {
               <ScrollReveal key={idx} delay={(idx % 4) * 120} direction="up">
                 <div className="bg-white/90 backdrop-blur-md rounded-3xl p-6 border-2 border-slate-200/80 shadow-md hover:shadow-2xl hover:border-blue-400 hover:-translate-y-2 transition-all duration-300 flex flex-col justify-between h-full group cursor-pointer relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-20 h-20 bg-sky-50/50 rounded-full blur-xl pointer-events-none group-hover:bg-blue-100/50 transition-colors" />
-                  
+
                   <div className="space-y-4 relative z-10">
                     {/* Icon Pod */}
                     <div

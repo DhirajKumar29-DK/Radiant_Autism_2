@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Radiant Autism Center",
     short_name: "Radiant Autism",
     description:
-      "OAP Approved & BCBA Supervised ABA Therapy, Speech Therapy, Occupational Therapy, and Early Intervention Programs.",
+      "OAP Covered & RBA Supervised ABA Therapy, Speech Therapy, Occupational Therapy, and Early Intervention Programs.",
     start_url: "/",
     display: "standalone",
     background_color: "#0f172a",

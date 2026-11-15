@@ -6,15 +6,14 @@ import {
   ChevronRight,
   ChevronLeft,
   Calendar,
-  Sparkles,
 } from "lucide-react";
 
 export default function Hero() {
   const slides = [
     {
       id: 1,
-      badge: "OAP APPROVED & BCBA SUPERVISED",
-      title: "ABA (Applied Behavior Analysis) Therapy",
+      badge: "OAP COVERED & RBA SUPERVISED",
+      title: "ABA Therapy (Applied Behavior Analysis)",
       subtitle: "Personalized, evidence-based, and compassionate interventions.",
       ctaPrimary: "BOOK APPOINTMENT",
       ctaPrimaryLink: "/contact",
@@ -25,8 +24,8 @@ export default function Hero() {
     {
       id: 2,
       badge: "SPEECH & LANGUAGE CARE",
-      title: "Speech & Communication Therapy",
-      subtitle: "Strengthening articulation, oral-motor skills, and feeding independence.",
+      title: "Speech and Language Service (SLP)",
+      subtitle: "Strengthening articulation, verbal communication, and everyday confidence.",
       ctaPrimary: "BOOK APPOINTMENT",
       ctaPrimaryLink: "/contact",
       ctaSecondary: "OUR SERVICES",
@@ -35,13 +34,13 @@ export default function Hero() {
     },
     {
       id: 3,
-      badge: "EARLY INTERVENTION SOCIAL GROUPS",
-      title: "Buddy Steps & Group Learning",
-      subtitle: "Building social interaction, peer play, and school readiness for young learners.",
+      badge: "MOTOR & SENSORY DEVELOPMENT",
+      title: "Occupational Therapy & Life Skills",
+      subtitle: "Supporting fine and gross motor needs, sensory regulation, and group programs.",
       ctaPrimary: "BOOK APPOINTMENT",
       ctaPrimaryLink: "/contact",
-      ctaSecondary: "EXPLORE GALLERY",
-      ctaSecondaryLink: "/gallery",
+      ctaSecondary: "ABOUT OUR CLINIC",
+      ctaSecondaryLink: "/about",
       bgImage: "/gallery_sensory_gym.jpg",
     },
   ];
@@ -69,16 +68,14 @@ export default function Hero() {
       {slides.map((slide, idx) => (
         <div
           key={slide.id}
-          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-            currentSlide === idx ? "opacity-100 z-10" : "opacity-0 z-0"
-          }`}
+          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${currentSlide === idx ? "opacity-100 z-10" : "opacity-0 z-0"
+            }`}
         >
           <img
             src={slide.bgImage}
             alt={slide.title}
-            className={`w-full h-full object-cover object-center transform transition-transform duration-1000 ${
-              currentSlide === idx ? "opacity-100 animate-kenburns" : "opacity-90"
-            }`}
+            className={`w-full h-full object-cover object-center transform transition-transform duration-1000 ${currentSlide === idx ? "opacity-100 animate-kenburns" : "opacity-90"
+              }`}
           />
           {/* Gradient Overlay for high readability & vibrant image visibility */}
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/75 via-slate-950/45 to-transparent" />
@@ -92,7 +89,6 @@ export default function Hero() {
         <div className="max-w-3xl space-y-5 my-auto text-left lg:ml-4 xl:ml-8">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-amber-300 text-xs font-extrabold uppercase tracking-wider">
-            <Sparkles className="w-4 h-4 text-amber-400" />
             <span>{slides[currentSlide].badge}</span>
           </div>
 
@@ -134,9 +130,8 @@ export default function Hero() {
               <button
                 key={idx}
                 onClick={() => setCurrentSlide(idx)}
-                className={`h-2.5 rounded-full transition-all duration-300 ${
-                  currentSlide === idx ? "w-8 bg-blue-500" : "w-2.5 bg-white/40"
-                }`}
+                className={`h-2.5 rounded-full transition-all duration-300 ${currentSlide === idx ? "w-8 bg-blue-500" : "w-2.5 bg-white/40"
+                  }`}
                 aria-label={`Go to slide ${idx + 1}`}
               />
             ))}

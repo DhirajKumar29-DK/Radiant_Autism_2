@@ -6,7 +6,7 @@ export interface ServiceDetail {
   badgeBg: string;
   iconBg: string;
   bulletColor: string;
-  iconName: "Brain" | "MessageCircle" | "Activity" | "Smile" | "Sparkles" | "ShieldCheck";
+  iconName: "Brain" | "MessageCircle" | "Activity" | "Smile" | "Compass" | "ShieldCheck";
   image: string;
   heroImage: string;
   shortDescription: string;
@@ -38,7 +38,7 @@ export interface ServiceDetail {
 export const SERVICES_DATA: Record<string, ServiceDetail> = {
   "aba-therapy": {
     id: "aba-therapy",
-    title: "ABA / IBI Therapy",
+    title: "ABA Therapy (Applied Behavior Analysis)",
     tagline: "Evidence-based Applied Behavior Analysis for autism & developmental goals.",
     badge: "OAP Covered",
     badgeBg: "bg-blue-600",
@@ -57,7 +57,7 @@ export const SERVICES_DATA: Record<string, ServiceDetail> = {
     ageGroup: "2 to 20 Years",
     sessionFormat: "1:1 & Small Group Individualized Clinical Sessions",
     duration: "Customized per Individualized Care Plan",
-    clinicalLead: "Jesenia Duran (Registered Behaviour Analyst & BCBA Supervision)",
+    clinicalLead: "Jesenia Duran, RBA (Registered Behaviour Analyst, Ontario)",
     features: ["Ages 2 to 20 Years", "Registered Behaviour Analyst", "Target Verbal & Life Skills"],
     whoNeedsThis: {
       subtitle: "ABA/IBI Therapy is recommended if your child demonstrates:",
@@ -83,7 +83,7 @@ export const SERVICES_DATA: Record<string, ServiceDetail> = {
         description: "Empowering children with daily self-care, focus, and classroom readiness."
       },
       {
-        title: "OAP Funding Approved",
+        title: "OAP Funding Covered",
         description: "100% eligible for Ontario Autism Program (OAP) funding support."
       }
     ],
@@ -106,7 +106,7 @@ export const SERVICES_DATA: Record<string, ServiceDetail> = {
       {
         stepNumber: "04",
         title: "Progress Tracking & Parent Review",
-        description: "Continuous data collection and regular BCBA supervisory parent progress meetings."
+        description: "Continuous data collection and regular RBA supervisory parent progress meetings."
       }
     ],
     faqs: [
@@ -129,7 +129,7 @@ export const SERVICES_DATA: Record<string, ServiceDetail> = {
     badgeBg: "bg-purple-600",
     iconBg: "bg-purple-600",
     bulletColor: "text-purple-600",
-    iconName: "Sparkles",
+    iconName: "Compass",
     image: "/gallery_group_play.jpg",
     heroImage: "/gallery_group_play.jpg",
     shortDescription:
@@ -142,7 +142,7 @@ export const SERVICES_DATA: Record<string, ServiceDetail> = {
     ageGroup: "4 to 24 Years",
     sessionFormat: "Small Peer Groups & Guided Workshops",
     duration: "Weekly Group Modules & Seasonal Camps",
-    clinicalLead: "Certified Group Facilitators & BCBA Supervisory Team",
+    clinicalLead: "Certified Group Facilitators & RBA Supervisory Team",
     features: ["Ages 4 to 24 Years", "PEERS® & Emotional ABCs®", "Social Skills & Peer Groups"],
     whoNeedsThis: {
       subtitle: "Group Programs are ideal if your child or teen:",
@@ -168,7 +168,7 @@ export const SERVICES_DATA: Record<string, ServiceDetail> = {
         description: "Learning real-world coping mechanisms for managing frustration and social stress."
       },
       {
-        title: "OAP Funding Approved",
+        title: "OAP Funding Covered",
         description: "Fully eligible for Ontario Autism Program (OAP) funding support."
       }
     ],
@@ -208,7 +208,7 @@ export const SERVICES_DATA: Record<string, ServiceDetail> = {
 
   "speech-therapy": {
     id: "speech-therapy",
-    title: "Speech Therapy",
+    title: "Speech and Language Service (SLP)",
     tagline: "Fun, effective speech & language therapy combining SLP expertise with ABA practices.",
     badge: "Communication Care",
     badgeBg: "bg-teal-600",
@@ -253,7 +253,7 @@ export const SERVICES_DATA: Record<string, ServiceDetail> = {
         description: "Leveraging behavioral reinforcement to accelerate communication milestones."
       },
       {
-        title: "OAP Funding Approved",
+        title: "OAP Funding Covered",
         description: "Covered under Ontario Autism Program (OAP) funding."
       }
     ],
@@ -293,8 +293,8 @@ export const SERVICES_DATA: Record<string, ServiceDetail> = {
 
   "occupational-therapy": {
     id: "occupational-therapy",
-    title: "Occupational Therapy",
-    tagline: "Building fine motor, gross motor, sensory regulation, and daily living skills.",
+    title: "Occupational Therapy (OT)",
+    tagline: "Building fine and gross motor skills, sensory regulation, and daily living independence.",
     badge: "Motor & Sensory",
     badgeBg: "bg-indigo-600",
     iconBg: "bg-indigo-600",
@@ -338,7 +338,7 @@ export const SERVICES_DATA: Record<string, ServiceDetail> = {
         description: "Fostering confidence in self-dressing, hygiene, and daily task management."
       },
       {
-        title: "OAP Funding Approved",
+        title: "OAP Funding Covered",
         description: "Covered under Ontario Autism Program (OAP) funding."
       }
     ],
@@ -397,7 +397,7 @@ export const SERVICES_DATA: Record<string, ServiceDetail> = {
     ageGroup: "Parents, Families & Organizations",
     sessionFormat: "In-Person, Online Consultation & Video Modules",
     duration: "1:1 Consultations & Self-Paced Courses",
-    clinicalLead: "Clinical Behaviour Consultants & BCBA Team",
+    clinicalLead: "Clinical Behaviour Consultants & RBA Supervisory Team",
     features: ["In-Person & Online", "Self-Paced Parent Courses", "Toilet Training & Behaviour"],
     whoNeedsThis: {
       subtitle: "Behaviour Consultation is recommended if you need:",
@@ -423,7 +423,7 @@ export const SERVICES_DATA: Record<string, ServiceDetail> = {
         description: "Available in-person, via telehealth, or through self-paced video training modules."
       },
       {
-        title: "OAP Funding Approved",
+        title: "OAP Funding Covered",
         description: "Covered under Ontario Autism Program (OAP) funding."
       }
     ],
@@ -593,7 +593,7 @@ export const SERVICES_DATA: Record<string, ServiceDetail> = {
         description: "Empowering parents to support mental health practices effectively at home."
       },
       {
-        title: "OAP Funding Approved",
+        title: "OAP Funding Covered",
         description: "Covered under Ontario Autism Program (OAP) funding."
       }
     ],
@@ -633,27 +633,32 @@ export const SERVICES_DATA: Record<string, ServiceDetail> = {
 
   "life-skills": {
     id: "life-skills",
-    title: "Life Skills",
-    tagline: "Building independent living, transit, meal prep, self-advocacy, and career skills.",
-    badge: "Independence",
-    badgeBg: "bg-sky-600",
-    iconBg: "bg-sky-600",
-    bulletColor: "text-sky-600",
-    iconName: "Sparkles",
-    image: "/hero_bg_aba.jpg",
-    heroImage: "/hero_bg_aba.jpg",
+    title: "Life Skills & Group Programs",
+    tagline: "Social skills, independence, daily living for ages 9–18, and pre-employment readiness.",
+    badge: "Ages 9–18 & Groups",
+    badgeBg: "bg-purple-600",
+    iconBg: "bg-purple-600",
+    bulletColor: "text-purple-600",
+    iconName: "Compass",
+    image: "/gallery_group_play.jpg",
+    heroImage: "/gallery_group_play.jpg",
     shortDescription:
-      "Empowering neurodivergent teens and young adults with real-world skills: public transit, grocery shopping, meal prep, cleaning, self-advocacy, resume building, and job/school applications.",
+      "Integrated peer group programs, social skills development, and practical daily life skills for ages 9–18, plus pre-employment preparation.",
     overviewParagraphs: [
-      "At Radiant Autism Center, we empower neurodivergent teens and young adults to build the skills they need to thrive independently in their communities.",
-      "Our programs focus on real-world skills like navigating public transportation, grocery shopping, meal preparation, cleaning, dressing, grooming, and managing daily schedules. We also support self-advocacy, resume building, and the school or job application process to help individuals reach their goals.",
-      "Through hands-on learning and personalized guidance, we create opportunities for growth, confidence, and self-reliance. Whether preparing for higher education, entering the workforce, or gaining life skills, we support their journey every step of the way. (Covered with OAP funding)."
+      "At Radiant Autism Center, our Life Skills & Group Programs bring together structured peer interaction, social emotional learning, and essential daily living independence for children and youth aged 9 to 18.",
+      "Our Group Programs & Social Skills sessions provide safe, guided environments where learners practice conversation, active listening, turn-taking, friendship building, and emotional regulation alongside peers.",
+      "Our Life Skills curriculum targets practical daily independence: meal prep, personal hygiene, schedule management, community transit, and money handling.",
+      "Pre-Employment Skills Preparation: For older youth transitioning toward vocational goals, we offer workplace readiness and task completion coaching. Please note: Prerequisite needed (preference is given to students already enrolled in our skill building programs). (Covered with OAP funding)."
     ],
-    ageGroup: "Teens & Young Adults",
-    sessionFormat: "Community Hands-on Training & 1:1 Coaching",
-    duration: "Flexible Life Skill Workshops & Community Outings",
-    clinicalLead: "Life Skills Specialists & BCBA Supervisory Team",
-    features: ["Community Navigation", "Job & School Applications", "Self-Advocacy & Meal Prep"],
+    ageGroup: "Ages 9 to 18 Years",
+    sessionFormat: "Small Peer Groups & 1:1 Guided Practice",
+    duration: "60 to 90 Min Group & Coaching Sessions",
+    clinicalLead: "Life Skills Specialists & RBA Supervisory Team",
+    features: [
+      "Ages 9–18 Dedicated Focus",
+      "Structured Peer Social Groups",
+      "Pre-Employment Readiness (Prerequisite Needed)"
+    ],
     whoNeedsThis: {
       subtitle: "Life Skills training is ideal for teens and young adults preparing to:",
       signs: [
@@ -678,7 +683,7 @@ export const SERVICES_DATA: Record<string, ServiceDetail> = {
         description: "Empowering individuals to communicate their needs and rights confidently."
       },
       {
-        title: "OAP Funding Approved",
+        title: "OAP Funding Covered",
         description: "Covered under Ontario Autism Program (OAP) funding."
       }
     ],

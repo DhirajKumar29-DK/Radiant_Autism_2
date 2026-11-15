@@ -6,7 +6,6 @@ import {
   Award,
   CheckCircle2,
   ShieldCheck,
-  Sparkles,
   ArrowRight,
   Heart,
   Users,
@@ -15,12 +14,12 @@ import ScrollReveal from "@/common/ScrollReveal";
 
 export default function AboutSection() {
   const highlights = [
-    "Board Certified Behavior Analyst (BCBA) Supervision",
-    "OAP Approved Center with Certified Programs",
-    "Person-Centered & Modern ABA Methodologies",
-    "Integrated Speech, Feeding & Occupational Therapy",
-    "ASDAN Curriculum & AI Milestones Training",
-    "Compassionate Parent Guidance & CEU Workshops",
+    "Registered Behaviour Analyst (RBA, Ontario) Supervision",
+    "OAP Covered Programs & Services",
+    "Person-Centered & Compassionate ABA Therapy",
+    "Integrated Speech & Occupational Therapy Support",
+    "Tailored 1:1 and Group Skill Building",
+    "Close Family Collaboration & Parent Guidance",
   ];
 
   return (
@@ -50,9 +49,8 @@ export default function AboutSection() {
 
                   {/* Top Floating Badge */}
                   <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-md border border-slate-100 flex items-center gap-2">
-                    <Sparkles className="w-3.5 h-3.5 text-blue-600" />
                     <span className="text-xs font-extrabold text-slate-900">
-                      OAP Approved Center
+                      OAP Covered Services
                     </span>
                   </div>
                 </div>
@@ -76,8 +74,7 @@ export default function AboutSection() {
             <ScrollReveal direction="left" delay={200}>
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full badge-blue text-xs font-bold uppercase tracking-wider">
-                  <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                  About Radiant Autism Center
+                  <span>About Radiant Autism Center</span>
                 </div>
 
                 <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-snug">
@@ -85,11 +82,11 @@ export default function AboutSection() {
                 </h2>
 
                 <p className="text-slate-600 text-base leading-relaxed">
-                  At Radiant Autism Center, we are more than just a therapy provider. We are a dedicated family of certified therapists, educators, and behavior analysts committed to providing gentle, high-quality, individual-focused interventions.
+                  At Radiant Autism Center, our mission is simple: to help every child build meaningful communication, motor independence, and daily life confidence through gentle, evidence-based care.
                 </p>
 
                 <p className="text-slate-600 text-sm leading-relaxed">
-                  Unlike traditional strict approaches, our modern ABA therapy is root-cause focused, play-infused, and compassionate. We collaborate closely with parents, speech pathologists, and occupational therapists to design a cohesive development journey.
+                  We work closely with families to deliver individualized support across ABA therapy, speech-language services, and occupational therapy in a welcoming, caring environment.
                 </p>
 
                 {/* Highlights Grid */}

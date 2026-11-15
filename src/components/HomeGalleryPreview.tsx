@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import { Camera, ArrowRight, Eye, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Camera, Eye, ChevronLeft, ChevronRight, X } from "lucide-react";
 import ScrollReveal from "@/common/ScrollReveal";
 
 export default function HomeGalleryPreview() {
@@ -141,19 +140,6 @@ export default function HomeGalleryPreview() {
             })}
           </div>
         </div>
-
-        {/* Bottom View All Link -> Navigates to /gallery */}
-        <ScrollReveal direction="up" delay={200}>
-          <div className="text-center mt-12 sm:mt-16">
-            <Link
-              href="/gallery"
-              className="inline-flex items-center gap-2.5 px-9 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-xl shadow-blue-600/30 transition-all group transform hover:-translate-y-0.5"
-            >
-              <span>Explore Full Gallery</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-        </ScrollReveal>
 
       </div>
 

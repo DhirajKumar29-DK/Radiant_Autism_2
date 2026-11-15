@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Sparkles, LucideIcon } from "lucide-react";
+import { LucideIcon } from "lucide-react";
 
 interface BadgeProps {
   text: string;
@@ -13,7 +13,7 @@ interface BadgeProps {
 export default function Badge({
   text,
   variant = "blue",
-  icon: Icon = Sparkles,
+  icon: Icon,
   className = "",
 }: BadgeProps) {
   const variantClasses = {

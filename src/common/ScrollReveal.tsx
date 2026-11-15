@@ -50,15 +50,15 @@ export default function ScrollReveal({
     }
     switch (direction) {
       case "up":
-        return "opacity-0 translate-y-12";
+        return "opacity-0 translate-y-4";
       case "down":
-        return "opacity-0 -translate-y-12";
+        return "opacity-0 -translate-y-4";
       case "left":
-        return "opacity-0 translate-x-12";
+        return "opacity-0 translate-x-4";
       case "right":
-        return "opacity-0 -translate-x-12";
+        return "opacity-0 -translate-x-4";
       default:
-        return "opacity-0 translate-y-12";
+        return "opacity-0 translate-y-4";
     }
   };
 
@@ -66,7 +66,7 @@ export default function ScrollReveal({
     <div
       ref={ref}
       style={{ transitionDelay: `${delay}ms` }}
-      className={`transition-all duration-700 ease-out transform ${getDirectionStyle()} ${className}`}
+      className={`transition-all duration-500 ease-out transform ${getDirectionStyle()} ${className}`}
     >
       {children}
     </div>

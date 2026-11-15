@@ -8,8 +8,8 @@ export default function OurTeamSection() {
   const teamMembers = [
     {
       name: "Shyni Gopal",
-      role: "BCBA, QBA - Program Director & Founder",
-      badge: "Board Certified Analyst",
+      role: "RBA, QBA - Clinical Director & Founder",
+      badge: "Registered Behaviour Analyst (Ontario)",
       image: "/founder_portrait.jpg",
       bio: "Over 12+ years of clinical expertise specializing in person-centered ABA, VB-MAPP assessment, and compassionate family-focused therapy.",
     },
@@ -42,7 +42,7 @@ export default function OurTeamSection() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
+
         {/* Section Header */}
         <ScrollReveal direction="up">
           <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
@@ -50,13 +50,13 @@ export default function OurTeamSection() {
               <Award className="w-4 h-4 text-blue-400" />
               <span>CLINICAL LEADERSHIP & STAFF</span>
             </div>
-            
+
             <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
               Meet Our Dedicated Clinical Team
             </h2>
-            
+
             <p className="text-slate-300 text-base sm:text-lg leading-relaxed font-medium">
-              Supervised by certified Board Certified Behavior Analysts (BCBA) and delivered by compassionate speech, occupational, and behavior specialists.
+              Supervised by Registered Behaviour Analysts (RBA, Ontario) and delivered by compassionate speech, occupational, and behavior specialists.
             </p>
           </div>
         </ScrollReveal>
@@ -75,7 +75,7 @@ export default function OurTeamSection() {
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
-                    
+
                     {/* Badge */}
                     <span className="absolute top-4 left-4 bg-slate-950/85 backdrop-blur-md border border-white/20 text-white px-3.5 py-1.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider shadow-lg">
                       {member.badge}

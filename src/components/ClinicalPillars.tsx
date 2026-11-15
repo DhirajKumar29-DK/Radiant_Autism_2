@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { HeartHandshake, Award, Users, ShieldCheck, Sparkles, CheckCircle2 } from "lucide-react";
+import { HeartHandshake, Award, Users, ShieldCheck, CheckCircle2 } from "lucide-react";
 import ScrollReveal from "@/common/ScrollReveal";
 
 export default function ClinicalPillars() {
@@ -16,9 +16,9 @@ export default function ClinicalPillars() {
     },
     {
       id: "02",
-      title: "1:1 BCBA Supervision",
-      badge: "BCBA Led",
-      desc: "Certified Behavior Analysts directly design, continuously monitor, and adjust clinical progress for every child.",
+      title: "1:1 RBA Supervision",
+      badge: "RBA Led",
+      desc: "Registered Behaviour Analysts (Ontario) directly design, continuously monitor, and adjust clinical progress for every child.",
       icon: Award,
       points: ["Certified Clinicians", "VB-MAPP & ABLLS-R"],
     },
@@ -32,11 +32,11 @@ export default function ClinicalPillars() {
     },
     {
       id: "04",
-      title: "OAP & CEU Approved",
+      title: "OAP Covered & CEU Programs",
       badge: "Accredited",
-      desc: "Fully registered clinical center offering approved family support funding programs and professional clinical development.",
+      desc: "Clinical center offering OAP eligible family support funding programs and professional clinical development.",
       icon: ShieldCheck,
-      points: ["OAP Approved Center", "Parent CEU Training"],
+      points: ["OAP Covered Services", "Parent CEU Training"],
     },
   ];
 
@@ -47,19 +47,18 @@ export default function ClinicalPillars() {
       <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:28px_28px] opacity-40 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
+
         {/* Section Header */}
         <ScrollReveal direction="up">
           <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100/90 text-blue-700 border border-blue-200/80 text-xs font-extrabold uppercase tracking-wider shadow-xs">
-              <Sparkles className="w-4 h-4 text-blue-600" />
               <span>CLINICAL EXCELLENCE</span>
             </div>
-            
+
             <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">
               Our 4 Pillars of Clinical Excellence
             </h2>
-            
+
             <p className="text-slate-600 text-base sm:text-lg leading-relaxed font-medium">
               We hold ourselves to the highest global healthcare standards to ensure your child receives gentle, evidence-based, and compassionate therapy.
             </p>

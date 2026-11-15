@@ -26,15 +26,15 @@ export const metadata: Metadata = {
     template: "%s | Radiant Autism Center",
   },
   description:
-    "OAP approved & BCBA supervised Autism Center providing ABA therapy, speech therapy, occupational therapy & early intervention in Ontario.",
+    "OAP covered & RBA supervised Autism Center providing ABA therapy, speech therapy, occupational therapy & early intervention in Ontario.",
   keywords: [
     "Autism Center",
     "ABA Therapy",
     "IBI Therapy",
     "Speech Therapy",
     "Occupational Therapy",
-    "OAP Approved Center",
-    "BCBA Supervised",
+    "OAP Covered Services",
+    "RBA Supervised",
     "Behavior Consultation",
     "Early Intervention Social Groups",
     "Autism Therapy Ontario",
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     url: siteUrl,
     title: "Radiant Autism Center | ABA & Skill Therapy",
     description:
-      "OAP approved & BCBA supervised Autism Center providing ABA therapy, speech therapy, occupational therapy & early intervention in Ontario.",
+      "OAP covered & RBA supervised Autism Center providing ABA therapy, speech therapy, occupational therapy & early intervention in Ontario.",
     siteName: "Radiant Autism Center",
     images: [
       {
@@ -71,7 +71,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Radiant Autism Center | ABA & Skill Therapy",
     description:
-      "OAP approved & BCBA supervised Autism Center providing ABA therapy, speech therapy, occupational therapy & early intervention in Ontario.",
+      "OAP covered & RBA supervised Autism Center providing ABA therapy, speech therapy, occupational therapy & early intervention in Ontario.",
     images: ["/hero_child_therapy.jpg"],
   },
   robots: {
@@ -93,7 +93,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${plusJakarta.variable} scroll-smooth`}>
+    <html lang="en" className={plusJakarta.variable}>
       <head>
         <JsonLd />
       </head>

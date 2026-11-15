@@ -14,7 +14,7 @@ export default function JsonLd() {
         "url": baseUrl,
         "logo": `${baseUrl}/hero_child_therapy.jpg`,
         "image": `${baseUrl}/hero_child_therapy.jpg`,
-        "description": "OAP Approved & BCBA Supervised ABA Therapy, Speech Therapy, Occupational Therapy, Behavior Consultation, Psychoeducational Assessments, and Early Intervention Programs.",
+        "description": "OAP Covered & RBA Supervised ABA Therapy, Speech Therapy, Occupational Therapy, and Early Intervention Programs.",
         "telephone": "+1-800-555-7890",
         "email": "dhirajhzp62@gmail.com",
         "priceRange": "$$",
@@ -93,7 +93,7 @@ export default function JsonLd() {
         "@id": `${baseUrl}/#website`,
         "url": baseUrl,
         "name": "Radiant Autism Center",
-        "description": "Empowering children with autism through BCBA supervised clinical therapy.",
+        "description": "Empowering children with autism through RBA supervised clinical therapy.",
         "publisher": {
           "@id": `${baseUrl}/#clinic`
         }

@@ -15,7 +15,7 @@ export default function AboutCentreDetail() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24 relative z-10">
-        
+
         {/* Row 1: Image Left + Text Right (About Radiant Autism Services & Our Centre) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-6">
@@ -31,7 +31,7 @@ export default function AboutCentreDetail() {
                 {/* Floating Badge */}
                 <div className="absolute top-4 left-4 bg-slate-900/85 backdrop-blur-md border border-white/20 text-white px-3.5 py-1.5 rounded-full text-xs font-extrabold shadow-md flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-blue-400" />
-                  <span>OAP Approved Facility</span>
+                  <span>OAP Covered Services</span>
                 </div>
               </div>
             </ScrollReveal>
@@ -50,21 +50,21 @@ export default function AboutCentreDetail() {
                 </h2>
 
                 <p className="text-slate-600 text-base leading-relaxed font-medium">
-                  Radiant Autism Services is a leading, OAP-approved provider of autism and developmental therapies. For over many years, our clinical team has earned a strong reputation for delivering high-quality, family-centred ABA, Speech-Language Pathology (SLP), Occupational Therapy (OT), and Diagnostic Assessments.
+                  Radiant Autism Services provides high-quality, OAP-covered autism and developmental therapies. Our clinical team delivers compassionate, family-centred ABA, Speech-Language Pathology (SLP), and Occupational Therapy (OT).
                 </p>
 
                 <p className="text-slate-600 text-base leading-relaxed font-medium">
-                  We are proud to be recognized as a trusted, best-in-class centre where families feel supported, respected, and confident in the individualized care their child receives every single day.
+                  We are proud to be recognized as a trusted centre where families feel supported, respected, and confident in the individualized care their child receives every single day.
                 </p>
 
                 <div className="pt-2 flex flex-wrap items-center gap-4">
                   <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-extrabold text-slate-800">
                     <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                    <span>BCBA Supervised</span>
+                    <span>RBA Supervised</span>
                   </div>
                   <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-extrabold text-slate-800">
                     <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                    <span>OAP Approved Services</span>
+                    <span>OAP Covered Services</span>
                   </div>
                 </div>
               </div>

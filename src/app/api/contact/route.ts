@@ -5,22 +5,26 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const {
-      parentFirstName,
-      parentLastName,
-      childFirstName,
-      childLastName,
-      childAge,
+      fullName,
       email,
       phone,
-      postalCode,
       service,
-      referralSource,
+      preferredDate,
+      preferredTime,
       message,
     } = body;
 
-    if (!parentFirstName || !email || !phone) {
+    if (!fullName || !email || !service || !preferredDate) {
       return NextResponse.json(
-        { error: "Parent name, email, and phone are required fields." },
+        { error: "Full name, email, service, and calendar date are required fields." },
+        { status: 400 }
+      );
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: "Please provide a valid email address." },
         { status: 400 }
       );
     }
@@ -56,36 +60,28 @@ export async function POST(req: NextRequest) {
             .ticket-badge { display: inline-block; background-color: #eff6ff; color: #1d4ed8; padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 14px; border: 1px solid #bfdbfe; margin-bottom: 16px; }
             .table-info { width: 100%; border-collapse: collapse; margin-top: 12px; }
             .table-info th, .table-info td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
-            .table-info th { color: #64748b; font-weight: 700; width: 38%; }
+            .table-info th { color: #64748b; font-weight: 700; width: 40%; }
             .table-info td { color: #0f172a; font-weight: 700; }
             .message-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-top: 16px; font-size: 13px; font-style: italic; color: #334155; }
-            .footer { background-color: #f1f5f9; padding: 16px; text-align: center; font-size: 12px; color: #64748b; border-t: 1px solid #e2e8f0; }
+            .footer { background-color: #f1f5f9; padding: 16px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0; }
           </style>
         </head>
         <body>
           <div class="container">
             <div class="header">
-              <h2>Radiant Autism Center</h2>
-              <p>New Consultation & Clinical Inquiry Request</p>
+              <h2>Radiant Autism & Skill Center</h2>
+              <p>New Appointment & Consultation Request</p>
             </div>
             <div class="content">
-              <div class="ticket-badge">Inquiry Ticket #${ticketId}</div>
+              <div class="ticket-badge">Appointment Ticket #${ticketId}</div>
               <p style="font-size: 14px; color: #334155; margin-top: 0;">
-                A new consultation inquiry has been submitted through the Radiant Autism website form:
+                A new appointment inquiry has been submitted through the Radiant Autism website:
               </p>
               
               <table class="table-info">
                 <tr>
-                  <th>Parent Name</th>
-                  <td>${parentFirstName} ${parentLastName || ""}</td>
-                </tr>
-                <tr>
-                  <th>Child's Name</th>
-                  <td>${childFirstName || "N/A"} ${childLastName || ""}</td>
-                </tr>
-                <tr>
-                  <th>Child's Age</th>
-                  <td>${childAge || "Not Specified"}</td>
+                  <th>Parent / Guardian Name</th>
+                  <td>${fullName}</td>
                 </tr>
                 <tr>
                   <th>Email Address</th>
@@ -93,26 +89,26 @@ export async function POST(req: NextRequest) {
                 </tr>
                 <tr>
                   <th>Phone Number</th>
-                  <td><a href="tel:${phone}" style="color: #2563eb; text-decoration: none;">${phone}</a></td>
+                  <td>${phone ? `<a href="tel:${phone}" style="color: #2563eb; text-decoration: none;">${phone}</a>` : "Not Provided"}</td>
                 </tr>
                 <tr>
-                  <th>Postal / Zip Code</th>
-                  <td>${postalCode || "N/A"}</td>
+                  <th>Interested Service</th>
+                  <td style="color: #1d4ed8;">${service}</td>
                 </tr>
                 <tr>
-                  <th>Service Interested In</th>
-                  <td style="color: #1d4ed8;">${service || "General Inquiry"}</td>
+                  <th>Preferred Appointment Date</th>
+                  <td>${preferredDate || "Flexible / First Available"}</td>
                 </tr>
                 <tr>
-                  <th>Referral Source</th>
-                  <td>${referralSource || "Not Specified"}</td>
+                  <th>Prefer Time to Reach (EST)</th>
+                  <td>${preferredTime ? `${preferredTime} EST` : "Flexible / First Available"}</td>
                 </tr>
               </table>
 
               ${
                 message
                   ? `<div class="message-box">
-                      <strong>Additional Message / Notes:</strong><br/>
+                      <strong>Additional Notes / Message:</strong><br/>
                       "${message}"
                      </div>`
                   : ""
@@ -130,12 +126,12 @@ export async function POST(req: NextRequest) {
         from: `"Radiant Autism Center" <${userEmail}>`,
         to: recipientEmail,
         replyTo: email,
-        subject: `[New Inquiry #${ticketId}] Consultation Request from ${parentFirstName} ${parentLastName || ""}`,
+        subject: `[New Appointment #${ticketId}] Consultation Request from ${fullName}`,
         html: htmlTemplate,
       });
     } else {
       console.log(
-        `[Form Submitted Demo - EMAIL_USER/EMAIL_PASS pending] Ticket: #${ticketId} | Parent: ${parentFirstName} | Phone: ${phone}`
+        `[Form Submitted Demo - EMAIL_USER/EMAIL_PASS pending] Ticket: #${ticketId} | Name: ${fullName} | Service: ${service} | Phone: ${phone}`
       );
     }
 

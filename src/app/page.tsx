@@ -6,12 +6,11 @@ import CareApproachSection from "@/components/CareApproachSection";
 import OurApproachProcess from "@/components/OurApproachProcess";
 import ServicesGrid from "@/components/ServicesGrid";
 import HomeGalleryPreview from "@/components/HomeGalleryPreview";
-import Testimonials from "@/components/Testimonials";
 
 export const metadata: Metadata = {
   title: "Radiant Autism Center | ABA & Skill Therapy",
   description:
-    "OAP approved & BCBA supervised Autism Center providing ABA therapy, speech therapy, occupational therapy & early intervention in Ontario.",
+    "OAP covered & RBA supervised Autism Center providing ABA therapy, speech therapy, occupational therapy & early intervention in Ontario.",
   alternates: {
     canonical: "/",
   },
@@ -23,10 +22,9 @@ export default function HomePage() {
       <Hero />
       <AboutSection />
       <CareApproachSection />
-      <ServicesGrid limit={3} />
+      <ServicesGrid limit={4} />
       <OurApproachProcess />
       <HomeGalleryPreview />
-      <Testimonials />
     </div>
   );
 }

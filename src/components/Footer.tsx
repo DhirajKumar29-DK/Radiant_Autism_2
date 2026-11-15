@@ -15,14 +15,10 @@ import {
 
 export default function Footer() {
   const serviceLinks = [
-    { name: "ABA / IBI Therapy", path: "/services/aba-therapy" },
-    { name: "Group Programs", path: "/services/group-programs" },
-    { name: "Speech Therapy", path: "/services/speech-therapy" },
-    { name: "Occupational Therapy", path: "/services/occupational-therapy" },
-    { name: "Behaviour Consultation", path: "/services/behaviour-consultation" },
-    { name: "Psychoeducational Assessments", path: "/services/psychoeducational-assessments" },
-    { name: "Psychotherapy Services", path: "/services/psychotherapy-services" },
-    { name: "Life Skills Program", path: "/services/life-skills" },
+    { name: "ABA Therapy (Applied Behavior Analysis)", path: "/services/aba-therapy" },
+    { name: "Speech and Language Service (SLP)", path: "/services/speech-therapy" },
+    { name: "Occupational Therapy (OT)", path: "/services/occupational-therapy" },
+    { name: "Life Skills & Group Programs", path: "/services/life-skills" },
   ];
 
   return (
@@ -51,12 +47,12 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-slate-400 text-sm leading-relaxed">
-              Empowering children with autism and determination through compassionate, evidence-based ABA, speech, and occupational therapy supervised by certified BCBA professionals.
+              Empowering children with autism and determination through compassionate, evidence-based ABA, speech, and occupational therapy supervised by Registered Behaviour Analysts (RBA, Ontario).
             </p>
             <div className="pt-2 flex items-center gap-2">
               <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                OAP Approved Center
+                OAP Covered Services
               </span>
             </div>
           </div>
@@ -71,7 +67,6 @@ export default function Footer() {
                 { name: "Home", path: "/" },
                 { name: "About Us", path: "/about" },
                 { name: "Services", path: "/services" },
-                { name: "Gallery", path: "/gallery" },
                 { name: "Contact Us", path: "/contact" },
               ].map((item) => (
                 <li key={item.path}>
