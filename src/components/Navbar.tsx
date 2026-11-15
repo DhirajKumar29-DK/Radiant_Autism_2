@@ -5,11 +5,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { HeartHandshake, Menu, X, PhoneCall, ChevronRight } from "lucide-react";
 
+interface NavLink {
+  name: string;
+  path: string;
+}
+
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
-  const defaultNavLinks = [
+  const defaultNavLinks: NavLink[] = [
     { name: "Home", path: "/" },
     { name: "About Us", path: "/about" },
     { name: "Services", path: "/services" },
@@ -18,7 +23,7 @@ export default function Navbar() {
     { name: "Contact Us", path: "/contact" },
   ];
 
-  const [navLinks, setNavLinks] = useState(defaultNavLinks);
+  const [navLinks, setNavLinks] = useState<NavLink[]>(defaultNavLinks);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
@@ -31,11 +36,11 @@ export default function Navbar() {
         if (res.ok) {
           const data = await res.json();
           if (data.navItems && Array.isArray(data.navItems)) {
-            const visible = data.navItems
-              .filter((item: any) => item.isVisible)
+            const visible: NavLink[] = data.navItems
+              .filter((item: any) => item.isVisible !== false && (item.path || item.href))
               .map((item: any) => ({
-                name: item.label,
-                path: item.href,
+                name: String(item.name || item.label || "Link"),
+                path: String(item.path || item.href || "/"),
               }));
             if (visible.length > 0) setNavLinks(visible);
           }
@@ -75,11 +80,11 @@ export default function Navbar() {
 
           {/* Desktop Nav Links */}
           <nav className="hidden md:flex items-center gap-1.5">
-            {navLinks.map((link) => {
+            {navLinks.map((link, idx) => {
               const isActive = pathname === link.path;
               return (
                 <Link
-                  key={link.path}
+                  key={`${link.path}-${idx}`}
                   href={link.path}
                   className={`px-4 py-2 rounded-xl text-xs font-black transition-all duration-200 ${
                     isActive
@@ -121,11 +126,11 @@ export default function Navbar() {
       {/* Mobile Drawer Menu */}
       {isOpen && (
         <div className="md:hidden bg-white border-b border-slate-200 shadow-lg px-4 pt-3 pb-6 space-y-2 animate-fadeIn">
-          {navLinks.map((link) => {
+          {navLinks.map((link, idx) => {
             const isActive = pathname === link.path;
             return (
               <Link
-                key={link.path}
+                key={`mobile-${link.path}-${idx}`}
                 href={link.path}
                 onClick={() => setIsOpen(false)}
                 className={`flex items-center justify-between px-4 py-3 rounded-xl text-base font-semibold transition-all ${

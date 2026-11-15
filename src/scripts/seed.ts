@@ -279,21 +279,20 @@ async function main() {
     await prisma.siteNavigation.create({
       data: {
         navItemsJson: JSON.stringify([
-          { name: "Home", path: "/", isVisible: true },
-          { name: "About Us", path: "/about", isVisible: true },
-          { name: "Services", path: "/services", isVisible: true },
-          { name: "Contact Us", path: "/contact", isVisible: true },
-          { name: "Gallery", path: "/gallery", isVisible: false },
-          { name: "Blogs", path: "/blogs", isVisible: false },
+          { id: "home", label: "Home", name: "Home", href: "/", path: "/", isVisible: true },
+          { id: "about", label: "About Us", name: "About Us", href: "/about", path: "/about", isVisible: true },
+          { id: "services", label: "Services", name: "Services", href: "/services", path: "/services", isVisible: true },
+          { id: "gallery", label: "Gallery", name: "Gallery", href: "/gallery", path: "/gallery", isVisible: true },
+          { id: "blogs", label: "Articles & Blog", name: "Articles & Blog", href: "/blogs", path: "/blogs", isVisible: true },
+          { id: "contact", label: "Contact Us", name: "Contact Us", href: "/contact", path: "/contact", isVisible: true },
         ]),
         sectionsVisibilityJson: JSON.stringify({
-          heroSlider: true,
-          servicesGrid: true,
-          ourApproach: true,
-          aboutSummary: true,
-          galleryPreview: true,
-          teamSection: true,
-          testimonials: false,
+          hero: true,
+          about: true,
+          careApproach: true,
+          services: true,
+          process: true,
+          gallery: true,
         }),
       },
     });
