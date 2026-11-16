@@ -294,7 +294,7 @@ export default function HeroAdminPage() {
             </span>
           </div>
           <p className="text-slate-500 text-xs font-medium mt-1">
-            {activePageConfig.desc}. Manage carousel slides and live banners.
+            Manage website hero sections
           </p>
         </div>
 
@@ -303,7 +303,7 @@ export default function HeroAdminPage() {
             href={activePageConfig.path}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-4 py-2.5 bg-white border border-slate-200 hover:border-blue-400 text-slate-700 hover:text-blue-600 rounded-2xl font-bold text-xs shadow-xs transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2.5 bg-white border border-slate-200 hover:border-blue-400 text-slate-700 hover:text-blue-600 rounded-xl font-bold text-xs shadow-xs transition-colors"
           >
             <span>Live {activePageConfig.label}</span>
             <ExternalLink className="w-3.5 h-3.5" />
@@ -319,12 +319,13 @@ export default function HeroAdminPage() {
             </button>
           )}
 
+          {/* FabFit Style Amber/Gold + Add Hero Button */}
           <button
             onClick={openAddModal}
-            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-extrabold text-xs uppercase tracking-wider shadow-md shadow-blue-600/30 transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#f59e0b] hover:bg-[#d97706] text-white rounded-lg font-bold text-sm shadow-sm transition-all"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Hero Slide</span>
+            <span>+ Add Hero</span>
           </button>
         </div>
       </div>
@@ -450,15 +451,15 @@ export default function HeroAdminPage() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => openEditModal(hero)}
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 border border-blue-200 rounded-xl transition-colors"
-                            title="Edit Slide"
+                            className="p-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50 border border-amber-200 rounded-lg transition-colors"
+                            title="Edit Hero"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => triggerSingleDelete(hero.id)}
-                            className="p-1.5 text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-xl transition-colors"
-                            title="Delete Slide"
+                            className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 rounded-lg transition-colors"
+                            title="Delete Hero"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -488,21 +489,21 @@ export default function HeroAdminPage() {
 
       {/* FabFit Style 2-Column Modal (NEVER CUT OFF AT TOP OR BOTTOM!) */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
           <div
-            className="absolute inset-0"
+            className="fixed inset-0"
             onClick={() => setIsModalOpen(false)}
           />
 
-          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-slate-200">
+          <div className="relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-5xl max-h-[88vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-slate-200 my-auto z-10">
             {/* Fixed Modal Header */}
-            <div className="px-8 py-5 border-b border-slate-200 flex justify-between items-center bg-white shrink-0">
+            <div className="px-6 sm:px-8 py-4 sm:py-5 border-b border-slate-200 flex justify-between items-center bg-white shrink-0 sticky top-0 z-20">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-blue-600">
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-600">
                   Hero Carousel Slide
                 </span>
                 <h2 className="text-xl font-black text-slate-900 tracking-tight mt-0.5">
-                  {selectedHero ? "Edit Hero Slide" : "Add New Hero Slide"}
+                  {selectedHero ? "Edit Hero" : "Add Hero"}
                 </h2>
               </div>
               <button

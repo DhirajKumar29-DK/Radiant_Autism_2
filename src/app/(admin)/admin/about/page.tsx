@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Save,
   Loader2,
@@ -13,9 +15,13 @@ import {
   Eye,
   FileText,
   Activity,
+  Layers,
+  ArrowRight,
 } from "lucide-react";
 
-export default function AdminAboutPage() {
+function AboutAdminContent() {
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<string>("overview");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -33,6 +39,17 @@ export default function AdminAboutPage() {
   });
 
   const [newHighlight, setNewHighlight] = useState("");
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam) {
+      if (tabParam === "pillars") {
+        setActiveTab("highlights");
+      } else if (["overview", "facility", "highlights", "all"].includes(tabParam)) {
+        setActiveTab(tabParam);
+      }
+    }
+  }, [searchParams]);
 
   const fetchAboutData = async () => {
     setIsLoading(true);
@@ -136,6 +153,60 @@ export default function AdminAboutPage() {
         )}
       </div>
 
+      {/* Section Tabs Selector */}
+      <div className="bg-slate-100/90 p-1.5 rounded-2xl flex flex-wrap items-center gap-1.5 border border-slate-200/80">
+        <button
+          type="button"
+          onClick={() => setActiveTab("overview")}
+          className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+            activeTab === "overview"
+              ? "bg-white text-blue-700 shadow-sm border border-slate-200"
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
+          }`}
+        >
+          Overview & Mission
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("facility")}
+          className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+            activeTab === "facility"
+              ? "bg-white text-blue-700 shadow-sm border border-slate-200"
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
+          }`}
+        >
+          Facility Tour & Spaces
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("highlights")}
+          className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+            activeTab === "highlights"
+              ? "bg-white text-blue-700 shadow-sm border border-slate-200"
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
+          }`}
+        >
+          Clinical Highlights
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("all")}
+          className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+            activeTab === "all"
+              ? "bg-white text-blue-700 shadow-sm border border-slate-200"
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
+          }`}
+        >
+          All Fields
+        </button>
+        <Link
+          href="/admin/team"
+          className="ml-auto px-4 py-2 rounded-xl text-xs font-black bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all border border-blue-200 flex items-center gap-1.5"
+        >
+          <span>Clinical Team & Staff →</span>
+        </Link>
+      </div>
+
       {isLoading ? (
         <div className="py-20 flex flex-col items-center justify-center space-y-3">
           <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
@@ -149,199 +220,205 @@ export default function AdminAboutPage() {
           <div className="lg:col-span-7 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-xs space-y-6">
             <form onSubmit={handleSave} className="space-y-6 text-xs">
               {/* Part 1: Clinic Overview & Mission */}
-              <div className="space-y-4">
-                <div className="border-b border-slate-100 pb-3 flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-blue-600" />
-                  <h2 className="font-extrabold text-sm text-slate-900">
-                    Clinic Mission & Philosophy
-                  </h2>
-                </div>
+              {(activeTab === "overview" || activeTab === "all") && (
+                <div className="space-y-4 animate-in fade-in duration-150">
+                  <div className="border-b border-slate-100 pb-3 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-blue-600" />
+                    <h2 className="font-extrabold text-sm text-slate-900">
+                      Clinic Mission & Philosophy
+                    </h2>
+                  </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Badge Tagline
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.badgeText}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, badgeText: e.target.value }))}
-                    placeholder="e.g. ABOUT RADIANT AUTISM & SKILL CENTER"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                  />
-                </div>
+                  <div className="space-y-1.5">
+                    <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                      Badge Tagline
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.badgeText}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, badgeText: e.target.value }))}
+                      placeholder="e.g. ABOUT RADIANT AUTISM & SKILL CENTER"
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    />
+                  </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Headline Title *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-                    placeholder="e.g. Dedicated Clinical Support for Every Child's Unique Potential"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                  />
-                </div>
+                  <div className="space-y-1.5">
+                    <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                      Headline Title *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.title}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                      placeholder="e.g. Dedicated Clinical Support for Every Child's Unique Potential"
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    />
+                  </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Description Paragraph 1
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={formData.description1}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, description1: e.target.value }))
-                    }
-                    placeholder="Core mission and founding clinical statement..."
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                  />
-                </div>
+                  <div className="space-y-1.5">
+                    <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                      Description Paragraph 1
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={formData.description1}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, description1: e.target.value }))
+                      }
+                      placeholder="Core mission and founding clinical statement..."
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    />
+                  </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Description Paragraph 2
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={formData.description2}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, description2: e.target.value }))
-                    }
-                    placeholder="RBA supervision details, family collaboration, and growth..."
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                  />
-                </div>
+                  <div className="space-y-1.5">
+                    <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                      Description Paragraph 2
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={formData.description2}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, description2: e.target.value }))
+                      }
+                      placeholder="RBA supervision details, family collaboration, and growth..."
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    />
+                  </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Center Showcase Photo Path
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.centerImage}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, centerImage: e.target.value }))
-                    }
-                    placeholder="e.g. /about_center_photo.jpg or https://..."
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  />
+                  <div className="space-y-1.5">
+                    <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                      Center Showcase Photo Path
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.centerImage}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, centerImage: e.target.value }))
+                      }
+                      placeholder="e.g. /about_center_photo.jpg or https://..."
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Part 2: Key Clinical Highlights */}
-              <div className="space-y-3 pt-3 border-t border-slate-100">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">
-                    Core Clinical Highlights (Bullets)
-                  </h3>
-                  <span className="text-[11px] text-slate-400">
-                    {formData.highlights.length} Items
-                  </span>
-                </div>
+              {(activeTab === "highlights" || activeTab === "all") && (
+                <div className="space-y-3 pt-3 border-t border-slate-100 animate-in fade-in duration-150">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">
+                      Core Clinical Highlights (Bullets)
+                    </h3>
+                    <span className="text-[11px] text-slate-400">
+                      {formData.highlights.length} Items
+                    </span>
+                  </div>
 
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={newHighlight}
-                    onChange={(e) => setNewHighlight(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAddHighlight();
-                      }
-                    }}
-                    placeholder="Add a new highlight bullet point and press Enter..."
-                    className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddHighlight}
-                    className="px-3 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800"
-                  >
-                    Add
-                  </button>
-                </div>
-
-                <div className="space-y-2">
-                  {formData.highlights.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/70"
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={newHighlight}
+                      onChange={(e) => setNewHighlight(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddHighlight();
+                        }
+                      }}
+                      placeholder="Add a new highlight bullet point and press Enter..."
+                      className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddHighlight}
+                      className="px-3 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800"
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[10px]">
-                          {idx + 1}
-                        </span>
-                        <span className="font-semibold text-slate-800 text-xs">{item}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveHighlight(idx)}
-                        className="text-slate-400 hover:text-rose-600 p-1 rounded-lg"
+                      Add
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {formData.highlights.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/70"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[10px]">
+                            {idx + 1}
+                          </span>
+                          <span className="font-semibold text-slate-800 text-xs">{item}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveHighlight(idx)}
+                          className="text-slate-400 hover:text-rose-600 p-1 rounded-lg"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Part 3: Sensory Facility & Gym Showcase */}
-              <div className="space-y-4 pt-4 border-t border-slate-100">
-                <div className="border-b border-slate-100 pb-3 flex items-center gap-2">
-                  <Building className="w-4 h-4 text-teal-600" />
-                  <h2 className="font-extrabold text-sm text-slate-900">
-                    Sensory Gym & Facility Section
-                  </h2>
-                </div>
+              {(activeTab === "facility" || activeTab === "all") && (
+                <div className="space-y-4 pt-4 border-t border-slate-100 animate-in fade-in duration-150">
+                  <div className="border-b border-slate-100 pb-3 flex items-center gap-2">
+                    <Building className="w-4 h-4 text-teal-600" />
+                    <h2 className="font-extrabold text-sm text-slate-900">
+                      Sensory Gym & Facility Section
+                    </h2>
+                  </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Facility Section Heading
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.facilityHeading}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, facilityHeading: e.target.value }))
-                    }
-                    placeholder="e.g. Modern Sensory-Rich Clinical Environment"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-900"
-                  />
-                </div>
+                  <div className="space-y-1.5">
+                    <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                      Facility Section Heading
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.facilityHeading}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, facilityHeading: e.target.value }))
+                      }
+                      placeholder="e.g. Modern Sensory-Rich Clinical Environment"
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-900"
+                    />
+                  </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Facility Description
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={formData.facilityDesc}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, facilityDesc: e.target.value }))
-                    }
-                    placeholder="Sensory equipment, gross-motor room, parent room details..."
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-700"
-                  />
-                </div>
+                  <div className="space-y-1.5">
+                    <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                      Facility Description
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={formData.facilityDesc}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, facilityDesc: e.target.value }))
+                      }
+                      placeholder="Sensory equipment, gross-motor room, parent room details..."
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-700"
+                    />
+                  </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Facility Image Path
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.facilityImage}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, facilityImage: e.target.value }))
-                    }
-                    placeholder="e.g. /gallery_sensory_gym.jpg or https://..."
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-slate-800"
-                  />
+                  <div className="space-y-1.5">
+                    <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                      Facility Image Path
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.facilityImage}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, facilityImage: e.target.value }))
+                      }
+                      placeholder="e.g. /gallery_sensory_gym.jpg or https://..."
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-slate-800"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Save Button */}
               <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
@@ -368,53 +445,59 @@ export default function AdminAboutPage() {
                 <Eye className="w-4 h-4 text-blue-600" />
                 <span>About Card Preview</span>
               </div>
-              <span className="text-[10px] font-mono text-slate-400 uppercase">Live Render</span>
+              <span className="text-[10px] font-mono text-slate-400 uppercase">Live Output</span>
             </div>
 
-            <div className="space-y-4 text-xs">
-              <div className="space-y-1">
-                {formData.badgeText && (
-                  <span className="text-[10px] font-black text-blue-600 uppercase tracking-wider">
-                    {formData.badgeText}
-                  </span>
-                )}
-                <h3 className="text-base font-black text-slate-900 leading-snug">
-                  {formData.title || "Headline Title"}
-                </h3>
-              </div>
-
-              <div className="relative h-44 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
-                <img
-                  src={formData.centerImage || "/about_center_photo.jpg"}
-                  alt="About preview"
-                  className="w-full h-full object-cover"
+            <div className="space-y-4">
+              <div className="relative aspect-16/10 rounded-2xl overflow-hidden bg-slate-100">
+                <Image
+                  src={
+                    activeTab === "facility"
+                      ? formData.facilityImage || "/gallery_sensory_gym.jpg"
+                      : formData.centerImage || "/about_center_photo.jpg"
+                  }
+                  alt="About Preview"
+                  fill
+                  className="object-cover"
                 />
               </div>
 
-              <p className="text-slate-600 font-medium leading-relaxed line-clamp-3">
-                {formData.description1 || "Description 1 will show here."}
-              </p>
-
-              <div className="space-y-1.5 pt-2 border-t border-slate-100">
-                <span className="text-[10px] font-black uppercase text-slate-400">Highlights</span>
-                {formData.highlights.slice(0, 3).map((h, i) => (
-                  <div key={i} className="flex items-center gap-2 text-[11px] text-slate-700 font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                    <span>{h}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="pt-2 border-t border-slate-100">
-                <div className="p-3 bg-slate-50 rounded-xl space-y-1">
-                  <span className="text-[10px] font-extrabold text-teal-700 uppercase">Facility</span>
-                  <p className="font-black text-slate-800 text-xs">{formData.facilityHeading}</p>
-                </div>
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-600 block">
+                  {formData.badgeText || "About Center"}
+                </span>
+                <h3 className="font-black text-slate-900 text-sm mt-0.5">
+                  {activeTab === "facility"
+                    ? formData.facilityHeading || "Facility Tour"
+                    : formData.title || "Dedicated Support"}
+                </h3>
+                <p className="text-slate-500 text-xs mt-1 line-clamp-3">
+                  {activeTab === "facility"
+                    ? formData.facilityDesc || "Modern sensory therapy spaces..."
+                    : formData.description1 || "Comprehensive clinical intervention..."}
+                </p>
               </div>
             </div>
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminAboutPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="py-20 flex flex-col items-center justify-center space-y-3">
+          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+          <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">
+            Loading About Section...
+          </p>
+        </div>
+      }
+    >
+      <AboutAdminContent />
+    </Suspense>
   );
 }

@@ -21,7 +21,7 @@ export default function HomeSectionsContainer() {
   useEffect(() => {
     const fetchSections = async () => {
       try {
-        const res = await fetch("/api/admin/navigation");
+        const res = await fetch("/api/admin/navigation", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           if (data.sectionsVisibility) {

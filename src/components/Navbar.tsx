@@ -32,7 +32,7 @@ export default function Navbar() {
   useEffect(() => {
     const fetchNav = async () => {
       try {
-        const res = await fetch("/api/admin/navigation");
+        const res = await fetch("/api/admin/navigation", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           if (data.navItems && Array.isArray(data.navItems)) {
@@ -42,7 +42,7 @@ export default function Navbar() {
                 name: String(item.name || item.label || "Link"),
                 path: String(item.path || item.href || "/"),
               }));
-            if (visible.length > 0) setNavLinks(visible);
+            setNavLinks(visible);
           }
         }
       } catch (err) {
@@ -50,7 +50,7 @@ export default function Navbar() {
       }
     };
     fetchNav();
-  }, []);
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-50 bg-slate-50/95 backdrop-blur-md border-b-2 border-slate-200/90 shadow-sm relative overflow-hidden">

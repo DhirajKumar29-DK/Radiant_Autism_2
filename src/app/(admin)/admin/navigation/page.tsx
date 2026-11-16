@@ -64,10 +64,43 @@ export default function AdminNavigationPage() {
     fetchNavigation();
   }, []);
 
+  const saveChanges = async (
+    items: NavItem[],
+    secs: SectionsVisibility,
+    showToast: boolean = true
+  ) => {
+    setIsSaving(true);
+    try {
+      const res = await fetch("/api/admin/navigation", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          navItems: items,
+          sectionsVisibility: secs,
+        }),
+      });
+
+      if (res.ok) {
+        if (showToast) {
+          setSaveSuccess(true);
+          setTimeout(() => setSaveSuccess(false), 2500);
+        }
+      } else {
+        alert("Failed to save navigation settings");
+      }
+    } catch (err) {
+      console.error("Save error:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleToggleNavVisibility = (id: string) => {
-    setNavItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, isVisible: !item.isVisible } : item))
+    const updated = navItems.map((item) =>
+      item.id === id ? { ...item, isVisible: !item.isVisible } : item
     );
+    setNavItems(updated);
+    saveChanges(updated, sections, true);
   };
 
   const handleLabelChange = (id: string, newLabel: string) => {
@@ -77,38 +110,17 @@ export default function AdminNavigationPage() {
   };
 
   const handleToggleSection = (sectionKey: keyof SectionsVisibility) => {
-    setSections((prev) => ({
-      ...prev,
-      [sectionKey]: !prev[sectionKey],
-    }));
+    const updated = {
+      ...sections,
+      [sectionKey]: !sections[sectionKey],
+    };
+    setSections(updated);
+    saveChanges(navItems, updated, true);
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
-    setSaveSuccess(false);
-
-    try {
-      const res = await fetch("/api/admin/navigation", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          navItems,
-          sectionsVisibility: sections,
-        }),
-      });
-
-      if (res.ok) {
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
-      } else {
-        alert("Failed to save navigation settings");
-      }
-    } catch (err) {
-      console.error("Save error:", err);
-    } finally {
-      setIsSaving(false);
-    }
+    await saveChanges(navItems, sections, true);
   };
 
   const visibleNavLinks = navItems.filter((item) => item.isVisible);
@@ -153,16 +165,26 @@ export default function AdminNavigationPage() {
             <div className="lg:col-span-7 space-y-8">
               {/* Part 1: Navbar Links */}
               <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-xs space-y-5">
-                <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Compass className="w-5 h-5 text-blue-600" />
-                    <h2 className="font-extrabold text-sm text-slate-900">
-                      Public Header Navigation Links
-                    </h2>
+                <div className="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Compass className="w-5 h-5 text-blue-600" />
+                      <h2 className="font-extrabold text-sm text-slate-900">
+                        Public Header Navigation Links (Navbar Menu)
+                      </h2>
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                      Controls only which links show in the top header menu. Does not disable or hide the actual page.
+                    </p>
                   </div>
-                  <span className="text-[11px] font-bold text-slate-500">
-                    {visibleNavLinks.length} Active in Header
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Auto-Saves Instantly
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-500">
+                      {visibleNavLinks.length} Active in Header
+                    </span>
+                  </div>
                 </div>
 
                 <div className="space-y-3">
@@ -181,6 +203,7 @@ export default function AdminNavigationPage() {
                             type="text"
                             value={item.label}
                             onChange={(e) => handleLabelChange(item.id, e.target.value)}
+                            onBlur={() => saveChanges(navItems, sections, true)}
                             className="p-1.5 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 max-w-xs"
                           />
                           <span className="text-[10px] font-mono text-slate-400 font-bold">
@@ -193,7 +216,7 @@ export default function AdminNavigationPage() {
                         <button
                           type="button"
                           onClick={() => handleToggleNavVisibility(item.id)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
                             item.isVisible
                               ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
                               : "bg-slate-200 text-slate-700 hover:bg-slate-300"
@@ -202,12 +225,12 @@ export default function AdminNavigationPage() {
                           {item.isVisible ? (
                             <>
                               <Eye className="w-3.5 h-3.5" />
-                              <span>Visible</span>
+                              <span>Visible in Header</span>
                             </>
                           ) : (
                             <>
                               <EyeOff className="w-3.5 h-3.5" />
-                              <span>Hidden</span>
+                              <span>Hidden from Header</span>
                             </>
                           )}
                         </button>
@@ -219,11 +242,21 @@ export default function AdminNavigationPage() {
 
               {/* Part 2: Homepage Sections Visibility */}
               <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-xs space-y-5">
-                <div className="border-b border-slate-100 pb-3 flex items-center gap-2">
-                  <Sliders className="w-5 h-5 text-teal-600" />
-                  <h2 className="font-extrabold text-sm text-slate-900">
-                    Homepage Sections Visibility
-                  </h2>
+                <div className="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Sliders className="w-5 h-5 text-teal-600" />
+                      <h2 className="font-extrabold text-sm text-slate-900">
+                        Homepage Scroll Sections Visibility
+                      </h2>
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                      Controls which content blocks appear on the homepage scroll layout.
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    Auto-Saves Instantly
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -242,8 +275,8 @@ export default function AdminNavigationPage() {
                         onClick={() => handleToggleSection(sec.key as keyof SectionsVisibility)}
                         className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-3 ${
                           isVisible
-                            ? "bg-white border-blue-200/80 shadow-xs"
-                            : "bg-slate-50 border-slate-200 opacity-60"
+                            ? "bg-white border-emerald-200/80 shadow-xs hover:border-emerald-300"
+                            : "bg-slate-50 border-slate-200 opacity-60 hover:opacity-80"
                         }`}
                       >
                         <div>
@@ -251,11 +284,13 @@ export default function AdminNavigationPage() {
                           <p className="text-[11px] text-slate-500 font-medium">{sec.desc}</p>
                         </div>
                         <span
-                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                            isVisible ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-500"
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 ${
+                            isVisible
+                              ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                              : "bg-slate-200 text-slate-600 border border-slate-300"
                           }`}
                         >
-                          {isVisible ? "✓" : "✕"}
+                          {isVisible ? "✓ Active" : "✕ Disabled"}
                         </span>
                       </div>
                     );
