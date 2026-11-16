@@ -18,6 +18,8 @@ import {
   Calendar,
   User,
   Tag,
+  Search,
+  FileText,
 } from "lucide-react";
 import AdminPagination from "@/components/common/AdminPagination";
 import ConfirmModal from "@/components/common/ConfirmModal";
@@ -46,6 +48,11 @@ export default function AdminBlogsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [blogToDelete, setBlogToDelete] = useState<BlogPost | null>(null);
+
+  // Search and Category Filter State (FabFit Style)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const CATEGORIES = ["ALL", "ABA Therapy", "OAP Funding", "Speech & Language", "Occupational Therapy", "Parent Guides"];
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -181,31 +188,94 @@ export default function AdminBlogsPage() {
     }
   };
 
+  const filteredBlogs = blogs.filter((b) => {
+    const matchesCategory =
+      selectedCategory === "ALL" ||
+      b.category?.toLowerCase() === selectedCategory.toLowerCase();
+    const matchesSearch =
+      !searchQuery.trim() ||
+      b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (b.excerpt && b.excerpt.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      b.category.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  const paginatedBlogs = filteredBlogs.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
+      {/* Top Header (FabFit Style) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              Clinical Articles & Parent Guides
-            </h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-extrabold text-xs">
-              {blogs.length} Articles
-            </span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+                Blog Articles Manager
+              </h1>
+            </div>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            Write evidence-based articles on autism therapy, speech milestones, sensory tips, and Ontario Autism Program (OAP) funding guides.
+            Create, edit, and publish SEO-optimized clinical articles & parent guides.
           </p>
         </div>
 
         <button
           onClick={openAddModal}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold rounded-2xl shadow-lg shadow-blue-600/30 transition-all uppercase tracking-wider"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-950 hover:bg-slate-900 text-white text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>Write Clinical Article</span>
+          <span>+ Create New Article</span>
         </button>
+      </div>
+
+      {/* FabFit Style Search & Filter Row */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <Search className="w-4 h-4" />
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+            placeholder="Search by title or category..."
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+          />
+        </div>
+
+        {/* Category Filter Pills (Image 4 Style) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+          {CATEGORIES.map((cat) => {
+            const isSelected = selectedCategory === cat;
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => {
+                  setSelectedCategory(cat);
+                  setCurrentPage(1);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  isSelected
+                    ? "bg-slate-950 text-white shadow-xs"
+                    : "bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200"
+                }`}
+              >
+                {cat}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Grid */}
@@ -216,26 +286,37 @@ export default function AdminBlogsPage() {
             Loading Articles...
           </p>
         </div>
-      ) : blogs.length === 0 ? (
+      ) : filteredBlogs.length === 0 ? (
         <div className="bg-white p-16 rounded-3xl border border-slate-200 text-center space-y-4">
           <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
             <BookOpen className="w-7 h-7" />
           </div>
-          <h3 className="text-slate-900 font-bold text-base">No Articles Published Yet</h3>
+          <h3 className="text-slate-900 font-bold text-base">
+            {searchQuery || selectedCategory !== "ALL"
+              ? "No Matching Articles Found"
+              : "No Articles Published Yet"}
+          </h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
-            Publish your first pediatric therapy guide or parent resource.
+            {searchQuery || selectedCategory !== "ALL"
+              ? "Try adjusting your search terms or selecting another category filter."
+              : "Publish your first pediatric therapy guide or parent resource."}
           </p>
-          <button
-            onClick={openAddModal}
-            className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold"
-          >
-            Create First Article
-          </button>
+          {(searchQuery || selectedCategory !== "ALL") && (
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedCategory("ALL");
+              }}
+              className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 cursor-pointer"
+            >
+              Clear Filters
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {blogs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((blog) => {
+            {paginatedBlogs.map((blog) => {
               const isPublished = blog.status === "PUBLISHED";
               return (
                 <div
@@ -257,7 +338,7 @@ export default function AdminBlogsPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
 
                     <div className="absolute top-3 left-3">
-                      <span className="px-3 py-1 rounded-full bg-blue-600/90 text-white text-[10px] font-black uppercase tracking-wider shadow-sm backdrop-blur-xs">
+                      <span className="px-3 py-1 rounded-full bg-slate-900/90 text-white text-[10px] font-black uppercase tracking-wider shadow-sm backdrop-blur-xs">
                         {blog.category}
                       </span>
                     </div>
@@ -265,7 +346,7 @@ export default function AdminBlogsPage() {
                     <div className="absolute top-3 right-3">
                       <button
                         onClick={() => handleTogglePublished(blog)}
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm backdrop-blur-md ${
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm backdrop-blur-md cursor-pointer ${
                           isPublished
                             ? "bg-emerald-500/90 text-white"
                             : "bg-amber-500/90 text-white"
@@ -326,7 +407,7 @@ export default function AdminBlogsPage() {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => openEditModal(blog)}
-                          className="p-2 rounded-xl text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                          className="p-2 rounded-xl text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
                           title="Edit Article"
                         >
                           <Edit className="w-4 h-4" />
@@ -336,7 +417,7 @@ export default function AdminBlogsPage() {
                             setBlogToDelete(blog);
                             setIsDeleteOpen(true);
                           }}
-                          className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                          className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                           title="Delete Article"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -351,13 +432,14 @@ export default function AdminBlogsPage() {
 
           <AdminPagination
             currentPage={currentPage}
-            totalItems={blogs.length}
+            totalItems={filteredBlogs.length}
             itemsPerPage={itemsPerPage}
             onPageChange={setCurrentPage}
             onItemsPerPageChange={(val) => {
               setItemsPerPage(val);
               setCurrentPage(1);
             }}
+            pageSizeOptions={[6, 9, 12, 24]}
           />
         </div>
       )}

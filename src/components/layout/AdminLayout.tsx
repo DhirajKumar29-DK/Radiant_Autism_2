@@ -32,13 +32,13 @@ interface AdminUser {
 
 function AdminSidebarNav({
   navigation,
-  openMenus,
-  setOpenMenus,
+  openMenu,
+  setOpenMenu,
   setSidebarOpen,
 }: {
   navigation: any[];
-  openMenus: Record<string, boolean>;
-  setOpenMenus: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  openMenu: string | null;
+  setOpenMenu: (menu: string | null) => void;
   setSidebarOpen: (open: boolean) => void;
 }) {
   const pathname = usePathname();
@@ -68,7 +68,7 @@ function AdminSidebarNav({
           : false;
 
         const isActive = isDirectActive || isChildActive;
-        const isMenuOpen = openMenus[item.name] ?? false;
+        const isMenuOpen = openMenu === item.name;
         const Icon = item.icon;
 
         if (hasChildren) {
@@ -78,7 +78,7 @@ function AdminSidebarNav({
               <button
                 type="button"
                 onClick={() =>
-                  setOpenMenus((prev) => ({ ...prev, [item.name]: !isMenuOpen }))
+                  setOpenMenu(isMenuOpen ? null : item.name)
                 }
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   isActive
@@ -145,7 +145,7 @@ function AdminSidebarNav({
           );
         }
 
-        // Standard Link Item (e.g. Hero Section, Dashboard)
+        // Standard Link Item (e.g. Hero Section, Blogs, Dashboard)
         return (
           <Link
             key={item.name}
@@ -201,25 +201,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     checkAuth();
   }, [router]);
 
-  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
-    "About Section": true,
-    "Clinical Programs": false,
-    "Facility Gallery": false,
-    "Blogs": false,
-  });
+  const [openMenu, setOpenMenu] = useState<string | null>("About Section");
 
   useEffect(() => {
     if (pathname?.startsWith("/admin/about") || pathname?.startsWith("/admin/team")) {
-      setOpenMenus((prev) => ({ ...prev, "About Section": true }));
-    }
-    if (pathname?.startsWith("/admin/services")) {
-      setOpenMenus((prev) => ({ ...prev, "Clinical Programs": true }));
-    }
-    if (pathname?.startsWith("/admin/gallery")) {
-      setOpenMenus((prev) => ({ ...prev, "Facility Gallery": true }));
-    }
-    if (pathname?.startsWith("/admin/blogs")) {
-      setOpenMenus((prev) => ({ ...prev, "Blogs": true }));
+      setOpenMenu("About Section");
+    } else if (pathname?.startsWith("/admin/services")) {
+      setOpenMenu("Clinical Programs");
+    } else if (pathname?.startsWith("/admin/gallery")) {
+      setOpenMenu("Facility Gallery");
+    } else {
+      setOpenMenu(null);
     }
   }, [pathname]);
 
@@ -238,15 +230,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navigation: NavItemConfig[] = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-    {
-      name: "Blogs",
-      href: "/admin/blogs",
-      icon: BookOpen,
-      children: [
-        { name: "All Published Articles", href: "/admin/blogs" },
-        { name: "Write New Article", href: "/admin/blogs" },
-      ],
-    },
+    { name: "Blogs", href: "/admin/blogs", icon: BookOpen },
     { name: "Appointments & Inquiries", href: "/admin/inquiries", icon: Calendar },
     { name: "Hero Section", href: "/admin/hero", icon: Star, isAmber: true },
     {
@@ -347,8 +331,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Suspense fallback={<div className="p-4 text-xs text-slate-500 font-bold uppercase tracking-wider">Loading menu...</div>}>
             <AdminSidebarNav
               navigation={navigation}
-              openMenus={openMenus}
-              setOpenMenus={setOpenMenus}
+              openMenu={openMenu}
+              setOpenMenu={setOpenMenu}
               setSidebarOpen={setSidebarOpen}
             />
           </Suspense>
