@@ -1,5 +1,7 @@
 import React from "react";
 import type { Metadata } from "next";
+import Link from "next/link";
+import prisma from "@/lib/prisma";
 import ServicesGrid from "@/components/ServicesGrid";
 
 export const metadata: Metadata = {
@@ -17,7 +19,24 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
+  let hero: any = null;
+  try {
+    hero = await prisma.hero.findFirst({
+      where: { pageKey: "services", status: "ACTIVE" },
+      orderBy: { displayOrder: "asc" },
+    });
+  } catch (e) {
+    // Fallback
+  }
+
+  const badge = hero?.badge || "Radiant Clinical Services";
+  const title = hero?.title || "Evidence-Based Therapy & Skill Development";
+  const subtitle =
+    hero?.subtitle ||
+    "Explore our comprehensive range of 1:1 individualized therapy and group services supervised by registered RBA clinicians.";
+  const bgImage = hero?.backgroundImage || "/hero_child_therapy.jpg";
+
   return (
     <div className="space-y-0 pb-16">
       {/* Premium Photo Hero Banner */}
@@ -25,8 +44,8 @@ export default function ServicesPage() {
         {/* Background Image with Zoom & Dark Gradient Overlay */}
         <div className="absolute inset-0 z-0">
           <img
-            src="/hero_child_therapy.jpg"
-            alt="Clinical therapy session background"
+            src={bgImage}
+            alt={title}
             className="w-full h-full object-cover object-center transform animate-kenburns"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/75 via-slate-950/50 to-slate-950/30" />
@@ -35,14 +54,25 @@ export default function ServicesPage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 space-y-4">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 backdrop-blur-md text-blue-300 border border-blue-500/30 text-xs font-extrabold uppercase tracking-wider shadow-lg">
-            <span>Radiant Clinical Services</span>
+            <span>{badge}</span>
           </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight text-white">
-            Evidence-Based Therapy & Skill Development
+            {title}
           </h1>
           <p className="text-slate-200 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed">
-            Explore our comprehensive range of 1:1 individualized therapy and group services supervised by registered RBA clinicians.
+            {subtitle}
           </p>
+
+          {hero?.primaryButtonText && (
+            <div className="pt-2">
+              <Link
+                href={hero.primaryButtonLink || "/contact"}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-md transition-all"
+              >
+                <span>{hero.primaryButtonText}</span>
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 

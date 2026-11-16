@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import type { Metadata } from "next";
+import prisma from "@/lib/prisma";
 import ContactForm from "@/components/ContactForm";
 import { MapPin, Clock, MessageSquare } from "lucide-react";
 
@@ -18,7 +19,23 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  let hero: any = null;
+  try {
+    hero = await prisma.hero.findFirst({
+      where: { pageKey: "contact", status: "ACTIVE" },
+      orderBy: { displayOrder: "asc" },
+    });
+  } catch (e) {
+    // Fallback
+  }
+
+  const badge = hero?.badge || "Contact Radiant Care Team";
+  const title = hero?.title || "Reach Out For Support & Assessment";
+  const subtitle =
+    hero?.subtitle || "We are ready to answer your questions and welcome your family to our center.";
+  const bgImage = hero?.backgroundImage || "/hero_bg_speech.jpg";
+
   return (
     <div className="space-y-0 pb-16">
       {/* Premium Photo Hero Banner */}
@@ -26,8 +43,8 @@ export default function ContactPage() {
         {/* Background Image with Dark Gradient Overlay */}
         <div className="absolute inset-0 z-0">
           <img
-            src="/hero_bg_speech.jpg"
-            alt="Radiant Care Team consultation and support"
+            src={bgImage}
+            alt={title}
             className="w-full h-full object-cover object-center transform animate-kenburns"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/75 via-slate-950/50 to-slate-950/30" />
@@ -36,13 +53,13 @@ export default function ContactPage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 space-y-4">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 backdrop-blur-md text-blue-300 border border-blue-500/30 text-xs font-extrabold uppercase tracking-wider shadow-lg">
-            <span>Contact Radiant Care Team</span>
+            <span>{badge}</span>
           </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight text-white">
-            Reach Out For Support & Assessment
+            {title}
           </h1>
           <p className="text-slate-200 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed">
-            We are ready to answer your questions and welcome your family to our center.
+            {subtitle}
           </p>
         </div>
       </section>

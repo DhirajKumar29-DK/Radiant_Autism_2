@@ -11,13 +11,24 @@ import {
   Eye,
   Loader2,
   CheckCircle,
+  ExternalLink,
 } from "lucide-react";
 import AdminPagination from "@/components/common/AdminPagination";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import RichTextEditor from "@/components/admin/RichTextEditor";
 
+export const PAGES_CONFIG = [
+  { key: "home", label: "Home Page", path: "/", desc: "Homepage rotating hero slider (unlimited slides)" },
+  { key: "about", label: "About Us", path: "/about", desc: "Dedicated to Empowering Exceptional Children" },
+  { key: "services", label: "Services", path: "/services", desc: "Evidence-Based Therapy & Skill Development" },
+  { key: "gallery", label: "Facility Gallery", path: "/gallery", desc: "Explore Radiant Therapy & Sensory Spaces" },
+  { key: "blogs", label: "Articles & Guides", path: "/blogs", desc: "Autism Therapy Insights & Family Guides" },
+  { key: "contact", label: "Contact Us", path: "/contact", desc: "Reach Out For Support & Assessment" },
+];
+
 interface HeroSlide {
   id: string;
+  pageKey?: string;
   badge?: string | null;
   title: string;
   subtitle?: string | null;
@@ -34,6 +45,7 @@ interface HeroSlide {
 }
 
 export default function HeroAdminPage() {
+  const [activeTab, setActiveTab] = useState<string>("home");
   const [heroes, setHeroes] = useState<HeroSlide[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -50,6 +62,7 @@ export default function HeroAdminPage() {
 
   // Form State
   const [formData, setFormData] = useState({
+    pageKey: "home",
     badge: "",
     title: "",
     subtitle: "",
@@ -64,10 +77,10 @@ export default function HeroAdminPage() {
     displayOrder: 1,
   });
 
-  const fetchHeroes = async () => {
+  const fetchHeroes = async (page: string = activeTab) => {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/admin/hero");
+      const res = await fetch(`/api/admin/hero?pageKey=${page}`);
       if (res.ok) {
         const data = await res.json();
         setHeroes(data.heroes || data.data || []);
@@ -81,21 +94,32 @@ export default function HeroAdminPage() {
   };
 
   useEffect(() => {
-    fetchHeroes();
-  }, []);
+    fetchHeroes(activeTab);
+    setCurrentPage(1);
+  }, [activeTab]);
+
+  const activePageConfig = PAGES_CONFIG.find((p) => p.key === activeTab) || PAGES_CONFIG[0];
 
   const openAddModal = () => {
     setSelectedHero(null);
     setFormData({
-      badge: "OAP COVERED & RBA SUPERVISED",
+      pageKey: activeTab,
+      badge: activeTab === "home" ? "OAP COVERED & RBA SUPERVISED" : `${activePageConfig.label.toUpperCase()}`,
       title: "",
       subtitle: "",
       description: "",
-      primaryButtonText: "Book Free Consultation",
-      primaryButtonLink: "/contact",
-      secondaryButtonText: "Explore Our Programs",
-      secondaryButtonLink: "/services",
-      backgroundImage: "/hero_bg_aba.jpg",
+      primaryButtonText: activeTab === "home" || activeTab === "contact" ? "Book Free Consultation" : "Learn More",
+      primaryButtonLink: activeTab === "home" || activeTab === "contact" ? "/contact" : activePageConfig.path,
+      secondaryButtonText: activeTab === "home" ? "Explore Our Programs" : "",
+      secondaryButtonLink: activeTab === "home" ? "/services" : "",
+      backgroundImage:
+        activeTab === "about"
+          ? "/about_center_photo.jpg"
+          : activeTab === "gallery"
+          ? "/gallery_sensory_gym.jpg"
+          : activeTab === "contact"
+          ? "/hero_bg_speech.jpg"
+          : "/hero_child_therapy.jpg",
       foregroundImage: "",
       status: "ACTIVE",
       displayOrder: heroes.length + 1,
@@ -106,6 +130,7 @@ export default function HeroAdminPage() {
   const openEditModal = (hero: HeroSlide) => {
     setSelectedHero(hero);
     setFormData({
+      pageKey: hero.pageKey || activeTab,
       badge: hero.badge || "",
       title: hero.title || "",
       subtitle: hero.subtitle || "",
@@ -207,7 +232,11 @@ export default function HeroAdminPage() {
 
       if (res.ok) {
         setIsModalOpen(false);
-        fetchHeroes();
+        if (formData.pageKey !== activeTab) {
+          setActiveTab(formData.pageKey);
+        } else {
+          fetchHeroes(activeTab);
+        }
       } else {
         const errData = await res.json();
         alert(`Failed to save: ${errData.error || "Unknown error"}`);
@@ -258,13 +287,28 @@ export default function HeroAdminPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Hero Section</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Hero Section</h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[11px] font-black uppercase">
+              {activePageConfig.label}
+            </span>
+          </div>
           <p className="text-slate-500 text-xs font-medium mt-1">
-            Manage website hero carousel slides. Admin can create unlimited slides and set active status.
+            {activePageConfig.desc}. Manage carousel slides and live banners.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
+          <a
+            href={activePageConfig.path}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-4 py-2.5 bg-white border border-slate-200 hover:border-blue-400 text-slate-700 hover:text-blue-600 rounded-2xl font-bold text-xs shadow-xs transition-colors"
+          >
+            <span>Live {activePageConfig.label}</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+
           {selectedIds.length > 0 && (
             <button
               onClick={triggerBulkDelete}
@@ -280,9 +324,33 @@ export default function HeroAdminPage() {
             className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-extrabold text-xs uppercase tracking-wider shadow-md shadow-blue-600/30 transition-all"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Hero</span>
+            <span>Add Hero Slide</span>
           </button>
         </div>
+      </div>
+
+      {/* Page Selector Tabs */}
+      <div className="bg-slate-100/90 p-1.5 rounded-2xl flex flex-wrap items-center gap-1.5 border border-slate-200/80">
+        {PAGES_CONFIG.map((pg) => {
+          const isActive = activeTab === pg.key;
+          return (
+            <button
+              key={pg.key}
+              type="button"
+              onClick={() => setActiveTab(pg.key)}
+              className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 ${
+                isActive
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+                  : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/80"
+              }`}
+            >
+              <span>{pg.label}</span>
+              {isActive && (
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Main Table Container */}
@@ -451,6 +519,23 @@ export default function HeroAdminPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Left Column */}
                 <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700">
+                      Target Website Page *
+                    </label>
+                    <select
+                      value={formData.pageKey}
+                      onChange={(e) => setFormData({ ...formData, pageKey: e.target.value })}
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    >
+                      {PAGES_CONFIG.map((p) => (
+                        <option key={p.key} value={p.key}>
+                          {p.label} ({p.path})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div className="space-y-1.5">
                     <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700">
                       Badge / Pill Tag

@@ -51,7 +51,7 @@ export default function Hero() {
   useEffect(() => {
     const fetchHero = async () => {
       try {
-        const res = await fetch("/api/admin/hero?status=ACTIVE");
+        const res = await fetch("/api/admin/hero?pageKey=home&status=ACTIVE");
         if (res.ok) {
           const data = await res.json();
           const items = data.heroes || data.data;

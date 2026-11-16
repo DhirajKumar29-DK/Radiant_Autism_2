@@ -16,14 +16,30 @@ export const metadata: Metadata = {
 
 export default async function BlogsPage() {
   let blogs: any[] = [];
+  let hero: any = null;
   try {
-    blogs = await prisma.blogPost.findMany({
-      where: { status: "PUBLISHED" },
-      orderBy: { createdAt: "desc" },
-    });
+    const [fetchedBlogs, fetchedHero] = await Promise.all([
+      prisma.blogPost.findMany({
+        where: { status: "PUBLISHED" },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.hero.findFirst({
+        where: { pageKey: "blogs", status: "ACTIVE" },
+        orderBy: { displayOrder: "asc" },
+      }),
+    ]);
+    blogs = fetchedBlogs;
+    hero = fetchedHero;
   } catch (err) {
-    console.error("Error fetching blogs:", err);
+    console.error("Error fetching blogs/hero:", err);
   }
+
+  const badge = hero?.badge || "Clinical Knowledge & Parent Guides";
+  const title = hero?.title || "Autism Therapy Insights & Family Guides";
+  const subtitle =
+    hero?.subtitle ||
+    "Written and reviewed by our Registered Behaviour Analysts (RBA) and clinical specialists to support children and families.";
+  const bgImage = hero?.backgroundImage || "/hero_child_therapy.jpg";
 
   return (
     <div className="space-y-0 pb-20">
@@ -31,8 +47,8 @@ export default async function BlogsPage() {
       <section className="relative py-20 md:py-28 bg-slate-950 text-white overflow-hidden select-none">
         <div className="absolute inset-0 z-0">
           <img
-            src="/hero_child_therapy.jpg"
-            alt="Pediatric therapy resources"
+            src={bgImage}
+            alt={title}
             className="w-full h-full object-cover object-center opacity-30 transform animate-kenburns"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/60 to-slate-950/40" />
@@ -41,14 +57,25 @@ export default async function BlogsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 space-y-4">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 backdrop-blur-md text-blue-300 border border-blue-500/30 text-xs font-extrabold uppercase tracking-wider shadow-lg">
             <BookOpen className="w-3.5 h-3.5" />
-            <span>Clinical Knowledge & Parent Guides</span>
+            <span>{badge}</span>
           </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight text-white">
-            Autism Therapy Insights & Family Guides
+            {title}
           </h1>
           <p className="text-slate-300 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed">
-            Written and reviewed by our Registered Behaviour Analysts (RBA) and clinical specialists to support children and families.
+            {subtitle}
           </p>
+
+          {hero?.primaryButtonText && (
+            <div className="pt-2">
+              <Link
+                href={hero.primaryButtonLink || "/blogs"}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-md transition-all"
+              >
+                <span>{hero.primaryButtonText}</span>
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 

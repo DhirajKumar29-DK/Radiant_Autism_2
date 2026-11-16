@@ -39,6 +39,7 @@ export async function PUT(
     const body = await request.json();
 
     const dataToUpdate: any = {};
+    if (body.pageKey !== undefined) dataToUpdate.pageKey = body.pageKey;
     if (body.title !== undefined) dataToUpdate.title = body.title;
     if (body.subtitle !== undefined) dataToUpdate.subtitle = body.subtitle;
     if (body.badge !== undefined) dataToUpdate.badge = body.badge;

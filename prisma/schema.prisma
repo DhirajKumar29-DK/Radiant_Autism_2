@@ -76,6 +76,7 @@ model Service {
 
 model Hero {
   id                  String     @id @default(uuid())
+  pageKey             String     @default("home")
   badge               String?
   title               String
   subtitle            String?

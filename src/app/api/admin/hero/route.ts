@@ -7,8 +7,12 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
+    const pageKey = searchParams.get("pageKey");
 
     const where: any = {};
+    if (pageKey) {
+      where.pageKey = pageKey;
+    }
     if (status && Object.values(HeroStatus).includes(status as HeroStatus)) {
       where.status = status as HeroStatus;
     }
@@ -35,6 +39,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
+      pageKey,
       title,
       subtitle,
       badge,
@@ -58,6 +63,7 @@ export async function POST(request: NextRequest) {
 
     const newHero = await prisma.hero.create({
       data: {
+        pageKey: pageKey || "home",
         title,
         subtitle: subtitle || null,
         badge: badge || null,

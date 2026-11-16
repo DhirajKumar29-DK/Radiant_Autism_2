@@ -9,6 +9,38 @@ import { Camera, ArrowRight, Eye, ChevronLeft, ChevronRight, X } from "lucide-re
 export default function GalleryClient() {
   const [activeTab, setActiveTab] = useState("All");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [heroData, setHeroData] = useState({
+    badge: "Radiant Center Gallery",
+    title: "Explore Our Center & Therapy Facilities",
+    subtitle:
+      "Take a visual tour of our sensory gym, 1:1 learning rooms, group activity areas, and cheerful child development environment.",
+    bgImage: "/gallery_sensory_gym.jpg",
+  });
+
+  useEffect(() => {
+    const fetchHero = async () => {
+      try {
+        const res = await fetch("/api/admin/hero?pageKey=gallery&status=ACTIVE");
+        if (res.ok) {
+          const data = await res.json();
+          const items = data.heroes || data.data;
+          if (Array.isArray(items) && items.length > 0) {
+            setHeroData({
+              badge: items[0].badge || "Radiant Center Gallery",
+              title: items[0].title || "Explore Our Center & Therapy Facilities",
+              subtitle:
+                items[0].subtitle ||
+                "Take a visual tour of our sensory gym, 1:1 learning rooms, group activity areas, and cheerful child development environment.",
+              bgImage: items[0].backgroundImage || "/gallery_sensory_gym.jpg",
+            });
+          }
+        }
+      } catch (e) {
+        // Fallback
+      }
+    };
+    fetchHero();
+  }, []);
 
   const galleryItems = [
     {
@@ -105,8 +137,8 @@ export default function GalleryClient() {
         {/* Background Image with Dark Gradient Overlay */}
         <div className="absolute inset-0 z-0">
           <img
-            src="/gallery_sensory_gym.jpg"
-            alt="Sensory gym and play area facility"
+            src={heroData.bgImage}
+            alt={heroData.title}
             className="w-full h-full object-cover object-center transform animate-kenburns"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/75 via-slate-950/50 to-slate-950/30" />
@@ -116,13 +148,13 @@ export default function GalleryClient() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 space-y-4">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 backdrop-blur-md text-blue-300 border border-blue-500/30 text-xs font-extrabold uppercase tracking-wider shadow-lg">
             <Camera className="w-4 h-4 text-blue-400" />
-            <span>Radiant Center Gallery</span>
+            <span>{heroData.badge}</span>
           </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight text-white">
-            Explore Our Center & Therapy Facilities
+            {heroData.title}
           </h1>
           <p className="text-slate-200 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed">
-            Take a visual tour of our sensory gym, 1:1 learning rooms, group activity areas, and cheerful child development environment.
+            {heroData.subtitle}
           </p>
         </div>
       </section>
