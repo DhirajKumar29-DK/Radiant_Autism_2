@@ -320,13 +320,13 @@ export default function HeroAdminPage() {
             </button>
           )}
 
-          {/* FabFit Style Amber/Gold + Add Hero Button */}
+          {/* Radiant Blue Style + ADD HERO SLIDE Button */}
           <button
             onClick={openAddModal}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#f59e0b] hover:bg-[#d97706] text-white rounded-lg font-bold text-sm shadow-sm transition-all"
+            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-black text-xs uppercase tracking-wider shadow-md shadow-blue-600/25 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>+ Add Hero</span>
+            <span>+ ADD HERO SLIDE</span>
           </button>
         </div>
       </div>
@@ -452,7 +452,7 @@ export default function HeroAdminPage() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => openEditModal(hero)}
-                            className="p-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50 border border-amber-200 rounded-lg transition-colors"
+                            className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 rounded-lg transition-colors cursor-pointer"
                             title="Edit Hero"
                           >
                             <Edit3 className="w-4 h-4" />
@@ -500,7 +500,7 @@ export default function HeroAdminPage() {
             {/* Fixed Modal Header */}
             <div className="px-6 sm:px-8 py-4 sm:py-5 border-b border-slate-200 flex justify-between items-center bg-white shrink-0 sticky top-0 z-20">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-amber-600">
+                <span className="text-[10px] font-black uppercase tracking-wider text-blue-600">
                   Hero Carousel Slide
                 </span>
                 <h2 className="text-xl font-black text-slate-900 tracking-tight mt-0.5">

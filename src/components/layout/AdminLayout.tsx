@@ -152,20 +152,14 @@ function AdminSidebarNav({
             href={item.href || "/admin"}
             onClick={() => setSidebarOpen(false)}
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
-              item.isAmber && isActive
-                ? "bg-[#f59e0b] hover:bg-[#d97706] text-black font-black shadow-md shadow-amber-500/20"
-                : isActive
+              isActive
                 ? "bg-blue-600 text-white shadow-md shadow-blue-600/25"
                 : "text-slate-400 hover:text-white hover:bg-slate-900"
             }`}
           >
             <Icon
               className={`w-4 h-4 shrink-0 ${
-                item.isAmber && isActive
-                  ? "text-black fill-black"
-                  : isActive
-                  ? "text-white"
-                  : "text-slate-400"
+                isActive ? "text-white" : "text-slate-400"
               }`}
             />
             <span>{item.name}</span>
@@ -206,10 +200,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (pathname?.startsWith("/admin/about") || pathname?.startsWith("/admin/team")) {
       setOpenMenu("About Section");
-    } else if (pathname?.startsWith("/admin/services")) {
-      setOpenMenu("Clinical Programs");
-    } else if (pathname?.startsWith("/admin/gallery")) {
-      setOpenMenu("Facility Gallery");
     } else {
       setOpenMenu(null);
     }
@@ -225,14 +215,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     href?: string;
     icon: any;
     children?: NavChild[];
-    isAmber?: boolean;
   }
 
   const navigation: NavItemConfig[] = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { name: "Blogs", href: "/admin/blogs", icon: BookOpen },
     { name: "Appointments & Inquiries", href: "/admin/inquiries", icon: Calendar },
-    { name: "Hero Section", href: "/admin/hero", icon: Star, isAmber: true },
+    { name: "Hero Section", href: "/admin/hero", icon: Star },
     {
       name: "About Section",
       href: "/admin/about",
@@ -244,25 +233,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { name: "Clinical Pillars & Care", href: "/admin/about?tab=pillars" },
       ],
     },
-    {
-      name: "Facility Gallery",
-      href: "/admin/gallery",
-      icon: ImageIcon,
-      children: [
-        { name: "All Facility Photos", href: "/admin/gallery" },
-        { name: "Sensory Rooms", href: "/admin/gallery" },
-        { name: "Clinical Spaces", href: "/admin/gallery" },
-      ],
-    },
-    {
-      name: "Clinical Programs",
-      href: "/admin/services",
-      icon: Brain,
-      children: [
-        { name: "All Clinical Programs", href: "/admin/services" },
-        { name: "Add New Program", href: "/admin/services" },
-      ],
-    },
+    { name: "Facility Gallery", href: "/admin/gallery", icon: ImageIcon },
+    { name: "Clinical Programs", href: "/admin/services", icon: Brain },
     { name: "Navbar & Visibility", href: "/admin/navigation", icon: Sliders },
   ];
 
