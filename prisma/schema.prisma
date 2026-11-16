@@ -15,6 +15,12 @@ enum AppointmentStatus {
   CANCELLED
 }
 
+enum HeroStatus {
+  ACTIVE
+  INACTIVE
+  DRAFT
+}
+
 model Admin {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -66,6 +72,24 @@ model Service {
   order              Int      @default(0)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+}
+
+model Hero {
+  id                  String     @id @default(uuid())
+  badge               String?
+  title               String
+  subtitle            String?
+  description         String?    @db.Text
+  primaryButtonText   String?
+  primaryButtonLink   String?
+  secondaryButtonText String?
+  secondaryButtonLink String?
+  backgroundImage     String?
+  foregroundImage     String?
+  status              HeroStatus @default(ACTIVE)
+  displayOrder        Int        @default(0)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
 }
 
 model PageHero {

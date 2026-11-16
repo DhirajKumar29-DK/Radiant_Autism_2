@@ -16,6 +16,8 @@ import {
   Star,
   Tag,
 } from "lucide-react";
+import AdminPagination from "@/components/common/AdminPagination";
+import ConfirmModal from "@/components/common/ConfirmModal";
 
 interface GalleryItem {
   id: string;
@@ -34,8 +36,13 @@ export default function AdminGalleryPage() {
   const [modalMode, setModalMode] = useState<"ADD" | "EDIT" | null>(null);
   const [editingItem, setEditingItem] = useState<GalleryItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<GalleryItem | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(8);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -156,7 +163,6 @@ export default function AdminGalleryPage() {
       });
       if (res.ok) {
         setItems((prev) => prev.filter((i) => i.id !== id));
-        setDeleteConfirmId(null);
       }
     } catch (err) {
       console.error("Delete error:", err);
@@ -237,146 +243,152 @@ export default function AdminGalleryPage() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.map((item) => (
-            <div
-              key={item.id}
-              className={`bg-white rounded-3xl border transition-all overflow-hidden flex flex-col justify-between ${
-                item.isActive
-                  ? "border-slate-200/90 shadow-xs hover:shadow-md hover:border-blue-400"
-                  : "border-slate-200 opacity-60 bg-slate-50/50"
-              }`}
-            >
-              {/* Photo Frame */}
-              <div className="relative aspect-16/10 w-full bg-slate-100 overflow-hidden group">
-                <Image
-                  src={item.image || "/gallery_sensory_gym.jpg"}
-                  alt={item.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item) => (
+              <div
+                key={item.id}
+                className={`bg-white rounded-3xl border transition-all overflow-hidden flex flex-col justify-between ${
+                  item.isActive
+                    ? "border-slate-200/90 shadow-xs hover:shadow-md hover:border-blue-400"
+                    : "border-slate-200 opacity-60 bg-slate-50/50"
+                }`}
+              >
+                {/* Photo Frame */}
+                <div className="relative aspect-16/10 w-full bg-slate-100 overflow-hidden group">
+                  <Image
+                    src={item.image || "/gallery_sensory_gym.jpg"}
+                    alt={item.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
 
-                <div className="absolute top-3 left-3 flex items-center gap-2">
-                  <span className="px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-black uppercase tracking-wider">
-                    {item.category}
-                  </span>
-                  {item.isFeatured && (
-                    <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold flex items-center gap-1 shadow-sm">
-                      <Star className="w-3 h-3 fill-current" />
-                      <span>Featured</span>
+                  <div className="absolute top-3 left-3 flex items-center gap-2">
+                    <span className="px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-black uppercase tracking-wider">
+                      {item.category}
                     </span>
-                  )}
-                </div>
-
-                <div className="absolute top-3 right-3">
-                  <button
-                    onClick={() => handleToggleActive(item)}
-                    className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm backdrop-blur-md ${
-                      item.isActive
-                        ? "bg-emerald-500/90 text-white"
-                        : "bg-rose-500/90 text-white"
-                    }`}
-                  >
-                    {item.isActive ? (
-                      <>
-                        <CheckCircle className="w-3 h-3" />
-                        <span>Visible</span>
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="w-3 h-3" />
-                        <span>Hidden</span>
-                      </>
+                    {item.isFeatured && (
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold flex items-center gap-1 shadow-sm">
+                        <Star className="w-3 h-3 fill-current" />
+                        <span>Featured</span>
+                      </span>
                     )}
-                  </button>
+                  </div>
+
+                  <div className="absolute top-3 right-3">
+                    <button
+                      onClick={() => handleToggleActive(item)}
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm backdrop-blur-md ${
+                        item.isActive
+                          ? "bg-emerald-500/90 text-white"
+                          : "bg-rose-500/90 text-white"
+                      }`}
+                    >
+                      {item.isActive ? (
+                        <>
+                          <CheckCircle className="w-3 h-3" />
+                          <span>Visible</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-3 h-3" />
+                          <span>Hidden</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="absolute bottom-3 left-3 right-3 text-white">
+                    <h3 className="font-black text-base line-clamp-1">{item.title}</h3>
+                    {item.tag && (
+                      <span className="text-xs text-blue-200 font-bold flex items-center gap-1 mt-0.5">
+                        <Tag className="w-3 h-3" />
+                        <span>{item.tag}</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="absolute bottom-3 left-3 right-3 text-white">
-                  <h3 className="font-black text-base line-clamp-1">{item.title}</h3>
-                  {item.tag && (
-                    <span className="text-xs text-blue-200 font-bold flex items-center gap-1 mt-0.5">
-                      <Tag className="w-3 h-3" />
-                      <span>{item.tag}</span>
-                    </span>
-                  )}
+                {/* Bottom Actions */}
+                <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <span className="text-[10px] font-mono text-slate-400 font-bold">
+                    Order #{item.order}
+                  </span>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => openEditModal(item)}
+                      className="p-1.5 rounded-xl text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                      title="Edit Photo"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setItemToDelete(item);
+                        setIsDeleteOpen(true);
+                      }}
+                      className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                      title="Delete Photo"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
+            ))}
+          </div>
 
-              {/* Bottom Actions */}
-              <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-[10px] font-mono text-slate-400 font-bold">
-                  Order #{item.order}
-                </span>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => openEditModal(item)}
-                    className="p-1.5 rounded-xl text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                    title="Edit Photo"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setDeleteConfirmId(item.id)}
-                    className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                    title="Delete Photo"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+          <AdminPagination
+            currentPage={currentPage}
+            totalItems={filteredItems.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            onItemsPerPageChange={(val) => {
+              setItemsPerPage(val);
+              setCurrentPage(1);
+            }}
+          />
         </div>
       )}
 
       {/* Delete Confirmation Modal */}
-      {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
-              <AlertCircle className="w-6 h-6" />
-            </div>
-            <div className="text-center space-y-1">
-              <h3 className="font-extrabold text-slate-900 text-base">Delete Gallery Photo?</h3>
-              <p className="text-xs text-slate-500 font-medium">
-                This image entry will be permanently removed from the website gallery.
-              </p>
-            </div>
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                onClick={() => setDeleteConfirmId(null)}
-                className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleDelete(deleteConfirmId)}
-                className="flex-1 py-2.5 rounded-2xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-500 transition-colors shadow-sm"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={isDeleteOpen}
+        onClose={() => {
+          setIsDeleteOpen(false);
+          setItemToDelete(null);
+        }}
+        onConfirm={async () => {
+          if (itemToDelete) {
+            await handleDelete(itemToDelete.id);
+            setIsDeleteOpen(false);
+            setItemToDelete(null);
+          }
+        }}
+        title="Delete Gallery Photo?"
+        message={`Are you sure you want to delete "${itemToDelete?.title}"? This photo will be permanently removed from the website gallery.`}
+        confirmText="Delete Photo"
+        cancelText="Cancel"
+      />
 
       {/* Add / Edit Modal */}
       {modalMode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6 my-8 animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200">
             {/* Modal Header */}
-            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+            <div className="px-6 sm:px-8 py-5 border-b border-slate-200 flex justify-between items-center bg-white shrink-0">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-wider text-blue-600">
                   {modalMode === "ADD" ? "New Facility Photo" : "Edit Photo Details"}
                 </span>
-                <h2 className="text-xl font-black text-slate-900 tracking-tight mt-1">
+                <h2 className="text-xl font-black text-slate-900 tracking-tight mt-0.5">
                   {modalMode === "ADD" ? "Upload Center Photo" : `Edit: ${formData.title}`}
                 </h2>
               </div>
               <button
+                type="button"
                 onClick={() => setModalMode(null)}
                 className="p-2 rounded-2xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
               >
@@ -385,7 +397,7 @@ export default function AdminGalleryPage() {
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+            <form id="gallery-modal-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-4 text-xs">
               <div className="space-y-1.5">
                 <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
                   Photo Caption / Title *
@@ -491,29 +503,31 @@ export default function AdminGalleryPage() {
                   Display photo in public website gallery
                 </label>
               </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setModalMode(null)}
-                  className="px-5 py-2.5 rounded-2xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-blue-600/30 transition-all disabled:opacity-50"
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4" />
-                  )}
-                  <span>{modalMode === "ADD" ? "Upload Photo" : "Save Changes"}</span>
-                </button>
-              </div>
             </form>
+
+            {/* Modal Footer (Sticky Bottom) */}
+            <div className="px-6 sm:px-8 py-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 shrink-0">
+              <button
+                type="button"
+                onClick={() => setModalMode(null)}
+                className="px-5 py-2.5 rounded-2xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="gallery-modal-form"
+                disabled={isSubmitting}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold uppercase tracking-wider shadow-md shadow-blue-600/30 transition-all disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                <span>{modalMode === "ADD" ? "Upload Photo" : "Save Changes"}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

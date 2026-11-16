@@ -51,25 +51,23 @@ export default function Hero() {
   useEffect(() => {
     const fetchHero = async () => {
       try {
-        const res = await fetch("/api/admin/hero?pageKey=home");
+        const res = await fetch("/api/admin/hero?status=ACTIVE");
         if (res.ok) {
           const data = await res.json();
-          if (data.hero && data.hero.slidesJson) {
-            const parsed = JSON.parse(data.hero.slidesJson);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              const mapped = parsed.map((s: any, idx: number) => ({
-                id: s.id || idx + 1,
-                badge: data.hero.badgeText || "OAP COVERED & RBA SUPERVISED",
-                title: s.title || data.hero.title,
-                subtitle: s.desc || data.hero.subtitle || "",
-                ctaPrimary: data.hero.primaryBtnText || "BOOK APPOINTMENT",
-                ctaPrimaryLink: data.hero.primaryBtnLink || "/contact",
-                ctaSecondary: data.hero.secondaryBtnText || "OUR SERVICES",
-                ctaSecondaryLink: data.hero.secondaryBtnLink || "/services",
-                bgImage: s.image || "/hero_bg_aba.jpg",
-              }));
-              setSlides(mapped);
-            }
+          const items = data.heroes || data.data;
+          if (Array.isArray(items) && items.length > 0) {
+            const mapped = items.map((h: any, idx: number) => ({
+              id: h.id || idx + 1,
+              badge: h.badge || "OAP COVERED & RBA SUPERVISED",
+              title: h.title,
+              subtitle: h.subtitle || "",
+              ctaPrimary: h.primaryButtonText || "BOOK APPOINTMENT",
+              ctaPrimaryLink: h.primaryButtonLink || "/contact",
+              ctaSecondary: h.secondaryButtonText || "OUR SERVICES",
+              ctaSecondaryLink: h.secondaryButtonLink || "/services",
+              bgImage: h.backgroundImage || "/hero_bg_aba.jpg",
+            }));
+            setSlides(mapped);
           }
         }
       } catch (err) {

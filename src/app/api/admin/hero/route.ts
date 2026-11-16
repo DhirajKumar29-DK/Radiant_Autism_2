@@ -1,29 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAdminToken } from "@/modules/auth/auth.service";
+import { HeroStatus } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const pageKey = searchParams.get("pageKey");
+    const status = searchParams.get("status");
 
-    if (pageKey) {
-      const hero = await prisma.pageHero.findUnique({
-        where: { pageKey },
-      });
-      return NextResponse.json({ success: true, hero });
+    const where: any = {};
+    if (status && Object.values(HeroStatus).includes(status as HeroStatus)) {
+      where.status = status as HeroStatus;
     }
 
-    const heroes = await prisma.pageHero.findMany();
-    return NextResponse.json({ success: true, heroes });
+    const heroes = await prisma.hero.findMany({
+      where,
+      orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
+    });
+
+    return NextResponse.json({ success: true, data: heroes, heroes });
   } catch (error: unknown) {
-    console.error("Error fetching hero:", error);
+    console.error("Error fetching heroes:", error);
     const message = error instanceof Error ? error.message : "Internal Server Error";
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
 
-export async function PUT(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const token = request.cookies.get("admin_token")?.value;
     if (!token || !verifyAdminToken(token)) {
@@ -32,47 +35,47 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
     const {
-      pageKey,
-      badgeText,
       title,
       subtitle,
-      bgImage,
-      slidesJson,
-      primaryBtnText,
-      primaryBtnLink,
-      secondaryBtnText,
-      secondaryBtnLink,
+      badge,
+      description,
+      primaryButtonText,
+      primaryButtonLink,
+      secondaryButtonText,
+      secondaryButtonLink,
+      backgroundImage,
+      foregroundImage,
+      status,
+      displayOrder,
     } = body;
 
-    if (!pageKey || !title) {
+    if (!title) {
       return NextResponse.json(
-        { success: false, error: "pageKey and title are required" },
+        { success: false, error: "Slide Title is required" },
         { status: 400 }
       );
     }
 
-    const payload: any = {
-      badgeText: badgeText || null,
-      title,
-      subtitle: subtitle || null,
-      bgImage: bgImage || null,
-      slidesJson:
-        typeof slidesJson === "string" ? slidesJson : JSON.stringify(slidesJson || []),
-      primaryBtnText: primaryBtnText || null,
-      primaryBtnLink: primaryBtnLink || null,
-      secondaryBtnText: secondaryBtnText || null,
-      secondaryBtnLink: secondaryBtnLink || null,
-    };
-
-    const updatedHero = await prisma.pageHero.upsert({
-      where: { pageKey },
-      update: payload,
-      create: { pageKey, ...payload },
+    const newHero = await prisma.hero.create({
+      data: {
+        title,
+        subtitle: subtitle || null,
+        badge: badge || null,
+        description: description || null,
+        primaryButtonText: primaryButtonText || null,
+        primaryButtonLink: primaryButtonLink || null,
+        secondaryButtonText: secondaryButtonText || null,
+        secondaryButtonLink: secondaryButtonLink || null,
+        backgroundImage: backgroundImage || "/hero_bg_aba.jpg",
+        foregroundImage: foregroundImage || null,
+        status: status && Object.values(HeroStatus).includes(status as HeroStatus) ? (status as HeroStatus) : "ACTIVE",
+        displayOrder: displayOrder ? parseInt(String(displayOrder), 10) : 0,
+      },
     });
 
-    return NextResponse.json({ success: true, hero: updatedHero });
+    return NextResponse.json({ success: true, hero: newHero, data: newHero });
   } catch (error: unknown) {
-    console.error("Error updating hero:", error);
+    console.error("Error creating hero:", error);
     const message = error instanceof Error ? error.message : "Internal Server Error";
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
