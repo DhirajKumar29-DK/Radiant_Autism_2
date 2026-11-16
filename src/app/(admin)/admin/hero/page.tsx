@@ -16,6 +16,7 @@ import {
 import AdminPagination from "@/components/common/AdminPagination";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import RichTextEditor from "@/components/admin/RichTextEditor";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 
 export const PAGES_CONFIG = [
   { key: "home", label: "Home Page", path: "/", desc: "Homepage rotating hero slider (unlimited slides)" },
@@ -654,35 +655,14 @@ export default function HeroAdminPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700">
-                      Background Image Path / URL *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. /hero_bg_aba.jpg or https://..."
-                      value={formData.backgroundImage}
-                      onChange={(e) =>
-                        setFormData({ ...formData, backgroundImage: e.target.value })
-                      }
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-slate-800"
-                    />
-
-                    {/* Image Preview Box */}
-                    <div className="relative aspect-16/9 w-full rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 mt-2">
-                      <img
-                        src={formData.backgroundImage || "/hero_bg_aba.jpg"}
-                        alt="Hero preview"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent flex items-end p-3">
-                        <span className="text-white text-[10px] font-bold">
-                          Live Slide Preview
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                  <ImageUploadField
+                    label="Background Image"
+                    value={formData.backgroundImage || ""}
+                    onChange={(url) => setFormData({ ...formData, backgroundImage: url })}
+                    placeholder="/hero_bg_aba.jpg"
+                    helpText="Upload a high-resolution hero image from your computer or enter a URL."
+                    required
+                  />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                     <div className="space-y-1.5">

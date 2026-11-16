@@ -1,8 +1,12 @@
 import React, { Suspense } from "react";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
+import { isPageRouteActive } from "@/lib/page-visibility";
 import ContactForm from "@/components/ContactForm";
 import { MapPin, Clock, MessageSquare } from "lucide-react";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Contact Us | Radiant Autism Center",
@@ -20,6 +24,11 @@ export const metadata: Metadata = {
 };
 
 export default async function ContactPage() {
+  const isPageActive = await isPageRouteActive("/contact");
+  if (!isPageActive) {
+    notFound();
+  }
+
   let hero: any = null;
   try {
     hero = await prisma.hero.findFirst({

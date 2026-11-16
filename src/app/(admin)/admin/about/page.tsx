@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 import {
   Save,
   Loader2,
@@ -286,20 +287,13 @@ function AboutAdminContent() {
                     />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                      Center Showcase Photo Path
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.centerImage}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, centerImage: e.target.value }))
-                      }
-                      placeholder="e.g. /about_center_photo.jpg or https://..."
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    />
-                  </div>
+                  <ImageUploadField
+                    label="Center Showcase Photo"
+                    value={formData.centerImage}
+                    onChange={(url) => setFormData((prev) => ({ ...prev, centerImage: url }))}
+                    placeholder="/about_center_photo.jpg"
+                    helpText="Upload a high-resolution clinic photo from your system (computer) or enter a URL."
+                  />
                 </div>
               )}
 
@@ -403,20 +397,13 @@ function AboutAdminContent() {
                     />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                      Facility Image Path
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.facilityImage}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, facilityImage: e.target.value }))
-                      }
-                      placeholder="e.g. /gallery_sensory_gym.jpg or https://..."
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-slate-800"
-                    />
-                  </div>
+                  <ImageUploadField
+                    label="Facility Showcase Photo"
+                    value={formData.facilityImage}
+                    onChange={(url) => setFormData((prev) => ({ ...prev, facilityImage: url }))}
+                    placeholder="/gallery_sensory_gym.jpg"
+                    helpText="Upload a sensory gym or therapy room photo from your system (computer)."
+                  />
                 </div>
               )}
 

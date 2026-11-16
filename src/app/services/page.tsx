@@ -1,8 +1,12 @@
 import React from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
+import { isPageRouteActive } from "@/lib/page-visibility";
 import ServicesGrid from "@/components/ServicesGrid";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Clinical Services | Radiant Autism Center",
@@ -20,6 +24,11 @@ export const metadata: Metadata = {
 };
 
 export default async function ServicesPage() {
+  const isPageActive = await isPageRouteActive("/services");
+  if (!isPageActive) {
+    notFound();
+  }
+
   let hero: any = null;
   try {
     hero = await prisma.hero.findFirst({

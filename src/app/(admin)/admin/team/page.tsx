@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import AdminPagination from "@/components/common/AdminPagination";
 import ConfirmModal from "@/components/common/ConfirmModal";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 
 interface TeamMember {
   id: string;
@@ -411,19 +412,14 @@ export default function AdminTeamPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Portrait Photo Path or URL
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.image}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, image: e.target.value }))}
-                    placeholder="e.g. /founder_portrait.jpg"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  />
-                </div>
+              <div className="space-y-4">
+                <ImageUploadField
+                  label="Portrait Photo"
+                  value={formData.image || ""}
+                  onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))}
+                  placeholder="/founder_portrait.jpg"
+                  helpText="Upload a clinical staff portrait from your system (computer) or enter a URL."
+                />
 
                 <div className="space-y-1.5">
                   <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">

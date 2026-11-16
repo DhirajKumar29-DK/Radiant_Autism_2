@@ -1,6 +1,10 @@
 import React from "react";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { isPageRouteActive } from "@/lib/page-visibility";
 import GalleryClient from "@/components/GalleryClient";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Facility Gallery | Radiant Autism Center",
@@ -17,6 +21,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default function GalleryPage() {
+export default async function GalleryPage() {
+  const isPageActive = await isPageRouteActive("/gallery");
+  if (!isPageActive) {
+    notFound();
+  }
+
   return <GalleryClient />;
 }

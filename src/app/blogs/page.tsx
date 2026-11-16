@@ -2,8 +2,12 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
+import { isPageRouteActive } from "@/lib/page-visibility";
 import { BookOpen, Calendar, User, ArrowRight } from "lucide-react";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Clinical Articles & Autism Guides | Radiant Autism Center",
@@ -15,6 +19,11 @@ export const metadata: Metadata = {
 };
 
 export default async function BlogsPage() {
+  const isPageActive = await isPageRouteActive("/blogs");
+  if (!isPageActive) {
+    notFound();
+  }
+
   let blogs: any[] = [];
   let hero: any = null;
   try {

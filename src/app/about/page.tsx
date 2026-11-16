@@ -1,11 +1,15 @@
 import React from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
+import { isPageRouteActive } from "@/lib/page-visibility";
 import AboutCentreDetail from "@/components/AboutCentreDetail";
 import OurTeamSection from "@/components/OurTeamSection";
 import ClinicalPillars from "@/components/ClinicalPillars";
 import { ArrowRight } from "lucide-react";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "About Us | Radiant Autism Center",
@@ -23,6 +27,11 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
+  const isPageActive = await isPageRouteActive("/about");
+  if (!isPageActive) {
+    notFound();
+  }
+
   let hero: any = null;
   try {
     hero = await prisma.hero.findFirst({

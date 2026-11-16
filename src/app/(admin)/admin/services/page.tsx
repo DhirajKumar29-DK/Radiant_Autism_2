@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import AdminPagination from "@/components/common/AdminPagination";
 import ConfirmModal from "@/components/common/ConfirmModal";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 
 interface ServiceItem {
   id: string;
@@ -564,16 +565,13 @@ export default function AdminServicesPage() {
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Image Path or URL
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.image}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, image: e.target.value }))}
-                    placeholder="e.g. /hero_child_therapy.jpg or https://..."
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                <div className="sm:col-span-2">
+                  <ImageUploadField
+                    label="Program Image"
+                    value={formData.image || ""}
+                    onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))}
+                    placeholder="/hero_child_therapy.jpg"
+                    helpText="Upload a clinical program photo from your system (computer) or enter a URL."
                   />
                 </div>
               </div>

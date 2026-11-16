@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import AdminPagination from "@/components/common/AdminPagination";
 import ConfirmModal from "@/components/common/ConfirmModal";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 
 interface GalleryItem {
   id: string;
@@ -443,19 +444,14 @@ export default function AdminGalleryPage() {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                  Image Path or URL *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.image}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, image: e.target.value }))}
-                  placeholder="e.g. /gallery_sensory_gym.jpg or https://..."
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-slate-800"
-                />
-              </div>
+              <ImageUploadField
+                label="Facility Photo"
+                value={formData.image || ""}
+                onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))}
+                placeholder="/gallery_sensory_gym.jpg"
+                helpText="Upload a clinic space or sensory gym photo from your system (computer) or enter a URL."
+                required
+              />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">

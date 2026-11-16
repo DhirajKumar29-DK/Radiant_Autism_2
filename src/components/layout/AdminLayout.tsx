@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard,
   Calendar,
@@ -28,6 +28,152 @@ interface AdminUser {
   email: string;
   name: string;
   role: string;
+}
+
+function AdminSidebarNav({
+  navigation,
+  openMenus,
+  setOpenMenus,
+  setSidebarOpen,
+}: {
+  navigation: any[];
+  openMenus: Record<string, boolean>;
+  setOpenMenus: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  setSidebarOpen: (open: boolean) => void;
+}) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentTab = searchParams.get("tab") || (pathname === "/admin/about" ? "overview" : "");
+
+  return (
+    <nav className="space-y-1">
+      {navigation.map((item) => {
+        const hasChildren = item.children && item.children.length > 0;
+        const isDirectActive =
+          item.href === "/admin"
+            ? pathname === "/admin"
+            : item.href
+            ? pathname === item.href || (item.href !== "/admin" && pathname?.startsWith(`${item.href}`))
+            : false;
+
+        const isChildActive = hasChildren
+          ? item.children!.some((c: any) => {
+              const [cBase, cQuery] = c.href.split("?");
+              if (pathname !== cBase) return false;
+              if (!cQuery) return !currentTab;
+              const params = new URLSearchParams(cQuery);
+              const t = params.get("tab");
+              return currentTab === t;
+            })
+          : false;
+
+        const isActive = isDirectActive || isChildActive;
+        const isMenuOpen = openMenus[item.name] ?? false;
+        const Icon = item.icon;
+
+        if (hasChildren) {
+          return (
+            <div key={item.name} className="space-y-0.5">
+              {/* Parent Accordion Trigger */}
+              <button
+                type="button"
+                onClick={() =>
+                  setOpenMenus((prev) => ({ ...prev, [item.name]: !isMenuOpen }))
+                }
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  isActive
+                    ? "bg-slate-900 text-white border-l-2 border-blue-500"
+                    : "text-slate-400 hover:text-white hover:bg-slate-900/60"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Icon
+                    className={`w-4 h-4 shrink-0 ${
+                      isActive ? "text-blue-400" : "text-slate-400"
+                    }`}
+                  />
+                  <span>{item.name}</span>
+                </div>
+                <ChevronDown
+                  className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
+                    isMenuOpen ? "rotate-180 text-white" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Dropdown Submenu (DDL) */}
+              {isMenuOpen && (
+                <div className="pl-7 pr-1 py-1 space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                  {item.children!.map((child: any) => {
+                    const [childBase, childQuery] = child.href.split("?");
+                    let activeSub = false;
+
+                    if (pathname === childBase) {
+                      if (childQuery) {
+                        const params = new URLSearchParams(childQuery);
+                        const tabVal = params.get("tab");
+                        activeSub = currentTab === tabVal;
+                      } else {
+                        // child has no query (e.g. /admin/team)
+                        activeSub = !currentTab;
+                      }
+                    }
+
+                    return (
+                      <Link
+                        key={child.name}
+                        href={child.href}
+                        onClick={() => setSidebarOpen(false)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors ${
+                          activeSub
+                            ? "text-blue-300 font-extrabold bg-blue-600/20 border-l-2 border-blue-500 pl-2.5"
+                            : "text-slate-400 hover:text-white hover:bg-slate-900/40"
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                            activeSub ? "bg-blue-400" : "bg-slate-600"
+                          }`}
+                        />
+                        <span className="truncate">{child.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        // Standard Link Item (e.g. Hero Section, Dashboard)
+        return (
+          <Link
+            key={item.name}
+            href={item.href || "/admin"}
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+              item.isAmber && isActive
+                ? "bg-[#f59e0b] hover:bg-[#d97706] text-black font-black shadow-md shadow-amber-500/20"
+                : isActive
+                ? "bg-blue-600 text-white shadow-md shadow-blue-600/25"
+                : "text-slate-400 hover:text-white hover:bg-slate-900"
+            }`}
+          >
+            <Icon
+              className={`w-4 h-4 shrink-0 ${
+                item.isAmber && isActive
+                  ? "text-black fill-black"
+                  : isActive
+                  ? "text-white"
+                  : "text-slate-400"
+              }`}
+            />
+            <span>{item.name}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -198,118 +344,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest px-3 mb-2">
             Clinical Modules
           </div>
-          <nav className="space-y-1">
-            {navigation.map((item) => {
-              const hasChildren = item.children && item.children.length > 0;
-              const isDirectActive =
-                item.href === "/admin"
-                  ? pathname === "/admin"
-                  : item.href
-                  ? pathname === item.href || (item.href !== "/admin" && pathname?.startsWith(`${item.href}`))
-                  : false;
-
-              const isChildActive = hasChildren
-                ? item.children!.some((c) => {
-                    const cBase = c.href.split("?")[0];
-                    return pathname === cBase || pathname === c.href;
-                  })
-                : false;
-
-              const isActive = isDirectActive || isChildActive;
-              const isMenuOpen = openMenus[item.name] ?? false;
-              const Icon = item.icon;
-
-              if (hasChildren) {
-                return (
-                  <div key={item.name} className="space-y-0.5">
-                    {/* Parent Accordion Trigger */}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setOpenMenus((prev) => ({ ...prev, [item.name]: !isMenuOpen }))
-                      }
-                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        isActive
-                          ? "bg-slate-900 text-white border-l-2 border-blue-500"
-                          : "text-slate-400 hover:text-white hover:bg-slate-900/60"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Icon
-                          className={`w-4 h-4 shrink-0 ${
-                            isActive ? "text-blue-400" : "text-slate-400"
-                          }`}
-                        />
-                        <span>{item.name}</span>
-                      </div>
-                      <ChevronDown
-                        className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
-                          isMenuOpen ? "rotate-180 text-white" : ""
-                        }`}
-                      />
-                    </button>
-
-                    {/* Dropdown Submenu (DDL) */}
-                    {isMenuOpen && (
-                      <div className="pl-7 pr-1 py-1 space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                        {item.children!.map((child) => {
-                          const childBase = child.href.split("?")[0];
-                          const activeSub = pathname === childBase;
-
-                          return (
-                            <Link
-                              key={child.name}
-                              href={child.href}
-                              onClick={() => setSidebarOpen(false)}
-                              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors ${
-                                activeSub
-                                  ? "text-amber-400 font-extrabold bg-slate-900/90 border-l-2 border-amber-400 pl-2.5"
-                                  : "text-slate-400 hover:text-white hover:bg-slate-900/40"
-                              }`}
-                            >
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                  activeSub ? "bg-amber-400" : "bg-slate-600"
-                                }`}
-                              />
-                              <span className="truncate">{child.name}</span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
-              // Standard Link Item (e.g. Hero Section, Dashboard)
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href || "/admin"}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                    item.isAmber && isActive
-                      ? "bg-[#f59e0b] hover:bg-[#d97706] text-black font-black shadow-md shadow-amber-500/20"
-                      : isActive
-                      ? "bg-blue-600 text-white shadow-md shadow-blue-600/25"
-                      : "text-slate-400 hover:text-white hover:bg-slate-900"
-                  }`}
-                >
-                  <Icon
-                    className={`w-4 h-4 shrink-0 ${
-                      item.isAmber && isActive
-                        ? "text-black fill-black"
-                        : isActive
-                        ? "text-white"
-                        : "text-slate-400"
-                    }`}
-                  />
-                  <span>{item.name}</span>
-                </Link>
-              );
-            })}
-          </nav>
+          <Suspense fallback={<div className="p-4 text-xs text-slate-500 font-bold uppercase tracking-wider">Loading menu...</div>}>
+            <AdminSidebarNav
+              navigation={navigation}
+              openMenus={openMenus}
+              setOpenMenus={setOpenMenus}
+              setSidebarOpen={setSidebarOpen}
+            />
+          </Suspense>
         </div>
 
         {/* Sidebar Footer */}

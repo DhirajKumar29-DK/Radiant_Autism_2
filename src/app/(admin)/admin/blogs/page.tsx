@@ -22,6 +22,7 @@ import {
 import AdminPagination from "@/components/common/AdminPagination";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import RichTextEditor from "@/components/admin/RichTextEditor";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 
 interface BlogPost {
   id: string;
@@ -480,18 +481,15 @@ export default function AdminBlogsPage() {
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Featured Image Path
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.image}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, image: e.target.value }))}
-                    placeholder="e.g. /hero_child_therapy.jpg"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-slate-800"
-                  />
-                </div>
+              <div className="space-y-4">
+                <ImageUploadField
+                  label="Featured Cover Image"
+                  value={formData.image || ""}
+                  onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))}
+                  placeholder="/hero_child_therapy.jpg"
+                  helpText="Upload a featured cover image from your system (computer) or enter a URL."
+                />
+              </div>
               </div>
 
               <div className="space-y-1.5">
