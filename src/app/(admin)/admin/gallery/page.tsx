@@ -7,18 +7,16 @@ import {
   Plus,
   Edit3,
   Trash2,
-  CheckCircle,
-  XCircle,
   Loader2,
   X,
   Save,
-  Star,
   CheckCircle2,
   Search,
+  UploadCloud,
+  Eye,
 } from "lucide-react";
 import AdminPagination from "@/components/common/AdminPagination";
 import ConfirmModal from "@/components/common/ConfirmModal";
-import ImageUploadField from "@/components/admin/ImageUploadField";
 
 type StatusType = "ACTIVE" | "INACTIVE" | "DRAFT";
 
@@ -36,17 +34,9 @@ interface GalleryItem {
   updatedAt?: string;
 }
 
-const CATEGORIES = [
-  "ALL",
-  "Sensory Gym",
-  "Life Skills",
-  "Learning Suites",
-  "Therapy Spaces",
-  "Outdoor & Movement",
-];
-
 export default function AdminGalleryPage() {
   const [items, setItems] = useState<GalleryItem[]>([]);
+  const [services, setServices] = useState<{ id: string; title: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [modalMode, setModalMode] = useState<"ADD" | "EDIT" | null>(null);
   const [editingItem, setEditingItem] = useState<GalleryItem | null>(null);
@@ -54,6 +44,12 @@ export default function AdminGalleryPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Uploading state
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [selectedFileName, setSelectedFileName] = useState("");
+  const [previewImageModalUrl, setPreviewImageModalUrl] = useState<string | null>(null);
 
   // Selection & Bulk Action
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -65,14 +61,11 @@ export default function AdminGalleryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(8);
 
+  // Exact 3 fields for modal: title, category, image
   const [formData, setFormData] = useState({
     title: "",
-    category: "Sensory Gym",
-    image: "/gallery_sensory_gym.jpg",
-    tag: "",
-    isFeatured: false,
-    order: 0,
-    status: "ACTIVE" as StatusType,
+    category: "",
+    image: "",
   });
 
   const fetchGallery = async () => {
@@ -94,20 +87,62 @@ export default function AdminGalleryPage() {
     }
   };
 
+  const fetchServices = async () => {
+    try {
+      const res = await fetch("/api/admin/services");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.services)) {
+          const activeList = data.services
+            .filter((s: any) => !s.isDeleted && s.isActive !== false)
+            .map((s: any) => ({
+              id: s.id,
+              title: s.title ? s.title.trim() : "",
+            }))
+            .filter((s: any) => Boolean(s.title));
+          setServices(activeList);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load services for gallery categories:", err);
+    }
+  };
+
   useEffect(() => {
     fetchGallery();
+    fetchServices();
   }, []);
 
+  // Dynamic Category options strictly derived from Services
+  const categoryOptions = useMemo(() => {
+    const list = services.map((s) => s.title);
+    if (list.length > 0) return list;
+    return [
+      "ABA Therapy (Applied Behavior Analysis)",
+      "Speech and Language Service (SLP)",
+      "Occupational Therapy (OT)",
+      "Sensory Gym",
+      "Group Programs",
+      "Life Skills & Group Programs",
+      "Behaviour Consultation",
+      "Psychoeducational Assessments",
+      "Psychotherapy Services",
+    ];
+  }, [services]);
+
+  const filterCategories = useMemo(() => {
+    return ["ALL", ...categoryOptions];
+  }, [categoryOptions]);
+
+  // Open Add modal with 100% EMPTY fields (no autofill, no dummy image)
   const openAddModal = () => {
     setFormData({
       title: "",
-      category: "Sensory Gym",
-      image: "/gallery_sensory_gym.jpg",
-      tag: "",
-      isFeatured: false,
-      order: items.length + 1,
-      status: "ACTIVE",
+      category: "",
+      image: "",
     });
+    setSelectedFileName("");
+    setUploadError(null);
     setEditingItem(null);
     setSaveSuccess(false);
     setModalMode("ADD");
@@ -116,83 +151,98 @@ export default function AdminGalleryPage() {
   const openEditModal = (item: GalleryItem) => {
     setEditingItem(item);
     setFormData({
-      title: item.title,
-      category: item.category,
-      image: item.image,
-      tag: item.tag || "",
-      isFeatured: item.isFeatured,
-      order: item.order,
-      status: item.status || (item.isActive ? "ACTIVE" : "INACTIVE"),
+      title: item.title || "",
+      category: item.category || "",
+      image: item.image || "",
     });
+    setSelectedFileName(item.image ? "Current image attached" : "");
+    setUploadError(null);
     setSaveSuccess(false);
     setModalMode("EDIT");
+  };
+
+  // Direct file selection and background upload to /api/admin/upload
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Please select a valid image file (JPG, PNG, WEBP).");
+      return;
+    }
+
+    setIsUploadingImage(true);
+    setUploadError(null);
+    setSelectedFileName(file.name);
+
+    try {
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: uploadData,
+      });
+
+      const json = await res.json();
+      if (res.ok && json.success && json.url) {
+        setFormData((prev) => ({ ...prev, image: json.url }));
+      } else {
+        setUploadError(json.error || "Failed to upload file from system.");
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+      setUploadError("Network error while uploading photo.");
+    } finally {
+      setIsUploadingImage(false);
+      if (e.target) e.target.value = "";
+    }
   };
 
   // Filter & Search
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
-      const matchCat = selectedCategory === "ALL" || item.category === selectedCategory;
+      const matchCat =
+        selectedCategory === "ALL" ||
+        item.category?.toLowerCase() === selectedCategory.toLowerCase();
       const matchSearch =
         !searchQuery.trim() ||
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.tag && item.tag.toLowerCase().includes(searchQuery.toLowerCase()));
+        (item.category && item.category.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchCat && matchSearch;
     });
   }, [items, selectedCategory, searchQuery]);
 
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-  const paginatedItems = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredItems.slice(start, start + itemsPerPage);
-  }, [filteredItems, currentPage, itemsPerPage]);
+  // Reset page to 1 whenever search query or category filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory]);
 
-  // Selection handlers
+  // Pagination calculation
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedItems = useMemo(() => {
+    return filteredItems.slice(startIndex, endIndex);
+  }, [filteredItems, startIndex, endIndex]);
+
+  // Bulk Select Toggle
   const toggleSelectAll = () => {
-    if (paginatedItems.length > 0 && paginatedItems.every((g) => selectedIds.includes(g.id))) {
-      setSelectedIds([]);
+    if (paginatedItems.every((g) => selectedIds.includes(g.id))) {
+      setSelectedIds((prev) => prev.filter((id) => !paginatedItems.some((g) => g.id === id)));
     } else {
-      setSelectedIds(paginatedItems.map((g) => g.id));
+      const currentIds = paginatedItems.map((g) => g.id);
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...currentIds])));
     }
   };
 
   const toggleSelectOne = (id: string) => {
-    if (selectedIds.includes(id)) {
-      setSelectedIds(selectedIds.filter((item) => item !== id));
-    } else {
-      setSelectedIds([...selectedIds, id]);
-    }
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
   };
 
-  // Quick cycle status
-  const cycleStatus = async (item: GalleryItem) => {
-    const nextStatus: StatusType =
-      item.status === "ACTIVE"
-        ? "INACTIVE"
-        : item.status === "INACTIVE"
-        ? "DRAFT"
-        : "ACTIVE";
-
-    try {
-      const res = await fetch(`/api/admin/gallery/${item.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: nextStatus }),
-      });
-      if (res.ok) {
-        setItems((prev) =>
-          prev.map((g) =>
-            g.id === item.id
-              ? { ...g, status: nextStatus, isActive: nextStatus === "ACTIVE" }
-              : g
-          )
-        );
-      }
-    } catch (err) {
-      console.error("Status toggle error:", err);
-    }
-  };
-
-  // Delete handlers
+  // Delete Handlers
   const confirmSingleDelete = (id: string) => {
     setDeleteTargetIds([id]);
     setIsConfirmDeleteOpen(true);
@@ -204,29 +254,28 @@ export default function AdminGalleryPage() {
     setIsConfirmDeleteOpen(true);
   };
 
-  const executeDelete = async () => {
+  const handleExecuteDelete = async () => {
     if (deleteTargetIds.length === 0) return;
     setIsDeleting(true);
 
     try {
-      if (deleteTargetIds.length === 1) {
-        const id = deleteTargetIds[0];
-        const res = await fetch(`/api/admin/gallery/${id}`, {
-          method: "DELETE",
-        });
-        if (res.ok) {
-          setItems((prev) => prev.filter((item) => item.id !== id));
-          setSelectedIds((prev) => prev.filter((item) => item !== id));
-        }
+      const res = await fetch("/api/admin/gallery", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: deleteTargetIds }),
+      });
+
+      if (res.ok) {
+        await fetchGallery();
+        setSelectedIds((prev) => prev.filter((id) => !deleteTargetIds.includes(id)));
       } else {
-        const res = await fetch("/api/admin/gallery", {
+        const singleId = deleteTargetIds[0];
+        const resSingle = await fetch(`/api/admin/gallery/${singleId}`, {
           method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ids: deleteTargetIds }),
         });
-        if (res.ok) {
-          setItems((prev) => prev.filter((item) => !deleteTargetIds.includes(item.id)));
-          setSelectedIds([]);
+        if (resSingle.ok) {
+          await fetchGallery();
+          setSelectedIds((prev) => prev.filter((id) => id !== singleId));
         }
       }
       setIsConfirmDeleteOpen(false);
@@ -239,17 +288,71 @@ export default function AdminGalleryPage() {
     }
   };
 
+  // Cycle Status (ACTIVE -> INACTIVE -> DRAFT)
+  const cycleStatus = async (item: GalleryItem) => {
+    const nextStatus: StatusType =
+      item.status === "ACTIVE" ? "INACTIVE" : item.status === "INACTIVE" ? "DRAFT" : "ACTIVE";
+
+    try {
+      const res = await fetch(`/api/admin/gallery/${item.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: nextStatus,
+          isActive: nextStatus === "ACTIVE",
+        }),
+      });
+
+      if (res.ok) {
+        setItems((prev) =>
+          prev.map((g) =>
+            g.id === item.id
+              ? { ...g, status: nextStatus, isActive: nextStatus === "ACTIVE" }
+              : g
+          )
+        );
+      }
+    } catch (e) {
+      console.error("Status update error:", e);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.image) {
+      alert("Please select and upload a photo file from your computer.");
+      return;
+    }
+    if (!formData.title.trim()) {
+      alert("Please enter a photo title.");
+      return;
+    }
+    if (!formData.category) {
+      alert("Please select a category.");
+      return;
+    }
+
     setIsSubmitting(true);
     setSaveSuccess(false);
+
+    const payload = {
+      title: formData.title.trim(),
+      category: formData.category,
+      image: formData.image,
+      tag: formData.category,
+      order: editingItem ? editingItem.order : items.length + 1,
+      isFeatured: true,
+      status: "ACTIVE",
+      isActive: true,
+    };
 
     try {
       if (modalMode === "ADD") {
         const res = await fetch("/api/admin/gallery", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(payload),
         });
         if (res.ok) {
           setSaveSuccess(true);
@@ -257,7 +360,7 @@ export default function AdminGalleryPage() {
           setTimeout(() => {
             setModalMode(null);
             setSaveSuccess(false);
-          }, 1000);
+          }, 600);
         } else {
           const err = await res.json().catch(() => ({}));
           alert(err.error || "Failed to create gallery item");
@@ -266,7 +369,7 @@ export default function AdminGalleryPage() {
         const res = await fetch(`/api/admin/gallery/${editingItem.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(payload),
         });
         if (res.ok) {
           setSaveSuccess(true);
@@ -274,7 +377,7 @@ export default function AdminGalleryPage() {
           setTimeout(() => {
             setModalMode(null);
             setSaveSuccess(false);
-          }, 1000);
+          }, 600);
         } else {
           const err = await res.json().catch(() => ({}));
           alert(err.error || "Failed to update gallery item");
@@ -295,7 +398,7 @@ export default function AdminGalleryPage() {
           <button
             type="button"
             onClick={() => cycleStatus(item)}
-            title="Click to cycle status (ACTIVE -> INACTIVE -> DRAFT)"
+            title="Click to cycle status"
             className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -307,8 +410,8 @@ export default function AdminGalleryPage() {
           <button
             type="button"
             onClick={() => cycleStatus(item)}
-            title="Click to cycle status (INACTIVE -> DRAFT -> ACTIVE)"
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-slate-100 text-slate-600 border border-slate-300 hover:bg-slate-200 transition-colors cursor-pointer"
+            title="Click to cycle status"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200 transition-colors cursor-pointer"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
             INACTIVE
@@ -319,21 +422,19 @@ export default function AdminGalleryPage() {
           <button
             type="button"
             onClick={() => cycleStatus(item)}
-            title="Click to cycle status (DRAFT -> ACTIVE -> INACTIVE)"
+            title="Click to cycle status"
             className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
             DRAFT
           </button>
         );
-      default:
-        return null;
     }
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Top Header Bar */}
+    <div className="space-y-6">
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
@@ -345,7 +446,7 @@ export default function AdminGalleryPage() {
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            Manage showcase images of therapy suites, sensory gym, calming zones, and clinic spaces.
+            Upload and manage showcase images of therapy suites, sensory gym, and clinic spaces.
           </p>
         </div>
 
@@ -376,7 +477,7 @@ export default function AdminGalleryPage() {
       <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
         {/* Category Pills */}
         <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
-          {CATEGORIES.map((cat) => (
+          {filterCategories.map((cat) => (
             <button
               key={cat}
               type="button"
@@ -405,14 +506,14 @@ export default function AdminGalleryPage() {
               setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
-            placeholder="Search photo title or tag..."
+            placeholder="Search photo title..."
             className="bg-transparent text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none w-full"
           />
         </div>
       </div>
 
-      {/* Main Table View (FabFit Style) */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+      {/* Main Table View */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col min-h-0 flex-1 overflow-hidden">
         {isLoading ? (
           <div className="py-20 flex flex-col items-center justify-center space-y-3">
             <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
@@ -421,7 +522,7 @@ export default function AdminGalleryPage() {
             </p>
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="bg-white p-16 rounded-3xl text-center space-y-4">
+          <div className="bg-white p-16 rounded-2xl text-center space-y-4">
             <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
               <ImageIcon className="w-7 h-7" />
             </div>
@@ -432,181 +533,231 @@ export default function AdminGalleryPage() {
             <button
               type="button"
               onClick={openAddModal}
-              className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold"
+              className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold cursor-pointer"
             >
               Add First Photo
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
-                  <th className="py-4 pl-6 pr-2 w-10">
-                    <input
-                      type="checkbox"
-                      checked={
-                        paginatedItems.length > 0 &&
-                        paginatedItems.every((g) => selectedIds.includes(g.id))
-                      }
-                      onChange={toggleSelectAll}
-                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                    />
-                  </th>
-                  <th className="py-4 px-3 w-12 text-center">#</th>
-                  <th className="py-4 px-6">Photo</th>
-                  <th className="py-4 px-6">Title</th>
-                  <th className="py-4 px-6">Category</th>
-                  <th className="py-4 px-6">Tag</th>
-                  <th className="py-4 px-6">Featured</th>
-                  <th className="py-4 px-6">Status</th>
-                  <th className="py-4 px-6 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {paginatedItems.map((item, idx) => {
-                  const rowNumber = (currentPage - 1) * itemsPerPage + idx + 1;
-                  const isSelected = selectedIds.includes(item.id);
+          <>
+            {/* Scrollable Container (Rows scroll cleanly, browser scrollbar hidden) */}
+            <div className="overflow-y-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <table className="w-full text-left border-collapse min-w-[800px]">
+                {/* 1. STICKY THEAD: Scroll karne par headers upar chipke rahenge */}
+                <thead className="sticky top-0 z-10 shadow-xs bg-slate-50 border-b border-slate-200 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                  <tr>
+                    <th className="py-4 pl-6 pr-2 w-10">
+                      <input
+                        type="checkbox"
+                        checked={
+                          paginatedItems.length > 0 &&
+                          paginatedItems.every((g) => selectedIds.includes(g.id))
+                        }
+                        onChange={toggleSelectAll}
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                    </th>
+                    <th className="py-4 px-3 w-12 text-center">#</th>
+                    <th className="py-4 px-6">Photo</th>
+                    <th className="py-4 px-6">Title</th>
+                    <th className="py-4 px-6">Category</th>
+                    <th className="py-4 px-6">Status</th>
+                    <th className="py-4 px-6 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {paginatedItems.map((item, idx) => {
+                    const rowNumber = (currentPage - 1) * itemsPerPage + idx + 1;
+                    const isSelected = selectedIds.includes(item.id);
 
-                  return (
-                    <tr
-                      key={item.id}
-                      className={`hover:bg-slate-50/50 transition-colors ${
-                        isSelected ? "bg-blue-50/30" : ""
-                      }`}
-                    >
-                      <td className="py-4 pl-6 pr-2">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleSelectOne(item.id)}
-                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                        />
-                      </td>
-
-                      <td className="py-4 px-3 font-bold text-slate-400 text-center">
-                        {rowNumber}
-                      </td>
-
-                      <td className="py-4 px-6">
-                        <div className="w-14 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 relative shrink-0">
-                          <Image
-                            src={item.image || "/gallery_sensory_gym.jpg"}
-                            alt={item.title}
-                            fill
-                            className="object-cover"
+                    return (
+                      <tr
+                        key={item.id}
+                        className={`hover:bg-slate-50/50 transition-colors ${
+                          isSelected ? "bg-blue-50/30" : ""
+                        }`}
+                      >
+                        <td className="py-4 pl-6 pr-2">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelectOne(item.id)}
+                            className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                           />
-                        </div>
-                      </td>
+                        </td>
 
-                      <td className="py-4 px-6 font-extrabold text-slate-800 max-w-xs">
-                        <p className="line-clamp-1">{item.title}</p>
-                        <p className="text-[11px] text-slate-400 font-medium">Order: {item.order}</p>
-                      </td>
+                        <td className="py-4 px-3 font-bold text-slate-400 text-center">
+                          {rowNumber}
+                        </td>
 
-                      <td className="py-4 px-6">
-                        <span className="inline-block px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px] font-extrabold border border-blue-100">
-                          {item.category}
-                        </span>
-                      </td>
+                        <td className="py-4 px-6">
+                          <div className="w-14 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 relative shrink-0">
+                            <Image
+                              src={item.image || "/gallery_sensory_gym.jpg"}
+                              alt={item.title}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        </td>
 
-                      <td className="py-4 px-6">
-                        {item.tag ? (
-                          <span className="inline-block px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-bold">
-                            #{item.tag}
+                        <td className="py-4 px-6 font-extrabold text-slate-800 max-w-xs">
+                          <p className="line-clamp-1">{item.title}</p>
+                        </td>
+
+                        <td className="py-4 px-6">
+                          <span className="inline-block px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px] font-extrabold border border-blue-100">
+                            {item.category}
                           </span>
-                        ) : (
-                          <span className="text-slate-400 font-medium">—</span>
-                        )}
-                      </td>
+                        </td>
 
-                      <td className="py-4 px-6">
-                        {item.isFeatured ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-extrabold">
-                            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                            Featured
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 font-medium">Standard</span>
-                        )}
-                      </td>
+                        {/* Status Badge */}
+                        <td className="py-4 px-6">
+                          {renderStatusBadge(item.status, item)}
+                        </td>
 
-                      {/* Status Badge with Click-to-Cycle */}
-                      <td className="py-4 px-6">
-                        {renderStatusBadge(item.status, item)}
-                      </td>
+                        {/* Action: Edit + Delete */}
+                        <td className="py-4 px-6 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(item)}
+                              title="Edit Photo"
+                              className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                              <span className="text-[11px]">Edit</span>
+                            </button>
 
-                      {/* Dual Action: Edit + Delete */}
-                      <td className="py-4 px-6 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openEditModal(item)}
-                            title="Edit Photo"
-                            className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                            <span className="text-[11px]">Edit</span>
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => confirmSingleDelete(item.id)}
+                              title="Delete"
+                              className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              <span className="text-[11px]">Delete</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-                          <button
-                            type="button"
-                            onClick={() => confirmSingleDelete(item.id)}
-                            title="Delete"
-                            className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            <span className="text-[11px]">Delete</span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="p-4 border-t border-slate-100 flex justify-end">
+            {/* 3. STICKY PAGINATION: Table ke theek niche pinned */}
             <AdminPagination
               currentPage={currentPage}
               totalItems={filteredItems.length}
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
+              onItemsPerPageChange={(newSize) => {
+                setItemsPerPage(newSize);
+                setCurrentPage(1);
+              }}
+              pageSizeOptions={[5, 10, 20, 50]}
             />
-          </div>
+          </>
         )}
       </div>
 
-      {/* POPUP MODAL (Add / Edit) */}
+      {/* ADD / EDIT MODAL - Clean 3 Fields Only (Photo, Title, Category) */}
       {modalMode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-slate-100">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {/* Modal Header */}
-            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-black text-slate-900 tracking-tight">
-                  {modalMode === "ADD" ? "Add Facility Showcase Photo" : "Edit Photo Details"}
+                <h3 className="font-black text-slate-900 text-lg">
+                  {modalMode === "ADD" ? "Add Facility Photo" : "Edit Facility Photo"}
                 </h3>
-                <p className="text-xs text-slate-500 font-medium">
-                  Update title, space category, image media, tag, and status.
+                <p className="text-slate-400 text-xs font-semibold">
+                  Upload a photo, enter title, and select category.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setModalMode(null)}
-                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Body Form */}
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
-              {/* Title & Category */}
+            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+              {/* 1. Direct File Upload + Live Thumbnail on Right */}
+              <div className="space-y-2">
+                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px] flex items-center gap-2">
+                  <UploadCloud className="w-4 h-4 text-blue-600" />
+                  <span>Facility Photo File *</span>
+                </label>
+
+                <div className="flex items-center gap-3">
+                  <label className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs cursor-pointer border border-blue-200 hover:border-blue-400 transition-all shrink-0">
+                    <UploadCloud className="w-4 h-4" />
+                    <span>{formData.image ? "Change File" : "Choose File"}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileSelect}
+                    />
+                  </label>
+
+                  {isUploadingImage && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 text-xs font-bold animate-pulse">
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                      <span>Uploading...</span>
+                    </div>
+                  )}
+
+                  {formData.image && !isUploadingImage && (
+                    <div className="flex items-center gap-3 animate-in fade-in">
+                      <div
+                        onClick={() => setPreviewImageModalUrl(formData.image)}
+                        title="Click to preview full image"
+                        className="w-14 h-11 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shrink-0 shadow-xs relative cursor-pointer hover:ring-2 hover:ring-blue-500 hover:scale-105 transition-all group"
+                      >
+                        <img
+                          src={formData.image}
+                          alt="Uploaded preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                          <Eye className="w-4 h-4 drop-shadow" />
+                        </div>
+                      </div>
+                      <div className="min-w-0">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-emerald-600">
+                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                          Uploaded
+                        </span>
+                        <p
+                          onClick={() => setPreviewImageModalUrl(formData.image)}
+                          title="Click to preview"
+                          className="text-[10px] text-slate-500 hover:text-blue-600 underline cursor-pointer truncate max-w-[160px] font-medium transition-colors"
+                        >
+                          {selectedFileName || "Click to view image"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {uploadError && (
+                  <p className="text-[11px] font-bold text-rose-600">{uploadError}</p>
+                )}
+                {!formData.image && !isUploadingImage && (
+                  <p className="text-[11px] text-slate-400 font-medium">
+                    Click to select JPG, PNG, or WEBP from your system.
+                  </p>
+                )}
+              </div>
+
+              {/* 2. Photo Title */}
               <div className="space-y-1.5">
                 <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
                   Photo Title / Headline *
@@ -616,98 +767,28 @@ export default function AdminGalleryPage() {
                   required
                   value={formData.title}
                   onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-                  placeholder="e.g. Sensory Integration Room with Ball Pit"
+                  placeholder="e.g. Indoor Sensory Gym & Play Area"
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Category *
-                  </label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
-                  >
-                    {CATEGORIES.filter((c) => c !== "ALL").map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Tag / Label (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.tag}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, tag: e.target.value }))}
-                    placeholder="e.g. Gross Motor, Calming"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
-                  />
-                </div>
-              </div>
-
-              {/* Image Media Upload Field */}
-              <ImageUploadField
-                label="Facility Photo (16:9 or 4:3 Aspect Ratio)"
-                value={formData.image}
-                onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))}
-                recommendedSize="1200 x 800px"
-              />
-
-              {/* Order & Featured */}
-              <div className="flex items-center justify-between pt-2">
-                <div className="space-y-1.5">
-                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Display Order
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.order}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        order: parseInt(e.target.value) || 0,
-                      }))
-                    }
-                    className="w-28 p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 text-xs focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <label className="flex items-center gap-2 cursor-pointer pt-4">
-                  <input
-                    type="checkbox"
-                    checked={formData.isFeatured}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, isFeatured: e.target.checked }))
-                    }
-                    className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-xs font-bold text-slate-700">Feature on Homepage</span>
-                </label>
-              </div>
-
-              {/* Status Dropdown */}
-              <div className="space-y-1.5 pt-3 border-t border-slate-100">
-                <label className="block text-xs font-bold text-slate-800">
-                  Status
+              {/* 3. Category Dropdown (Dynamically Loaded from Services) */}
+              <div className="space-y-1.5">
+                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                  Category (Services se Synced) *
                 </label>
                 <select
-                  value={formData.status}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, status: e.target.value as StatusType }))
-                  }
-                  className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-medium text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                  required
+                  value={formData.category}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm cursor-pointer"
                 >
-                  <option value="ACTIVE">Active</option>
-                  <option value="INACTIVE">Inactive</option>
-                  <option value="DRAFT">Draft</option>
+                  <option value="" disabled>-- Select Category --</option>
+                  {categoryOptions.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -726,14 +807,14 @@ export default function AdminGalleryPage() {
                   <button
                     type="button"
                     onClick={() => setModalMode(null)}
-                    className="px-5 py-2.5 rounded-2xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors"
+                    className="px-5 py-2.5 rounded-2xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
 
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isUploadingImage}
                     className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-blue-600/25 transition-all disabled:opacity-50 cursor-pointer"
                   >
                     {isSubmitting ? (
@@ -758,18 +839,55 @@ export default function AdminGalleryPage() {
       {/* CONFIRM DELETE MODAL */}
       <ConfirmModal
         isOpen={isConfirmDeleteOpen}
-        onClose={() => setIsConfirmDeleteOpen(false)}
-        onConfirm={executeDelete}
-        title="Confirm Deletion"
-        message={
-          deleteTargetIds.length > 1
-            ? `Are you sure you want to delete the selected ${deleteTargetIds.length} items? Please confirm to proceed.`
-            : "Are you sure you want to delete this? Please confirm to proceed."
-        }
-        confirmText="Delete"
+        onClose={() => {
+          setIsConfirmDeleteOpen(false);
+          setDeleteTargetIds([]);
+        }}
+        onConfirm={handleExecuteDelete}
+        title="Delete Photo(s)"
+        message={`Are you sure you want to delete ${deleteTargetIds.length} photo(s)? This will remove them from the public gallery.`}
+        confirmText="Yes, Delete"
         cancelText="Cancel"
+        isDeleting={isDeleting}
         variant="danger"
       />
+
+      {/* FULL IMAGE PREVIEW LIGHTBOX POPUP WITH CROSS (X) ICON */}
+      {previewImageModalUrl && (
+        <div
+          className="fixed inset-0 z-60 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 select-none animate-in fade-in duration-150"
+          onClick={() => setPreviewImageModalUrl(null)}
+        >
+          <div
+            className="relative max-w-3xl max-h-[85vh] bg-slate-900 rounded-3xl overflow-hidden border border-white/10 shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header with Title and Cut (X) Icon */}
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/10 bg-slate-950/70 backdrop-blur-md">
+              <span className="text-xs font-bold text-slate-200 truncate max-w-md">
+                {selectedFileName || "Image Preview"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPreviewImageModalUrl(null)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                title="Close preview (Cut)"
+              >
+                <X className="w-4 h-4 stroke-[2.5]" />
+              </button>
+            </div>
+
+            {/* Large Image Preview */}
+            <div className="p-3 sm:p-5 flex items-center justify-center bg-slate-950/60 overflow-auto">
+              <img
+                src={previewImageModalUrl}
+                alt="Full preview"
+                className="max-h-[70vh] w-auto h-auto max-w-full rounded-2xl object-contain shadow-lg"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

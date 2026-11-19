@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { isPageRouteActive } from "@/lib/page-visibility";
 import GalleryClient from "@/components/GalleryClient";
+import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -27,5 +28,19 @@ export default async function GalleryPage() {
     notFound();
   }
 
-  return <GalleryClient />;
+  let galleryItems = [];
+  try {
+    const rawItems = await prisma.galleryItem.findMany({
+      where: {
+        isActive: true,
+        isDeleted: false,
+      },
+      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+    });
+    galleryItems = JSON.parse(JSON.stringify(rawItems));
+  } catch (error) {
+    console.error("Error fetching gallery items:", error);
+  }
+
+  return <GalleryClient initialItems={galleryItems} />;
 }

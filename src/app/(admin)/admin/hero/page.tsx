@@ -356,12 +356,12 @@ export default function HeroAdminPage() {
       </div>
 
       {/* Main Table Container */}
-      <div className="bg-white rounded-3xl shadow-xs border border-slate-200/90 flex flex-col overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-xs border border-slate-200/90 flex flex-col min-h-0 flex-1 overflow-hidden">
+        <div className="overflow-y-auto overflow-x-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <table className="w-full text-left border-collapse min-w-[800px]">
-            <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 uppercase text-[11px] font-black tracking-wider">
+            <thead className="sticky top-0 z-10 shadow-2xs bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-[11px] font-black tracking-wider">
               <tr>
-                <th className="py-4 pl-6 pr-2 w-10">
+                <th className="py-4 pl-6 pr-2 w-10 bg-slate-50">
                   <input
                     type="checkbox"
                     className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
@@ -369,13 +369,13 @@ export default function HeroAdminPage() {
                     onChange={toggleSelectAll}
                   />
                 </th>
-                <th className="py-4 px-6 text-slate-500 w-16">#</th>
-                <th className="py-4 px-6">Title</th>
-                <th className="py-4 px-6">Subtitle</th>
-                <th className="py-4 px-6">Status</th>
-                <th className="py-4 px-6">Order</th>
-                <th className="py-4 px-6">Updated At</th>
-                <th className="py-4 px-6 text-right">Action</th>
+                <th className="py-4 px-6 text-slate-500 w-16 bg-slate-50">#</th>
+                <th className="py-4 px-6 bg-slate-50">Title</th>
+                <th className="py-4 px-6 bg-slate-50">Subtitle</th>
+                <th className="py-4 px-6 bg-slate-50">Status</th>
+                <th className="py-4 px-6 bg-slate-50">Order</th>
+                <th className="py-4 px-6 text-slate-500 bg-slate-50">Updated At</th>
+                <th className="py-4 px-6 text-right bg-slate-50">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">

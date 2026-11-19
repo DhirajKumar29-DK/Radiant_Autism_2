@@ -15,6 +15,7 @@ import {
   Save,
   CheckCircle2,
   Award,
+  Eye,
 } from "lucide-react";
 import AdminPagination from "@/components/common/AdminPagination";
 import ConfirmModal from "@/components/common/ConfirmModal";
@@ -42,6 +43,7 @@ export default function AdminTeamPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [modalMode, setModalMode] = useState<"ADD" | "EDIT" | null>(null);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const [viewingMember, setViewingMember] = useState<TeamMember | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -370,7 +372,7 @@ export default function AdminTeamPage() {
       </div>
 
       {/* Main Table View (FabFit Style with Select All & Actions) */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs flex flex-col min-h-0 flex-1 overflow-hidden">
         {isLoading ? (
           <div className="py-20 flex flex-col items-center justify-center space-y-3">
             <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
@@ -379,7 +381,7 @@ export default function AdminTeamPage() {
             </p>
           </div>
         ) : team.length === 0 ? (
-          <div className="bg-white p-16 rounded-3xl text-center space-y-4">
+          <div className="bg-white p-16 rounded-2xl text-center space-y-4">
             <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
               <Users className="w-7 h-7" />
             </div>
@@ -390,170 +392,144 @@ export default function AdminTeamPage() {
             <button
               type="button"
               onClick={openAddModal}
-              className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold"
+              className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold cursor-pointer"
             >
               Add First Staff Member
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
-                  <th className="py-4 pl-6 pr-2 w-10">
-                    <input
-                      type="checkbox"
-                      checked={
-                        paginatedTeam.length > 0 &&
-                        paginatedTeam.every((m) => selectedIds.includes(m.id))
-                      }
-                      onChange={toggleSelectAll}
-                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                    />
-                  </th>
-                  <th className="py-4 px-3 w-12 text-center">#</th>
-                  <th className="py-4 px-6">Clinician</th>
-                  <th className="py-4 px-6">Role & Title</th>
-                  <th className="py-4 px-6">Specialty Badge</th>
-                  <th className="py-4 px-6">Instagram</th>
-                  <th className="py-4 px-6">Status</th>
-                  <th className="py-4 px-6">Updated</th>
-                  <th className="py-4 px-6 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {paginatedTeam.map((member, idx) => {
-                  const rowNumber = (currentPage - 1) * itemsPerPage + idx + 1;
-                  const isSelected = selectedIds.includes(member.id);
+          <>
+            <div className="overflow-y-auto overflow-x-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <table className="w-full text-left border-collapse min-w-[850px]">
+                <thead className="sticky top-0 z-10 shadow-2xs bg-slate-50 border-b border-slate-200 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                  <tr>
+                    <th className="py-4 pl-6 pr-2 w-10 bg-slate-50">
+                      <input
+                        type="checkbox"
+                        checked={
+                          paginatedTeam.length > 0 &&
+                          paginatedTeam.every((m) => selectedIds.includes(m.id))
+                        }
+                        onChange={toggleSelectAll}
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                    </th>
+                    <th className="py-4 px-3 w-12 text-center bg-slate-50">#</th>
+                    <th className="py-4 px-6 bg-slate-50">Clinician</th>
+                    <th className="py-4 px-6 bg-slate-50">Role & Title</th>
+                    <th className="py-4 px-6 bg-slate-50">Status</th>
+                    <th className="py-4 px-6 bg-slate-50">Updated</th>
+                    <th className="py-4 px-6 text-right bg-slate-50">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {paginatedTeam.map((member, idx) => {
+                    const rowNumber = (currentPage - 1) * itemsPerPage + idx + 1;
+                    const isSelected = selectedIds.includes(member.id);
 
-                  return (
-                    <tr
-                      key={member.id}
-                      className={`hover:bg-slate-50/50 transition-colors ${
-                        isSelected ? "bg-blue-50/30" : ""
-                      }`}
-                    >
-                      <td className="py-4 pl-6 pr-2">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleSelectOne(member.id)}
-                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                        />
-                      </td>
+                    return (
+                      <tr
+                        key={member.id}
+                        className={`hover:bg-slate-50/50 transition-colors ${
+                          isSelected ? "bg-blue-50/30" : ""
+                        }`}
+                      >
+                        <td className="py-4 pl-6 pr-2">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelectOne(member.id)}
+                            className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          />
+                        </td>
 
-                      <td className="py-4 px-3 font-bold text-slate-400 text-center">
-                        {rowNumber}
-                      </td>
+                        <td className="py-4 px-3 font-bold text-slate-400 text-center">
+                          {rowNumber}
+                        </td>
 
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 relative shrink-0">
-                            <Image
-                              src={member.image || "/founder_portrait.jpg"}
-                              alt={member.name}
-                              fill
-                              className="object-cover object-top"
-                            />
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 relative shrink-0">
+                              <Image
+                                src={member.image || "/founder_portrait.jpg"}
+                                alt={member.name}
+                                fill
+                                className="object-cover object-top"
+                              />
+                            </div>
+                            <div>
+                              <p className="font-extrabold text-slate-900">{member.name}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-extrabold text-slate-900">{member.name}</p>
-                            <p className="text-[11px] text-slate-400 font-medium line-clamp-1">
-                              Order: {member.order}
-                            </p>
+                        </td>
+
+                        <td className="py-4 px-6 font-bold text-slate-700 max-w-xs">
+                          <p className="line-clamp-2">{member.role}</p>
+                        </td>
+
+                        {/* Dynamic Status with Quick Cycle */}
+                        <td className="py-4 px-6">
+                          {renderStatusBadge(member.status, member)}
+                        </td>
+
+                        <td className="py-4 px-6 font-semibold text-slate-500">
+                          {formatUpdatedAt(member.updatedAt || member.createdAt)}
+                        </td>
+
+                        {/* Action Buttons: View + Edit + Delete */}
+                        <td className="py-4 px-6 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setViewingMember(member)}
+                              title="View Details"
+                              className="p-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                            >
+                              <Eye className="w-4 h-4" />
+                              <span className="text-[11px]">View</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(member)}
+                              title="Edit Clinician"
+                              className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                              <span className="text-[11px]">Edit</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => confirmSingleDelete(member.id)}
+                              title="Delete"
+                              className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              <span className="text-[11px]">Delete</span>
+                            </button>
                           </div>
-                        </div>
-                      </td>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-                      <td className="py-4 px-6 font-bold text-slate-700 max-w-xs">
-                        <p className="line-clamp-2">{member.role}</p>
-                      </td>
-
-                      <td className="py-4 px-6">
-                        {member.badge ? (
-                          <span className="inline-block px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px] font-extrabold border border-blue-100">
-                            {member.badge}
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 font-medium">—</span>
-                        )}
-                      </td>
-
-                      <td className="py-4 px-6">
-                        {member.instagram ? (
-                          <a
-                            href={
-                              member.instagram.startsWith("http")
-                                ? member.instagram
-                                : `https://instagram.com/${member.instagram.replace(/^@/, "")}`
-                            }
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-pink-50 text-pink-700 hover:bg-pink-100 border border-pink-200/60 font-bold text-[11px] transition-colors"
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full bg-pink-500" />
-                            <span>
-                              {member.instagram.startsWith("http")
-                                ? `@${member.instagram.split("/").filter(Boolean).pop()}`
-                                : member.instagram}
-                            </span>
-                          </a>
-                        ) : (
-                          <span className="text-slate-400 font-medium">—</span>
-                        )}
-                      </td>
-
-                      {/* Dynamic Status with Quick Cycle */}
-                      <td className="py-4 px-6">
-                        {renderStatusBadge(member.status, member)}
-                      </td>
-
-                      <td className="py-4 px-6 font-semibold text-slate-500">
-                        {formatUpdatedAt(member.updatedAt || member.createdAt)}
-                      </td>
-
-                      {/* Dual Action: Edit + Delete */}
-                      <td className="py-4 px-6 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openEditModal(member)}
-                            title="Edit Clinician"
-                            className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                            <span className="text-[11px]">Edit</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => confirmSingleDelete(member.id)}
-                            title="Delete"
-                            className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            <span className="text-[11px]">Delete</span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalItems > itemsPerPage && (
-          <div className="p-4 border-t border-slate-100 flex justify-end">
+            {/* Pagination */}
             <AdminPagination
               currentPage={currentPage}
               totalItems={totalItems}
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
+              onItemsPerPageChange={(newSize) => {
+                setItemsPerPage(newSize);
+                setCurrentPage(1);
+              }}
+              pageSizeOptions={[5, 10, 20, 50]}
             />
-          </div>
+          </>
         )}
       </div>
 
@@ -737,6 +713,111 @@ export default function AdminTeamPage() {
                 </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* DETAIL VIEW MODAL */}
+      {viewingMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-slate-200/80 animate-in zoom-in-95 duration-200 p-6 sm:p-8 space-y-6">
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setViewingMember(null)}
+              className="absolute top-5 right-5 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Header: Photo, Name, Role, Badge & Order */}
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+              <div className="w-24 h-24 rounded-2xl overflow-hidden bg-slate-100 border-2 border-blue-500/20 relative shrink-0 shadow-md">
+                <Image
+                  src={viewingMember.image || "/founder_portrait.jpg"}
+                  alt={viewingMember.name}
+                  fill
+                  className="object-cover object-top"
+                />
+              </div>
+
+              <div className="text-center sm:text-left space-y-1.5 flex-1">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  {viewingMember.badge && (
+                    <span className="inline-block px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-extrabold uppercase tracking-wider border border-blue-200">
+                      {viewingMember.badge}
+                    </span>
+                  )}
+                  <span className="inline-block px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold">
+                    Order: #{viewingMember.order}
+                  </span>
+                  {renderStatusBadge(viewingMember.status, viewingMember)}
+                </div>
+
+                <h3 className="text-2xl font-black text-slate-900 leading-tight">
+                  {viewingMember.name}
+                </h3>
+                <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">
+                  {viewingMember.role}
+                </p>
+              </div>
+            </div>
+
+            {/* Biography */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
+                Clinical Biography & Specialty
+              </h4>
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-slate-700 text-xs sm:text-sm leading-relaxed whitespace-pre-line">
+                {viewingMember.bio || "No clinical biography provided."}
+              </div>
+            </div>
+
+            {/* Instagram Link if present */}
+            {viewingMember.instagram && (
+              <div className="space-y-1.5">
+                <h4 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
+                  Instagram Profile
+                </h4>
+                <a
+                  href={
+                    viewingMember.instagram.startsWith("http")
+                      ? viewingMember.instagram
+                      : `https://instagram.com/${viewingMember.instagram.replace(/^@/, "")}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-pink-50 hover:bg-pink-100 text-pink-700 border border-pink-200 text-xs font-bold transition-colors"
+                >
+                  <span className="w-2 h-2 rounded-full bg-pink-500" />
+                  <span>{viewingMember.instagram}</span>
+                </a>
+              </div>
+            )}
+
+            {/* Modal Footer */}
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => {
+                  const m = viewingMember;
+                  setViewingMember(null);
+                  openEditModal(m);
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs font-bold transition-colors cursor-pointer"
+              >
+                <Edit3 className="w-4 h-4" />
+                <span>Edit Profile</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setViewingMember(null)}
+                className="px-6 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

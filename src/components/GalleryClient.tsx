@@ -1,12 +1,86 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import ScrollReveal from "@/common/ScrollReveal";
 import SectionHeading from "@/common/SectionHeading";
 import { Camera, ArrowRight, Eye, ChevronLeft, ChevronRight, X } from "lucide-react";
 
-export default function GalleryClient() {
+interface GalleryPhoto {
+  id: string | number;
+  title: string;
+  category: string;
+  image: string;
+  tag?: string | null;
+}
+
+const DEFAULT_GALLERY_ITEMS: GalleryPhoto[] = [
+  {
+    id: 1,
+    title: "Play-Based ABA Therapy Session",
+    category: "ABA Therapy",
+    image: "/hero_child_therapy.jpg",
+    tag: "1:1 Learning",
+  },
+  {
+    id: 2,
+    title: "Speech & Language Development",
+    category: "Speech Therapy",
+    image: "/hero_speech_therapy.jpg",
+    tag: "Communication",
+  },
+  {
+    id: 3,
+    title: "Indoor Sensory Gym & Play Area",
+    category: "Sensory Gym",
+    image: "/gallery_sensory_gym.jpg",
+    tag: "Sensory & Motor",
+  },
+  {
+    id: 4,
+    title: "Buddy Steps Group Art & Social Circle",
+    category: "Group Activities",
+    image: "/gallery_group_play.jpg",
+    tag: "Peer Interaction",
+  },
+  {
+    id: 5,
+    title: "Clinical Assessment & Consultation Room",
+    category: "ABA Therapy",
+    image: "/about_center_photo.jpg",
+    tag: "Clinical Care",
+  },
+  {
+    id: 6,
+    title: "Pediatric Physical Movement Session",
+    category: "Physiotherapy",
+    image: "/service_physio.jpg",
+    tag: "Movement",
+  },
+  {
+    id: 7,
+    title: "Sensory & Cognitive Activity Station",
+    category: "Sensory Gym",
+    image: "/hero_bg_aba.jpg",
+    tag: "Sensory Play",
+  },
+  {
+    id: 8,
+    title: "Oral Motor & Communication Practice",
+    category: "Speech Therapy",
+    image: "/hero_bg_speech.jpg",
+    tag: "Speech Care",
+  },
+];
+
+interface GalleryClientProps {
+  initialItems?: GalleryPhoto[];
+}
+
+export default function GalleryClient({ initialItems = [] }: GalleryClientProps) {
+  const [items, setItems] = useState<GalleryPhoto[]>(
+    initialItems.length > 0 ? initialItems : DEFAULT_GALLERY_ITEMS
+  );
   const [activeTab, setActiveTab] = useState("All");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [heroData, setHeroData] = useState({
@@ -17,96 +91,71 @@ export default function GalleryClient() {
     bgImage: "/gallery_sensory_gym.jpg",
   });
 
+  // Fetch Hero Banner & Live Gallery Items
   useEffect(() => {
-    const fetchHero = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch("/api/admin/hero?pageKey=gallery&status=ACTIVE");
-        if (res.ok) {
-          const data = await res.json();
-          const items = data.heroes || data.data;
-          if (Array.isArray(items) && items.length > 0) {
+        // Hero data
+        const heroRes = await fetch("/api/admin/hero?pageKey=gallery&status=ACTIVE");
+        if (heroRes.ok) {
+          const data = await heroRes.json();
+          const heroItems = data.heroes || data.data;
+          if (Array.isArray(heroItems) && heroItems.length > 0) {
             setHeroData({
-              badge: items[0].badge || "Radiant Center Gallery",
-              title: items[0].title || "Explore Our Center & Therapy Facilities",
+              badge: heroItems[0].badge || "Radiant Center Gallery",
+              title: heroItems[0].title || "Explore Our Center & Therapy Facilities",
               subtitle:
-                items[0].subtitle ||
+                heroItems[0].subtitle ||
                 "Take a visual tour of our sensory gym, 1:1 learning rooms, group activity areas, and cheerful child development environment.",
-              bgImage: items[0].backgroundImage || "/gallery_sensory_gym.jpg",
+              bgImage: heroItems[0].backgroundImage || "/gallery_sensory_gym.jpg",
             });
           }
         }
-      } catch (e) {
+      } catch {
         // Fallback
       }
+
+      // Live Gallery items from DB
+      try {
+        const galleryRes = await fetch("/api/gallery");
+        if (galleryRes.ok) {
+          const data = await galleryRes.json();
+          if (data.success && Array.isArray(data.gallery) && data.gallery.length > 0) {
+            setItems(data.gallery);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch gallery:", err);
+      }
     };
-    fetchHero();
+
+    fetchData();
   }, []);
 
-  const galleryItems = [
-    {
-      id: 1,
-      title: "Play-Based ABA Therapy Session",
-      category: "ABA Therapy",
-      image: "/hero_child_therapy.jpg",
-      tag: "1:1 Learning",
-    },
-    {
-      id: 2,
-      title: "Speech & Language Development",
-      category: "Speech Therapy",
-      image: "/hero_speech_therapy.jpg",
-      tag: "Communication",
-    },
-    {
-      id: 3,
-      title: "Indoor Sensory Gym & Play Area",
-      category: "Sensory Gym",
-      image: "/gallery_sensory_gym.jpg",
-      tag: "Sensory & Motor",
-    },
-    {
-      id: 4,
-      title: "Buddy Steps Group Art & Social Circle",
-      category: "Group Activities",
-      image: "/gallery_group_play.jpg",
-      tag: "Peer Interaction",
-    },
-    {
-      id: 5,
-      title: "Clinical Assessment & Consultation Room",
-      category: "ABA Therapy",
-      image: "/about_center_photo.jpg",
-      tag: "Clinical Care",
-    },
-    {
-      id: 6,
-      title: "Pediatric Physical Movement Session",
-      category: "Physiotherapy",
-      image: "/service_physio.jpg",
-      tag: "Movement",
-    },
-    {
-      id: 7,
-      title: "Sensory & Cognitive Activity Station",
-      category: "Sensory Gym",
-      image: "/hero_bg_aba.jpg",
-      tag: "Sensory Play",
-    },
-    {
-      id: 8,
-      title: "Oral Motor & Communication Practice",
-      category: "Speech Therapy",
-      image: "/hero_bg_speech.jpg",
-      tag: "Speech Care",
-    },
-  ];
+  // Sync if initialItems changes
+  useEffect(() => {
+    if (initialItems && initialItems.length > 0) {
+      setItems(initialItems);
+    }
+  }, [initialItems]);
 
-  const categories = ["All", "ABA Therapy", "Speech Therapy", "Sensory Gym", "Group Activities", "Physiotherapy"];
+  // Extract dynamic categories from actual items
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    items.forEach((item) => {
+      if (item.category && item.category.trim()) {
+        set.add(item.category.trim());
+      }
+    });
+    return ["All", ...Array.from(set)];
+  }, [items]);
 
-  const filteredItems =
-    activeTab === "All"
-      ? galleryItems
-      : galleryItems.filter((item) => item.category === activeTab);
+  const filteredItems = useMemo(() => {
+    if (activeTab === "All") return items;
+    return items.filter(
+      (item) => item.category?.toLowerCase() === activeTab.toLowerCase()
+    );
+  }, [items, activeTab]);
 
   const handlePrev = useCallback(() => {
     if (selectedIndex === null) return;
@@ -190,10 +239,11 @@ export default function GalleryClient() {
                     setSelectedIndex(null);
                   }}
                   type="button"
-                  className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold transition-all duration-300 ${activeTab === cat
+                  className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold transition-all duration-300 cursor-pointer ${
+                    activeTab === cat
                       ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25 scale-105"
                       : "bg-white text-slate-700 hover:bg-slate-200/80 border border-slate-200/90 shadow-2xs"
-                    }`}
+                  }`}
                 >
                   {cat}
                 </button>
@@ -251,7 +301,7 @@ export default function GalleryClient() {
       </section>
 
       {/* Minimalist Lightbox Modal */}
-      {selectedIndex !== null && (
+      {selectedIndex !== null && filteredItems[selectedIndex] && (
         <div
           className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 select-none animate-fadeIn"
           onClick={() => setSelectedIndex(null)}

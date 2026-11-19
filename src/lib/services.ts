@@ -66,30 +66,32 @@ export async function getServiceBySlug(slug: string): Promise<ServiceDetail | nu
         }
       } catch {}
 
+      const fallback = SERVICES_DATA[slug] || null;
+
       return {
         id: dbSvc.slug,
         title: dbSvc.title,
-        tagline: dbSvc.tagline || "",
-        badge: dbSvc.badge || "Clinical Care",
-        badgeBg: dbSvc.badgeBg || "bg-blue-600",
-        iconBg: dbSvc.iconBg || "bg-blue-600",
-        bulletColor: dbSvc.bulletColor || "text-blue-600",
-        iconName: (dbSvc.iconName as any) || "Brain",
-        image: dbSvc.image || "/hero_child_therapy.jpg",
-        heroImage: dbSvc.image || "/hero_child_therapy.jpg",
-        shortDescription: dbSvc.shortDescription || dbSvc.tagline || "",
+        tagline: dbSvc.tagline || fallback?.tagline || "",
+        badge: dbSvc.badge || fallback?.badge || "Clinical Care",
+        badgeBg: dbSvc.badgeBg || fallback?.badgeBg || "bg-blue-600",
+        iconBg: dbSvc.iconBg || fallback?.iconBg || "bg-blue-600",
+        bulletColor: dbSvc.bulletColor || fallback?.bulletColor || "text-blue-600",
+        iconName: (dbSvc.iconName as any) || fallback?.iconName || "Brain",
+        image: dbSvc.image || fallback?.image || "/hero_child_therapy.jpg",
+        heroImage: dbSvc.image || fallback?.heroImage || "/hero_child_therapy.jpg",
+        shortDescription: dbSvc.shortDescription || fallback?.shortDescription || dbSvc.tagline || "",
         overviewParagraphs:
           overviewParagraphs.length > 0
             ? overviewParagraphs
-            : [dbSvc.shortDescription || ""],
-        ageGroup: dbSvc.ageGroup || "2 to 20 Years",
-        sessionFormat: dbSvc.sessionFormat || "1:1 Individualized Clinical Sessions",
-        duration: dbSvc.duration || "Customized Care Plan",
-        clinicalLead: dbSvc.clinicalLead || "Registered Clinical Team",
-        features: features.length > 0 ? features : ["Individualized Care Plan", "Clinical Supervision"],
-        whoNeedsThis,
-        keyBenefits,
-        clinicalProcess: [
+            : (fallback?.overviewParagraphs || [dbSvc.shortDescription || ""]),
+        ageGroup: dbSvc.ageGroup || fallback?.ageGroup || "All Ages",
+        sessionFormat: dbSvc.sessionFormat || fallback?.sessionFormat || "1:1 Focused Sessions",
+        duration: dbSvc.duration || fallback?.duration || "45–60 Minutes per session",
+        clinicalLead: dbSvc.clinicalLead || fallback?.clinicalLead || "Registered Clinical Team",
+        features: features.length > 0 ? features : (fallback?.features || ["Individualized Care Plan", "Clinical Supervision"]),
+        whoNeedsThis: (whoNeedsThis?.signs && whoNeedsThis.signs.length > 0) ? whoNeedsThis : (fallback?.whoNeedsThis || whoNeedsThis),
+        keyBenefits: (keyBenefits && keyBenefits.length > 0) ? keyBenefits : (fallback?.keyBenefits || keyBenefits),
+        clinicalProcess: fallback?.clinicalProcess || [
           {
             stepNumber: "01",
             title: "Intake & Clinical Assessment",
@@ -105,8 +107,13 @@ export async function getServiceBySlug(slug: string): Promise<ServiceDetail | nu
             title: "Ongoing Therapy & Data Tracking",
             description: "Continuous progress monitoring, parent updates, and program refinement.",
           },
+          {
+            stepNumber: "04",
+            title: "Outcome Review & Graduation",
+            description: "Systematic review of developmental achievements and next step planning.",
+          },
         ],
-        faqs,
+        faqs: (faqs && faqs.length > 0) ? faqs : (fallback?.faqs || []),
       };
     }
   } catch (err) {

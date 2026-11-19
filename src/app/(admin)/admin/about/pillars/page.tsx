@@ -103,15 +103,24 @@ export default function AdminAboutPillarsPage() {
           try {
             const parsed = JSON.parse(data.about.pillarsJson);
             if (Array.isArray(parsed) && parsed.length > 0) {
-              const normalized = parsed.map((item: any, idx: number) => ({
-                id: item.id || `0${idx + 1}`,
-                title: item.title || "",
-                badge: item.badge || "Clinical",
-                desc: item.desc || "",
-                icon: item.icon || "HeartHandshake",
-                points: Array.isArray(item.points) ? item.points : [],
-                status: (item.status as StatusType) || "ACTIVE",
-              }));
+              const seenIds = new Set<string>();
+              const normalized = parsed.map((item: any, idx: number) => {
+                const defaultNum = idx + 1 < 10 ? `0${idx + 1}` : `${idx + 1}`;
+                let uniqueId = item.id || defaultNum;
+                if (seenIds.has(uniqueId)) {
+                  uniqueId = `${defaultNum}-${idx + 1}`;
+                }
+                seenIds.add(uniqueId);
+                return {
+                  id: uniqueId,
+                  title: item.title || "",
+                  badge: item.badge || "Clinical",
+                  desc: item.desc || "",
+                  icon: item.icon || "HeartHandshake",
+                  points: Array.isArray(item.points) ? item.points : [],
+                  status: (item.status as StatusType) || "ACTIVE",
+                };
+              });
               setPillars(normalized);
             }
           } catch (e) {
@@ -408,11 +417,11 @@ export default function AdminAboutPillarsPage() {
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
-                  <th className="py-4 pl-6 pr-2 w-10">
+          <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <table className="w-full text-left border-collapse min-w-[700px]">
+              <thead className="sticky top-0 z-10 shadow-2xs bg-slate-50 border-b border-slate-200 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                <tr>
+                  <th className="py-4 pl-6 pr-2 w-10 bg-slate-50">
                     <input
                       type="checkbox"
                       checked={
@@ -423,13 +432,11 @@ export default function AdminAboutPillarsPage() {
                       className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                     />
                   </th>
-                  <th className="py-4 px-4 w-14 text-center">#</th>
-                  <th className="py-4 px-6">Badge Pill</th>
-                  <th className="py-4 px-6">Pillar Title</th>
-                  <th className="py-4 px-6">Description</th>
-                  <th className="py-4 px-6">Sub-Points</th>
-                  <th className="py-4 px-6">Status</th>
-                  <th className="py-4 px-6 text-right">Action</th>
+                  <th className="py-4 px-4 w-14 text-center bg-slate-50">#</th>
+                  <th className="py-4 px-6 bg-slate-50">Pillar Title</th>
+                  <th className="py-4 px-6 bg-slate-50">Description</th>
+                  <th className="py-4 px-6 bg-slate-50">Status</th>
+                  <th className="py-4 px-6 text-right bg-slate-50">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
@@ -438,7 +445,7 @@ export default function AdminAboutPillarsPage() {
 
                   return (
                     <tr
-                      key={item.id}
+                      key={`${item.id}-${idx}`}
                       className={`hover:bg-slate-50/50 transition-colors ${
                         isSelected ? "bg-blue-50/30" : ""
                       }`}
@@ -458,24 +465,12 @@ export default function AdminAboutPillarsPage() {
                         </span>
                       </td>
 
-                      <td className="py-4 px-6">
-                        <span className="inline-block px-3 py-1 rounded-full bg-blue-600 text-white text-[11px] font-extrabold shadow-xs">
-                          {item.badge}
-                        </span>
-                      </td>
-
                       <td className="py-4 px-6 font-black text-slate-900 max-w-xs">
                         <p className="text-sm">{item.title}</p>
                       </td>
 
                       <td className="py-4 px-6 font-medium text-slate-600 max-w-sm">
                         <p className="line-clamp-2 leading-relaxed">{item.desc}</p>
-                      </td>
-
-                      <td className="py-4 px-6">
-                        <span className="inline-block px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-bold">
-                          {item.points?.length || 0} Points
-                        </span>
                       </td>
 
                       {/* Status badge with cycle click */}

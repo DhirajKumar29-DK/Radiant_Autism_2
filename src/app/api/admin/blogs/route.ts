@@ -25,7 +25,24 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, slug, excerpt, content, author, authorName, authorRole, category, image, status, isPublished } = body;
+    const {
+      title,
+      slug,
+      excerpt,
+      content,
+      author,
+      authorName,
+      authorRole,
+      category,
+      image,
+      coverImage,
+      status,
+      isPublished,
+      metaTitle,
+      metaDescription,
+      metaKeywords,
+      ogImage,
+    } = body;
 
     if (!title || !slug || !content) {
       return NextResponse.json(
@@ -62,8 +79,12 @@ export async function POST(request: NextRequest) {
         authorName: authorName || author || "Radiant Clinical Team",
         authorRole: authorRole || "Registered Clinical Team",
         category: category || "Autism Care",
-        coverImage: image || "/hero_child_therapy.jpg",
+        coverImage: coverImage || image || "/hero_child_therapy.jpg",
         status: finalStatus,
+        metaTitle: metaTitle || null,
+        metaDescription: metaDescription || null,
+        metaKeywords: metaKeywords || null,
+        ogImage: ogImage || coverImage || image || null,
         isDeleted: false,
         publishedAt: finalStatus === "PUBLISHED" ? new Date() : null,
       },

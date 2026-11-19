@@ -117,3 +117,157 @@ html, body, * {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
 }
+
+/* ============================================================
+   RICH TEXT & BLOG ARTICLE CONTENT STYLES
+   Restores rich typography in contentEditable & public blog views
+   ============================================================ */
+.rich-editor-content,
+.blog-article-content {
+  color: #1e293b;
+  font-size: 0.9375rem; /* 15px */
+  line-height: 1.75;
+}
+
+.rich-editor-content h1,
+.blog-article-content h1 {
+  display: block !important;
+  font-size: 2rem !important; /* 32px */
+  line-height: 1.25 !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  margin-top: 1.75rem !important;
+  margin-bottom: 0.75rem !important;
+  letter-spacing: -0.025em !important;
+}
+
+.rich-editor-content h2,
+.blog-article-content h2 {
+  display: block !important;
+  font-size: 1.5rem !important; /* 24px */
+  line-height: 1.35 !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.6rem !important;
+  letter-spacing: -0.02em !important;
+}
+
+.rich-editor-content h3,
+.blog-article-content h3 {
+  display: block !important;
+  font-size: 1.25rem !important; /* 20px */
+  line-height: 1.4 !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  margin-top: 1.25rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.rich-editor-content h4,
+.blog-article-content h4 {
+  display: block !important;
+  font-size: 1.1rem !important;
+  line-height: 1.4 !important;
+  font-weight: 700 !important;
+  color: #334155 !important;
+  margin-top: 1rem !important;
+  margin-bottom: 0.4rem !important;
+}
+
+.rich-editor-content p,
+.blog-article-content p {
+  display: block !important;
+  margin-top: 0 !important;
+  margin-bottom: 0.85rem !important;
+  line-height: 1.75 !important;
+}
+
+.rich-editor-content strong,
+.blog-article-content strong,
+.rich-editor-content b,
+.blog-article-content b {
+  font-weight: 800 !important;
+  color: #0f172a !important;
+}
+
+.rich-editor-content em,
+.blog-article-content em,
+.rich-editor-content i,
+.blog-article-content i {
+  font-style: italic !important;
+}
+
+.rich-editor-content u,
+.blog-article-content u {
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+}
+
+.rich-editor-content s,
+.blog-article-content s,
+.rich-editor-content strike,
+.blog-article-content strike {
+  text-decoration: line-through !important;
+}
+
+.rich-editor-content ul,
+.blog-article-content ul {
+  display: block !important;
+  list-style-type: disc !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 1rem !important;
+  padding-left: 1.75rem !important;
+}
+
+.rich-editor-content ol,
+.blog-article-content ol {
+  display: block !important;
+  list-style-type: decimal !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 1rem !important;
+  padding-left: 1.75rem !important;
+}
+
+.rich-editor-content li,
+.blog-article-content li {
+  display: list-item !important;
+  margin-bottom: 0.35rem !important;
+  line-height: 1.65 !important;
+}
+
+.rich-editor-content blockquote,
+.blog-article-content blockquote {
+  display: block !important;
+  border-left: 4px solid #2563eb !important;
+  background-color: #f8fafc !important;
+  padding: 0.75rem 1rem !important;
+  margin: 1.25rem 0 !important;
+  font-style: italic !important;
+  color: #475569 !important;
+  border-radius: 0 0.75rem 0.75rem 0 !important;
+}
+
+.rich-editor-content hr,
+.blog-article-content hr {
+  border: none !important;
+  border-top: 1px solid #e2e8f0 !important;
+  margin: 1.5rem 0 !important;
+}
+
+.rich-editor-content a,
+.blog-article-content a {
+  color: #2563eb !important;
+  text-decoration: underline !important;
+  text-underline-offset: 2px !important;
+  font-weight: 600 !important;
+}
+
+/* Font Size styles */
+.rich-editor-content font[size="1"], .blog-article-content font[size="1"] { font-size: 11px !important; }
+.rich-editor-content font[size="2"], .blog-article-content font[size="2"] { font-size: 13px !important; }
+.rich-editor-content font[size="3"], .blog-article-content font[size="3"] { font-size: 15px !important; }
+.rich-editor-content font[size="4"], .blog-article-content font[size="4"] { font-size: 18px !important; }
+.rich-editor-content font[size="5"], .blog-article-content font[size="5"] { font-size: 22px !important; font-weight: 700 !important; }
+.rich-editor-content font[size="6"], .blog-article-content font[size="6"] { font-size: 28px !important; font-weight: 800 !important; }
+.rich-editor-content font[size="7"], .blog-article-content font[size="7"] { font-size: 34px !important; font-weight: 900 !important; }

@@ -4,41 +4,59 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Camera, Eye, ChevronLeft, ChevronRight, X } from "lucide-react";
 import ScrollReveal from "@/common/ScrollReveal";
 
-export default function HomeGalleryPreview() {
-  const galleryPhotos = [
-    {
-      id: 1,
-      title: "Indoor Sensory Gym & Play Area",
-      category: "Motor & Sensory Care",
-      image: "/gallery_sensory_gym.jpg",
-    },
-    {
-      id: 2,
-      title: "Play-Based 1:1 ABA Learning Room",
-      category: "ABA Therapy",
-      image: "/hero_child_therapy.jpg",
-    },
-    {
-      id: 3,
-      title: "Speech & Communication Room",
-      category: "Speech Therapy",
-      image: "/hero_speech_therapy.jpg",
-    },
-    {
-      id: 4,
-      title: "Clinical Baseline Assessment Area",
-      category: "Clinical Care",
-      image: "/about_center_photo.jpg",
-    },
-    {
-      id: 5,
-      title: "Pediatric Physical Movement Room",
-      category: "Physiotherapy",
-      image: "/service_physio.jpg",
-    },
-  ];
+const DEFAULT_GALLERY_PHOTOS = [
+  {
+    id: 1,
+    title: "Indoor Sensory Gym & Play Area",
+    category: "Motor & Sensory Care",
+    image: "/gallery_sensory_gym.jpg",
+  },
+  {
+    id: 2,
+    title: "Play-Based 1:1 ABA Learning Room",
+    category: "ABA Therapy",
+    image: "/hero_child_therapy.jpg",
+  },
+  {
+    id: 3,
+    title: "Speech & Communication Room",
+    category: "Speech Therapy",
+    image: "/hero_speech_therapy.jpg",
+  },
+  {
+    id: 4,
+    title: "Clinical Baseline Assessment Area",
+    category: "Clinical Care",
+    image: "/about_center_photo.jpg",
+  },
+  {
+    id: 5,
+    title: "Pediatric Physical Movement Room",
+    category: "Physiotherapy",
+    image: "/service_physio.jpg",
+  },
+];
 
+export default function HomeGalleryPreview() {
+  const [galleryPhotos, setGalleryPhotos] = useState<any[]>(DEFAULT_GALLERY_PHOTOS);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchLiveGallery = async () => {
+      try {
+        const res = await fetch("/api/gallery");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.gallery) && data.gallery.length > 0) {
+            setGalleryPhotos(data.gallery.slice(0, 5));
+          }
+        }
+      } catch (err) {
+        console.error("Home gallery fetch error:", err);
+      }
+    };
+    fetchLiveGallery();
+  }, []);
 
   const handlePrev = useCallback(() => {
     if (selectedIndex === null) return;

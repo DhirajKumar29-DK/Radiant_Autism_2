@@ -14,7 +14,7 @@ import {
 
 interface ImageUploadFieldProps {
   label: string;
-  value: string;
+  value?: string | null;
   onChange: (url: string) => void;
   placeholder?: string;
   helpText?: string;
@@ -24,13 +24,14 @@ interface ImageUploadFieldProps {
 
 export default function ImageUploadField({
   label,
-  value,
+  value = "",
   onChange,
   placeholder = "https://images.unsplash.com/... or paste direct web image link",
   helpText,
   recommendedSize,
   required = false,
 }: ImageUploadFieldProps) {
+  const safeValue = value ?? "";
   // Mode switcher: "upload" or "url"
   // Default to "url" if value looks like a full URL, otherwise "upload"
   const [mode, setMode] = useState<"upload" | "url">("upload");
@@ -78,6 +79,10 @@ export default function ImageUploadField({
     const file = e.target.files?.[0];
     if (file) {
       handleFileUpload(file);
+    }
+    // Clear input so selecting the same file triggers change again
+    if (e.target) {
+      e.target.value = "";
     }
   };
 
@@ -143,16 +148,17 @@ export default function ImageUploadField({
 
       {/* Input or Upload Area Based on Selected Mode */}
       {mode === "url" ? (
-        <div className="space-y-2">
+        <div key="mode-url-container" className="space-y-2">
           <div className="relative">
             <input
+              key="image-url-input"
               type="text"
-              value={value}
+              value={safeValue}
               onChange={(e) => onChange(e.target.value)}
               placeholder={placeholder}
               className="w-full p-3 bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 rounded-2xl font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-xs"
             />
-            {value && (
+            {safeValue && (
               <button
                 type="button"
                 onClick={() => onChange("")}
@@ -165,7 +171,7 @@ export default function ImageUploadField({
           </div>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div key="mode-upload-container" className="space-y-2">
           {/* File Upload Dropzone */}
           <div
             onDrop={handleDrop}
@@ -179,6 +185,7 @@ export default function ImageUploadField({
             }`}
           >
             <input
+              key="image-file-input"
               ref={fileInputRef}
               type="file"
               accept="image/*"
@@ -220,12 +227,12 @@ export default function ImageUploadField({
       )}
 
       {/* Linked Image Preview Bar (If image exists) */}
-      {value && (
+      {safeValue && (
         <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 border border-slate-200/90 gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 relative shrink-0">
               <img
-                src={value}
+                src={safeValue}
                 alt="Preview"
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -241,7 +248,7 @@ export default function ImageUploadField({
                 </span>
               </div>
               <p className="text-[10px] font-mono text-slate-500 truncate max-w-xs sm:max-w-md">
-                {value}
+                {safeValue}
               </p>
             </div>
           </div>

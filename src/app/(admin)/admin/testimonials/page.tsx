@@ -137,6 +137,11 @@ export default function AdminTestimonialsPage() {
     );
   }, [testimonials, searchQuery]);
 
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
   const paginatedItems = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -389,7 +394,7 @@ export default function AdminTestimonialsPage() {
       </div>
 
       {/* Main Table View (FabFit Style) */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs flex flex-col min-h-0 flex-1 overflow-hidden">
         {isLoading ? (
           <div className="py-20 flex flex-col items-center justify-center space-y-3">
             <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
@@ -398,7 +403,7 @@ export default function AdminTestimonialsPage() {
             </p>
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="bg-white p-16 rounded-3xl text-center space-y-4">
+          <div className="bg-white p-16 rounded-2xl text-center space-y-4">
             <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
               <MessageSquareQuote className="w-7 h-7" />
             </div>
@@ -411,167 +416,144 @@ export default function AdminTestimonialsPage() {
             <button
               type="button"
               onClick={openAddModal}
-              className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold"
+              className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold cursor-pointer"
             >
               Add First Testimonial
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
-                  <th className="py-4 pl-6 pr-2 w-10">
-                    <input
-                      type="checkbox"
-                      checked={
-                        paginatedItems.length > 0 &&
-                        paginatedItems.every((t) => selectedIds.includes(t.id))
-                      }
-                      onChange={toggleSelectAll}
-                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                    />
-                  </th>
-                  <th className="py-4 px-3 w-12 text-center">#</th>
-                  <th className="py-4 px-6">Family / Client</th>
-                  <th className="py-4 px-6">Program / Service</th>
-                  <th className="py-4 px-6">Rating</th>
-                  <th className="py-4 px-6">Quote Snippet</th>
-                  <th className="py-4 px-6">Status</th>
-                  <th className="py-4 px-6 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {paginatedItems.map((item, idx) => {
-                  const rowNumber = (currentPage - 1) * itemsPerPage + idx + 1;
-                  const isSelected = selectedIds.includes(item.id);
+          <>
+            <div className="overflow-y-auto overflow-x-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <table className="w-full text-left border-collapse min-w-[800px]">
+                <thead className="sticky top-0 z-10 shadow-2xs bg-slate-50 border-b border-slate-200 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                  <tr>
+                    <th className="py-4 pl-6 pr-2 w-10 bg-slate-50">
+                      <input
+                        type="checkbox"
+                        checked={
+                          paginatedItems.length > 0 &&
+                          paginatedItems.every((t) => selectedIds.includes(t.id))
+                        }
+                        onChange={toggleSelectAll}
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                    </th>
+                    <th className="py-4 px-3 w-12 text-center bg-slate-50">#</th>
+                    <th className="py-4 px-6 bg-slate-50">Family / Client</th>
+                    <th className="py-4 px-6 bg-slate-50">Program / Service</th>
+                    <th className="py-4 px-6 bg-slate-50">Status</th>
+                    <th className="py-4 px-6 text-right bg-slate-50">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {paginatedItems.map((item, idx) => {
+                    const rowNumber = (currentPage - 1) * itemsPerPage + idx + 1;
+                    const isSelected = selectedIds.includes(item.id);
 
-                  return (
-                    <tr
-                      key={item.id}
-                      className={`hover:bg-slate-50/50 transition-colors ${
-                        isSelected ? "bg-blue-50/30" : ""
-                      }`}
-                    >
-                      <td className="py-4 pl-6 pr-2">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleSelectOne(item.id)}
-                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                        />
-                      </td>
+                    return (
+                      <tr
+                        key={item.id}
+                        className={`hover:bg-slate-50/50 transition-colors ${
+                          isSelected ? "bg-blue-50/30" : ""
+                        }`}
+                      >
+                        <td className="py-4 pl-6 pr-2">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelectOne(item.id)}
+                            className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          />
+                        </td>
 
-                      <td className="py-4 px-3 font-bold text-slate-400 text-center">
-                        {rowNumber}
-                      </td>
+                        <td className="py-4 px-3 font-bold text-slate-400 text-center">
+                          {rowNumber}
+                        </td>
 
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200 relative shrink-0">
-                            {item.image ? (
-                              <Image
-                                src={item.image}
-                                alt={item.name}
-                                fill
-                                className="object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center font-black text-blue-600 text-xs">
-                                {item.name.charAt(0)}
-                              </div>
-                            )}
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200 relative shrink-0">
+                              {item.image ? (
+                                <Image
+                                  src={item.image}
+                                  alt={item.name}
+                                  fill
+                                  className="object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center font-black text-blue-600 text-xs">
+                                  {item.name.charAt(0)}
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-extrabold text-slate-900">{item.name}</p>
+                              <p className="text-[11px] text-slate-400 font-medium line-clamp-1">
+                                {item.role}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-extrabold text-slate-900">{item.name}</p>
-                            <p className="text-[11px] text-slate-400 font-medium line-clamp-1">
-                              {item.role}
-                            </p>
+                        </td>
+
+                        <td className="py-4 px-6">
+                          {item.service ? (
+                            <span className="inline-block px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px] font-extrabold border border-blue-100">
+                              {item.service}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 font-medium">—</span>
+                          )}
+                        </td>
+
+                        {/* Status Badge with Click-to-Cycle */}
+                        <td className="py-4 px-6">
+                          {renderStatusBadge(item.status, item)}
+                        </td>
+
+                        {/* Dual Action: Edit + Delete */}
+                        <td className="py-4 px-6 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(item)}
+                              title="Edit & View Full Details"
+                              className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                              <span className="text-[11px]">Edit</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => confirmSingleDelete(item.id)}
+                              title="Delete"
+                              className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              <span className="text-[11px]">Delete</span>
+                            </button>
                           </div>
-                        </div>
-                      </td>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-                      <td className="py-4 px-6">
-                        {item.service ? (
-                          <span className="inline-block px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px] font-extrabold border border-blue-100">
-                            {item.service}
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 font-medium">—</span>
-                        )}
-                      </td>
-
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-1 text-amber-400">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-3.5 h-3.5 ${
-                                i < item.rating
-                                  ? "fill-amber-400 text-amber-400"
-                                  : "fill-slate-200 text-slate-200"
-                              }`}
-                            />
-                          ))}
-                          <span className="text-[11px] font-black text-slate-700 ml-1">
-                            {item.rating}.0
-                          </span>
-                        </div>
-                      </td>
-
-                      <td className="py-4 px-6 font-medium text-slate-600 max-w-sm">
-                        <p className="line-clamp-2 leading-relaxed italic">
-                          &quot;{item.text}&quot;
-                        </p>
-                      </td>
-
-                      {/* Status Badge with Click-to-Cycle */}
-                      <td className="py-4 px-6">
-                        {renderStatusBadge(item.status, item)}
-                      </td>
-
-                      {/* Dual Action: Edit + Delete */}
-                      <td className="py-4 px-6 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openEditModal(item)}
-                            title="Edit Testimonial"
-                            className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                            <span className="text-[11px]">Edit</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => confirmSingleDelete(item.id)}
-                            title="Delete"
-                            className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            <span className="text-[11px]">Delete</span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="p-4 border-t border-slate-100 flex justify-end">
+            {/* Pagination (Always visible with items count and per-page selector) */}
             <AdminPagination
               currentPage={currentPage}
               totalItems={filteredItems.length}
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
+              onItemsPerPageChange={(newSize) => {
+                setItemsPerPage(newSize);
+                setCurrentPage(1);
+              }}
+              pageSizeOptions={[5, 10, 20, 50]}
             />
-          </div>
+          </>
         )}
       </div>
 
@@ -600,6 +582,59 @@ export default function AdminTestimonialsPage() {
 
             {/* Modal Body Form */}
             <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 space-y-5">
+              {/* Top Overview Card for Edit Mode */}
+              {selectedItem && (
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="w-12 h-12 rounded-2xl overflow-hidden bg-white border border-slate-200 relative shrink-0 shadow-2xs">
+                      {formData.image ? (
+                        <Image
+                          src={formData.image}
+                          alt={formData.name || "Client"}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center font-black text-blue-600 text-sm">
+                          {formData.name?.charAt(0) || "C"}
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-extrabold text-slate-900 text-sm truncate">
+                        {formData.name || "Untitled Client"}
+                      </p>
+                      <p className="text-xs text-slate-500 font-medium truncate">
+                        {formData.role || "Family Member"}
+                      </p>
+                      {formData.service && (
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 text-[10px] font-extrabold">
+                          {formData.service}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <div className="flex items-center gap-0.5 text-amber-400 justify-end">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-3.5 h-3.5 ${
+                            i < formData.rating
+                              ? "fill-amber-400 text-amber-400"
+                              : "fill-slate-200 text-slate-200"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs font-black text-slate-700 block mt-0.5">
+                      {formData.rating}.0 / 5.0 Rating
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Name & Relation */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -618,13 +653,13 @@ export default function AdminTestimonialsPage() {
 
                 <div className="space-y-1.5">
                   <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Relation / Role
+                    Relation / Subtitle
                   </label>
                   <input
                     type="text"
                     value={formData.role}
                     onChange={(e) => setFormData((prev) => ({ ...prev, role: e.target.value }))}
-                    placeholder="e.g. Parent of 4-year-old Lucas"
+                    placeholder="e.g. Parents of 5-year-old child"
                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
                   />
                 </div>
@@ -640,7 +675,7 @@ export default function AdminTestimonialsPage() {
                     type="text"
                     value={formData.service}
                     onChange={(e) => setFormData((prev) => ({ ...prev, service: e.target.value }))}
-                    placeholder="e.g. Early Intervention ABA, Speech Therapy"
+                    placeholder="e.g. Speech & ABA Therapy"
                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
                   />
                 </div>
@@ -649,16 +684,17 @@ export default function AdminTestimonialsPage() {
                   <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
                     Star Rating (1 - 5)
                   </label>
-                  <div className="flex items-center gap-2 pt-1">
+                  <div className="flex items-center gap-2 pt-1 bg-slate-50 border border-slate-200 px-3 py-2 rounded-2xl">
                     {[1, 2, 3, 4, 5].map((s) => (
                       <button
                         key={s}
                         type="button"
                         onClick={() => setFormData((prev) => ({ ...prev, rating: s }))}
                         className="p-1 hover:scale-110 transition-transform cursor-pointer"
+                        title={`${s} Stars`}
                       >
                         <Star
-                          className={`w-6 h-6 ${
+                          className={`w-5 h-5 ${
                             s <= formData.rating
                               ? "fill-amber-400 text-amber-400"
                               : "fill-slate-200 text-slate-200"
@@ -675,61 +711,62 @@ export default function AdminTestimonialsPage() {
 
               {/* Photo Upload Field */}
               <ImageUploadField
-                label="Parent / Child Photo (Optional)"
+                label="Client Avatar / Photo Media"
                 value={formData.image}
                 onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))}
                 recommendedSize="400 x 400px (Square Avatar)"
               />
 
-              {/* Display Order */}
-              <div className="space-y-1.5">
-                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                  Display Order
-                </label>
-                <input
-                  type="number"
-                  value={formData.displayOrder}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      displayOrder: parseInt(e.target.value) || 0,
-                    }))
-                  }
-                  className="w-32 p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                />
+              {/* Display Order & Status Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                    Display Order
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.displayOrder}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        displayOrder: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                    Status
+                  </label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, status: e.target.value as StatusType }))
+                    }
+                    className="w-full p-3 bg-white border border-slate-300 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                  >
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="INACTIVE">INACTIVE</option>
+                    <option value="DRAFT">DRAFT</option>
+                  </select>
+                </div>
               </div>
 
               {/* Review Text */}
               <div className="space-y-1.5">
                 <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                  Testimonial / Review Content *
+                  Full Testimonial Story & Review Content *
                 </label>
                 <textarea
                   required
-                  rows={4}
+                  rows={5}
                   value={formData.text}
                   onChange={(e) => setFormData((prev) => ({ ...prev, text: e.target.value }))}
                   placeholder="Share the family's journey, milestones achieved at Radiant Autism Services, and personal experiences with our clinical team..."
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-normal text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 leading-relaxed"
+                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 leading-relaxed"
                 />
-              </div>
-
-              {/* Status Dropdown */}
-              <div className="space-y-1.5 pt-3 border-t border-slate-100">
-                <label className="block text-xs font-bold text-slate-800">
-                  Status
-                </label>
-                <select
-                  value={formData.status}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, status: e.target.value as StatusType }))
-                  }
-                  className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-medium text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
-                >
-                  <option value="ACTIVE">Active</option>
-                  <option value="INACTIVE">Inactive</option>
-                  <option value="DRAFT">Draft</option>
-                </select>
               </div>
 
               {/* Modal Footer */}

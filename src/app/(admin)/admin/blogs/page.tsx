@@ -21,6 +21,10 @@ import {
   Search,
   FileText,
   CheckCircle2,
+  Sparkles,
+  ChevronDown,
+  Globe,
+  Share2,
 } from "lucide-react";
 import AdminPagination from "@/components/common/AdminPagination";
 import ConfirmModal from "@/components/common/ConfirmModal";
@@ -40,6 +44,10 @@ interface BlogPost {
   category: string;
   coverImage?: string | null;
   status: BlogStatusType;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  metaKeywords?: string | null;
+  ogImage?: string | null;
   publishedAt?: string | null;
   createdAt: string;
   updatedAt?: string;
@@ -76,6 +84,9 @@ export default function AdminBlogsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(8);
 
+  // Advanced SEO Collapsible
+  const [isSeoOpen, setIsSeoOpen] = useState(false);
+
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
@@ -86,6 +97,10 @@ export default function AdminBlogsPage() {
     category: "ABA Therapy",
     image: "/hero_child_therapy.jpg",
     status: "PUBLISHED" as BlogStatusType,
+    metaTitle: "",
+    metaDescription: "",
+    metaKeywords: "",
+    ogImage: "",
   });
 
   const fetchBlogs = async () => {
@@ -122,9 +137,14 @@ export default function AdminBlogsPage() {
       category: "ABA Therapy",
       image: "/hero_child_therapy.jpg",
       status: "PUBLISHED",
+      metaTitle: "",
+      metaDescription: "",
+      metaKeywords: "",
+      ogImage: "",
     });
     setEditingBlog(null);
     setSaveSuccess(false);
+    setIsSeoOpen(false);
     setModalMode("ADD");
   };
 
@@ -140,8 +160,14 @@ export default function AdminBlogsPage() {
       category: blog.category,
       image: blog.coverImage || "/hero_child_therapy.jpg",
       status: blog.status,
+      metaTitle: blog.metaTitle || "",
+      metaDescription: blog.metaDescription || "",
+      metaKeywords: blog.metaKeywords || "",
+      ogImage: blog.ogImage || "",
     });
     setSaveSuccess(false);
+    // If blog has meta data, keep SEO panel open for convenience
+    setIsSeoOpen(Boolean(blog.metaTitle || blog.metaDescription || blog.metaKeywords || blog.ogImage));
     setModalMode("EDIT");
   };
 
@@ -158,11 +184,17 @@ export default function AdminBlogsPage() {
     });
   }, [blogs, selectedCategory, searchQuery]);
 
-  const totalPages = Math.ceil(filteredBlogs.length / itemsPerPage);
+  // Reset page to 1 when filters or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
   const paginatedBlogs = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredBlogs.slice(start, start + itemsPerPage);
-  }, [filteredBlogs, currentPage, itemsPerPage]);
+    return filteredBlogs.slice(startIndex, endIndex);
+  }, [filteredBlogs, startIndex, endIndex]);
 
   // Selection handlers
   const toggleSelectAll = () => {
@@ -264,6 +296,10 @@ export default function AdminBlogsPage() {
         category: formData.category,
         image: formData.image,
         status: formData.status,
+        metaTitle: formData.metaTitle || null,
+        metaDescription: formData.metaDescription || null,
+        metaKeywords: formData.metaKeywords || null,
+        ogImage: formData.ogImage || null,
       };
 
       if (modalMode === "ADD") {
@@ -457,135 +493,140 @@ export default function AdminBlogsPage() {
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
-                  <th className="py-4 pl-6 pr-2 w-10">
-                    <input
-                      type="checkbox"
-                      checked={
-                        paginatedBlogs.length > 0 &&
-                        paginatedBlogs.every((b) => selectedIds.includes(b.id))
-                      }
-                      onChange={toggleSelectAll}
-                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                    />
-                  </th>
-                  <th className="py-4 px-3 w-12 text-center">#</th>
-                  <th className="py-4 px-6">Article</th>
-                  <th className="py-4 px-6">Category</th>
-                  <th className="py-4 px-6">Author</th>
-                  <th className="py-4 px-6">Status</th>
-                  <th className="py-4 px-6">Published</th>
-                  <th className="py-4 px-6 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {paginatedBlogs.map((blog, idx) => {
-                  const rowNumber = (currentPage - 1) * itemsPerPage + idx + 1;
-                  const isSelected = selectedIds.includes(blog.id);
+          <>
+            {/* Scrollable Container (Rows scroll cleanly, browser scrollbar hidden) */}
+            <div className="overflow-y-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <table className="w-full text-left border-collapse min-w-[800px]">
+                {/* 1. STICKY THEAD: Scroll karne par headers upar chipke rahenge */}
+                <thead className="sticky top-0 z-10 shadow-xs bg-slate-50 border-b border-slate-200 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                  <tr>
+                    <th className="py-4 pl-6 pr-2 w-10">
+                      <input
+                        type="checkbox"
+                        checked={
+                          paginatedBlogs.length > 0 &&
+                          paginatedBlogs.every((b) => selectedIds.includes(b.id))
+                        }
+                        onChange={toggleSelectAll}
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                    </th>
+                    <th className="py-4 px-3 w-12 text-center">#</th>
+                    <th className="py-4 px-6">Article</th>
+                    <th className="py-4 px-6">Category</th>
+                    <th className="py-4 px-6">Author</th>
+                    <th className="py-4 px-6">Status</th>
+                    <th className="py-4 px-6">Published</th>
+                    <th className="py-4 px-6 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {paginatedBlogs.map((blog, idx) => {
+                    const rowNumber = (currentPage - 1) * itemsPerPage + idx + 1;
+                    const isSelected = selectedIds.includes(blog.id);
 
-                  return (
-                    <tr
-                      key={blog.id}
-                      className={`hover:bg-slate-50/50 transition-colors ${
-                        isSelected ? "bg-blue-50/30" : ""
-                      }`}
-                    >
-                      <td className="py-4 pl-6 pr-2">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleSelectOne(blog.id)}
-                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                        />
-                      </td>
+                    return (
+                      <tr
+                        key={blog.id}
+                        className={`hover:bg-slate-50/50 transition-colors ${
+                          isSelected ? "bg-blue-50/30" : ""
+                        }`}
+                      >
+                        <td className="py-4 pl-6 pr-2">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelectOne(blog.id)}
+                            className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          />
+                        </td>
 
-                      <td className="py-4 px-3 font-bold text-slate-400 text-center">
-                        {rowNumber}
-                      </td>
+                        <td className="py-4 px-3 font-bold text-slate-400 text-center">
+                          {rowNumber}
+                        </td>
 
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 relative shrink-0">
-                            <Image
-                              src={blog.coverImage || "/hero_child_therapy.jpg"}
-                              alt={blog.title}
-                              fill
-                              className="object-cover"
-                            />
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 relative shrink-0">
+                              <Image
+                                src={blog.coverImage || "/hero_child_therapy.jpg"}
+                                alt={blog.title}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            <div>
+                              <p className="font-extrabold text-slate-900 line-clamp-1">{blog.title}</p>
+                              <p className="text-[11px] text-blue-600 font-mono font-medium">
+                                /{blog.slug}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-extrabold text-slate-900 line-clamp-1">{blog.title}</p>
-                            <p className="text-[11px] text-blue-600 font-mono font-medium">
-                              /{blog.slug}
-                            </p>
+                        </td>
+
+                        <td className="py-4 px-6">
+                          <span className="inline-block px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px] font-extrabold border border-blue-100">
+                            {blog.category}
+                          </span>
+                        </td>
+
+                        <td className="py-4 px-6 font-semibold text-slate-700">
+                          {blog.authorName}
+                        </td>
+
+                        {/* Status Badge with Click-to-Cycle */}
+                        <td className="py-4 px-6">
+                          {renderStatusBadge(blog.status, blog)}
+                        </td>
+
+                        <td className="py-4 px-6 font-semibold text-slate-500">
+                          {formatDate(blog.publishedAt || blog.createdAt)}
+                        </td>
+
+                        {/* Dual Action: Edit + Delete */}
+                        <td className="py-4 px-6 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(blog)}
+                              title="Edit Article"
+                              className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                              <span className="text-[11px]">Edit</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => confirmSingleDelete(blog.id)}
+                              title="Delete"
+                              className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              <span className="text-[11px]">Delete</span>
+                            </button>
                           </div>
-                        </div>
-                      </td>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-                      <td className="py-4 px-6">
-                        <span className="inline-block px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px] font-extrabold border border-blue-100">
-                          {blog.category}
-                        </span>
-                      </td>
-
-                      <td className="py-4 px-6 font-semibold text-slate-700">
-                        {blog.authorName}
-                      </td>
-
-                      {/* Status Badge with Click-to-Cycle */}
-                      <td className="py-4 px-6">
-                        {renderStatusBadge(blog.status, blog)}
-                      </td>
-
-                      <td className="py-4 px-6 font-semibold text-slate-500">
-                        {formatDate(blog.publishedAt || blog.createdAt)}
-                      </td>
-
-                      {/* Dual Action: Edit + Delete */}
-                      <td className="py-4 px-6 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openEditModal(blog)}
-                            title="Edit Article"
-                            className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                            <span className="text-[11px]">Edit</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => confirmSingleDelete(blog.id)}
-                            title="Delete"
-                            className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            <span className="text-[11px]">Delete</span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="p-4 border-t border-slate-100 flex justify-end">
+            {/* 3. STICKY PAGINATION: Table ke theek niche pinned */}
             <AdminPagination
               currentPage={currentPage}
               totalItems={filteredBlogs.length}
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
+              onItemsPerPageChange={(newSize) => {
+                setItemsPerPage(newSize);
+                setCurrentPage(1);
+              }}
+              pageSizeOptions={[5, 10, 20, 50]}
             />
-          </div>
+          </>
         )}
       </div>
 
@@ -652,8 +693,8 @@ export default function AdminBlogsPage() {
                 </div>
               </div>
 
-              {/* Category & Author */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Row 2: Category, Author, Status (3 columns matching Image 2) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
                   <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
                     Category *
@@ -661,7 +702,7 @@ export default function AdminBlogsPage() {
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
                   >
                     {CATEGORIES.filter((c) => c !== "ALL").map((c) => (
                       <option key={c} value={c}>
@@ -683,11 +724,27 @@ export default function AdminBlogsPage() {
                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                    Status
+                  </label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, status: e.target.value as BlogStatusType }))
+                    }
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                  >
+                    <option value="PUBLISHED">PUBLISHED (Live)</option>
+                    <option value="DRAFT">DRAFT</option>
+                  </select>
+                </div>
               </div>
 
               {/* Cover Image */}
               <ImageUploadField
-                label="Article Cover Media (16:9 Aspect Ratio)"
+                label="Featured Cover Image"
                 value={formData.image}
                 onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))}
                 recommendedSize="1200 x 675px"
@@ -696,22 +753,27 @@ export default function AdminBlogsPage() {
               {/* Excerpt */}
               <div className="space-y-1.5">
                 <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                  Article Excerpt / Meta Description
+                  Short Description / Excerpt (Quote highlight under featured image & on blog cards)
                 </label>
                 <textarea
                   rows={2}
                   value={formData.excerpt}
                   onChange={(e) => setFormData((prev) => ({ ...prev, excerpt: e.target.value }))}
-                  placeholder="Short engaging preview summary displayed on article cards and search results..."
+                  placeholder="Brief lead summary / highlight quote of the article (e.g. key takeaway)..."
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-normal text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
 
               {/* Full Content */}
               <div className="space-y-1.5">
-                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                  Full Article Content (Markdown / HTML) *
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                    Article Full Content * (Rich Text Editor)
+                  </label>
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    (supports h1, h2, h3, links, lists, bold, highlights)
+                  </span>
+                </div>
                 <RichTextEditor
                   value={formData.content}
                   onChange={(val) => setFormData((prev) => ({ ...prev, content: val }))}
@@ -719,21 +781,94 @@ export default function AdminBlogsPage() {
                 />
               </div>
 
-              {/* Status DDL matching Image 2 */}
-              <div className="space-y-1.5 pt-3 border-t border-slate-100">
-                <label className="block text-xs font-bold text-slate-800">
-                  Status
-                </label>
-                <select
-                  value={formData.status}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, status: e.target.value as BlogStatusType }))
-                  }
-                  className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-medium text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+              {/* Advanced SEO & Meta Tags Configuration (Matching Image 1) */}
+              <div className="border border-slate-200 rounded-2xl bg-slate-50/60 overflow-hidden transition-all">
+                <button
+                  type="button"
+                  onClick={() => setIsSeoOpen(!isSeoOpen)}
+                  className="w-full px-5 py-3.5 flex items-center justify-between hover:bg-slate-100/70 transition-colors cursor-pointer text-left"
                 >
-                  <option value="PUBLISHED">Published</option>
-                  <option value="DRAFT">Draft</option>
-                </select>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-blue-600" />
+                    <span className="font-extrabold text-xs text-slate-800 tracking-tight">
+                      Advanced SEO & Meta Tags Configuration
+                    </span>
+                  </div>
+                  <ChevronDown
+                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${
+                      isSeoOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
+                {isSeoOpen && (
+                  <div className="p-5 pt-3 border-t border-slate-200/80 space-y-4 bg-white animate-in fade-in duration-200">
+                    {/* Meta Title */}
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-700">
+                        Meta Title (Google Search Title)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.metaTitle}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, metaTitle: e.target.value }))
+                        }
+                        placeholder="Custom title tag for search engines"
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                      />
+                    </div>
+
+                    {/* Meta Description */}
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-700">
+                        Meta Description (Search Snippet Text)
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={formData.metaDescription}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, metaDescription: e.target.value }))
+                        }
+                        placeholder="Snippet describing article in Google search results..."
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                      />
+                    </div>
+
+                    {/* Meta Keywords & Social Share Image */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-slate-700">
+                          Meta Keywords (Comma Separated)
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.metaKeywords}
+                          onChange={(e) =>
+                            setFormData((prev) => ({ ...prev, metaKeywords: e.target.value }))
+                          }
+                          placeholder="e.g. aba therapy, autism clinic ontario, oap funding"
+                          className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-slate-700">
+                          Social Sharing Image URL (OpenGraph Image)
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.ogImage}
+                          onChange={(e) =>
+                            setFormData((prev) => ({ ...prev, ogImage: e.target.value }))
+                          }
+                          placeholder="WhatsApp / Facebook Share Image URL"
+                          className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Modal Footer */}

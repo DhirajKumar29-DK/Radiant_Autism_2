@@ -122,19 +122,16 @@ export default function ClinicalPillars() {
           {pillars.map((pillar, idx) => {
             const Icon = getIcon(pillar, idx);
             return (
-              <ScrollReveal key={pillar.id || idx} delay={idx * 120} direction="up">
+              <ScrollReveal key={`${pillar.id || "pillar"}-${idx}`} delay={idx * 120} direction="up">
                 <div className="bg-white rounded-3xl p-7 sm:p-8 border-2 border-slate-200/90 shadow-md hover:shadow-2xl hover:shadow-blue-600/10 hover:border-blue-600 hover:-translate-y-2 transition-all duration-300 flex flex-col justify-between h-full relative overflow-hidden group">
                   {/* Subtle Corner Glow */}
                   <div className="absolute -bottom-10 -right-10 w-28 h-28 bg-blue-500/10 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500 pointer-events-none" />
 
                   <div>
-                    {/* Top Row: Number Badge & Category Pill */}
-                    <div className="flex items-center justify-between">
+                    {/* Top Row: Number Badge */}
+                    <div className="flex items-center justify-start">
                       <span className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-700 font-black text-xs flex items-center justify-center border border-blue-200/60 shadow-xs group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
                         {pillar.id || `0${idx + 1}`}
-                      </span>
-                      <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-blue-600 text-white shadow-xs">
-                        {pillar.badge}
                       </span>
                     </div>
 
@@ -152,18 +149,6 @@ export default function ClinicalPillars() {
                     <p className="text-slate-600 text-xs sm:text-sm leading-relaxed pt-2 font-medium">
                       {pillar.desc}
                     </p>
-
-                    {/* Points Bullets */}
-                    {pillar.points && pillar.points.length > 0 && (
-                      <div className="pt-4 space-y-2">
-                        {pillar.points.map((pt, pIdx) => (
-                          <div key={pIdx} className="flex items-center gap-2 text-xs font-bold text-slate-700">
-                            <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
-                            <span>{pt}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
 
                   {/* Bottom Accent Bar */}

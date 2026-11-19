@@ -48,6 +48,10 @@ export async function PUT(
     if (body.category !== undefined) dataToUpdate.category = body.category;
     if (body.image !== undefined) dataToUpdate.coverImage = body.image;
     if (body.coverImage !== undefined) dataToUpdate.coverImage = body.coverImage;
+    if (body.metaTitle !== undefined) dataToUpdate.metaTitle = body.metaTitle;
+    if (body.metaDescription !== undefined) dataToUpdate.metaDescription = body.metaDescription;
+    if (body.metaKeywords !== undefined) dataToUpdate.metaKeywords = body.metaKeywords;
+    if (body.ogImage !== undefined) dataToUpdate.ogImage = body.ogImage;
     if (body.status !== undefined) {
       dataToUpdate.status = body.status;
       if (body.status === "PUBLISHED" && !body.publishedAt) {
