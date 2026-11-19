@@ -541,53 +541,6 @@ export default function AdminAboutPillarsPage() {
 
             {/* Modal Body Form */}
             <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 space-y-4">
-              {/* STATUS SELECTOR (Active / Inactive / Draft) */}
-              <div className="space-y-1.5">
-                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                  Pillar Status
-                </label>
-                <div className="grid grid-cols-3 gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/70">
-                  <button
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, status: "ACTIVE" }))}
-                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
-                      formData.status === "ACTIVE"
-                        ? "bg-white text-emerald-700 shadow-xs border border-emerald-200"
-                        : "text-slate-500 hover:text-slate-800"
-                    }`}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span>ACTIVE</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, status: "INACTIVE" }))}
-                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
-                      formData.status === "INACTIVE"
-                        ? "bg-white text-slate-700 shadow-xs border border-slate-300"
-                        : "text-slate-500 hover:text-slate-800"
-                    }`}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-slate-400" />
-                    <span>INACTIVE</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, status: "DRAFT" }))}
-                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
-                      formData.status === "DRAFT"
-                        ? "bg-white text-amber-700 shadow-xs border border-amber-200"
-                        : "text-slate-500 hover:text-slate-800"
-                    }`}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-amber-500" />
-                    <span>DRAFT</span>
-                  </button>
-                </div>
-              </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
@@ -695,6 +648,24 @@ export default function AdminAboutPillarsPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Status DDL (Publish or Draft at bottom of form) */}
+              <div className="space-y-1.5 pt-3 border-t border-slate-100">
+                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                  Pillar Status (Publish or Draft)
+                </label>
+                <select
+                  value={formData.status}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, status: e.target.value as StatusType }))
+                  }
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                >
+                  <option value="ACTIVE">🟢 Published (Active - Live on website)</option>
+                  <option value="DRAFT">🟡 Draft (Hidden / In Progress)</option>
+                  <option value="INACTIVE">⚪ Inactive (Deactivated / Hidden)</option>
+                </select>
               </div>
 
               {/* Modal Footer */}

@@ -679,9 +679,9 @@ export default function HeroAdminPage() {
                         }
                         className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 cursor-pointer"
                       >
-                        <option value="ACTIVE">ACTIVE (Live on Homepage)</option>
-                        <option value="INACTIVE">INACTIVE (Hidden)</option>
-                        <option value="DRAFT">DRAFT</option>
+                        <option value="ACTIVE">🟢 Published (Active - Live on website)</option>
+                        <option value="DRAFT">🟡 Draft (Hidden / In Progress)</option>
+                        <option value="INACTIVE">⚪ Inactive (Deactivated / Hidden)</option>
                       </select>
                     </div>
 
