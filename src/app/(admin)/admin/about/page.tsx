@@ -108,8 +108,8 @@ function AboutAdminContent() {
     }));
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setIsSaving(true);
     setSaveSuccess(false);
 
@@ -122,12 +122,14 @@ function AboutAdminContent() {
 
       if (res.ok) {
         setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
+        setTimeout(() => setSaveSuccess(false), 4000);
       } else {
-        alert("Failed to save about section");
+        const errorData = await res.json().catch(() => ({}));
+        alert(errorData.error || "Failed to save about section");
       }
     } catch (err) {
       console.error("Save error:", err);
+      alert("Network or server error while saving");
     } finally {
       setIsSaving(false);
     }
@@ -408,18 +410,42 @@ function AboutAdminContent() {
               )}
 
               {/* Save Button */}
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
+              <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div>
+                  {saveSuccess && (
+                    <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 animate-in fade-in">
+                      <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>About Content Saved to Live Website!</span>
+                    </div>
+                  )}
+                </div>
+
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={() => handleSave()}
                   disabled={isSaving}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-blue-600/30 transition-all disabled:opacity-50"
+                  className={`inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-extrabold uppercase tracking-wider transition-all disabled:opacity-50 ${
+                    saveSuccess
+                      ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30"
+                      : "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30"
+                  }`}
                 >
                   {isSaving ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Saving Changes...</span>
+                    </>
+                  ) : saveSuccess ? (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Saved Successfully!</span>
+                    </>
                   ) : (
-                    <Save className="w-4 h-4" />
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>Save About Content</span>
+                    </>
                   )}
-                  <span>Save About Content</span>
                 </button>
               </div>
             </form>

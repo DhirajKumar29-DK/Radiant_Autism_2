@@ -1,26 +1,84 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  Award,
   CheckCircle2,
   ShieldCheck,
   ArrowRight,
-  Heart,
-  Users,
 } from "lucide-react";
 import ScrollReveal from "@/common/ScrollReveal";
 
-export default function AboutSection() {
-  const highlights = [
+interface AboutData {
+  badgeText: string;
+  title: string;
+  description1: string;
+  description2: string;
+  centerImage: string;
+  highlights: string[];
+}
+
+const DEFAULT_ABOUT: AboutData = {
+  badgeText: "About Radiant Autism Center",
+  title: "Compassionate, Modern & Person-Centered Care For Every Child",
+  description1:
+    "At Radiant Autism Center, our mission is simple: to help every child build meaningful communication, motor independence, and daily life confidence through gentle, evidence-based care.",
+  description2:
+    "We work closely with families to deliver individualized support across ABA therapy, speech-language services, and occupational therapy in a welcoming, caring environment.",
+  centerImage: "/about_center_photo.jpg",
+  highlights: [
     "Registered Behaviour Analyst (RBA, Ontario) Supervision",
     "OAP Covered Programs & Services",
     "Person-Centered & Compassionate ABA Therapy",
     "Integrated Speech & Occupational Therapy Support",
     "Tailored 1:1 and Group Skill Building",
     "Close Family Collaboration & Parent Guidance",
-  ];
+  ],
+};
+
+export default function AboutSection() {
+  const [about, setAbout] = useState<AboutData>(DEFAULT_ABOUT);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchAboutData = async () => {
+      try {
+        const res = await fetch("/api/about", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.about && isMounted) {
+            let parsedHighlights = DEFAULT_ABOUT.highlights;
+            if (data.about.highlightsJson) {
+              try {
+                const parsed = JSON.parse(data.about.highlightsJson);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                  parsedHighlights = parsed;
+                }
+              } catch (e) {
+                console.error("Error parsing highlights:", e);
+              }
+            }
+
+            setAbout({
+              badgeText: data.about.badgeText || DEFAULT_ABOUT.badgeText,
+              title: data.about.title || DEFAULT_ABOUT.title,
+              description1: data.about.description1 || DEFAULT_ABOUT.description1,
+              description2: data.about.description2 || DEFAULT_ABOUT.description2,
+              centerImage: data.about.centerImage || DEFAULT_ABOUT.centerImage,
+              highlights: parsedHighlights,
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load about data:", err);
+      }
+    };
+
+    fetchAboutData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <section className="py-16 md:py-24 bg-slate-50 relative overflow-hidden">
@@ -33,7 +91,7 @@ export default function AboutSection() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          {/* Left Column: Real High Quality Center Photo Frame */}
+          {/* Left Column: Center Showcase Photo Frame */}
           <div className="lg:col-span-5">
             <ScrollReveal direction="right" delay={100}>
               <div className="relative">
@@ -41,7 +99,7 @@ export default function AboutSection() {
                 <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-slate-100 group">
                   <div className="relative aspect-4/5 w-full overflow-hidden">
                     <img
-                      src="/about_center_photo.jpg"
+                      src={about.centerImage || "/about_center_photo.jpg"}
                       alt="Child and clinician during interactive ABA skill building"
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
@@ -74,30 +132,34 @@ export default function AboutSection() {
             <ScrollReveal direction="left" delay={200}>
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full badge-blue text-xs font-bold uppercase tracking-wider">
-                  <span>About Radiant Autism Center</span>
+                  <span>{about.badgeText}</span>
                 </div>
 
                 <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-snug">
-                  Compassionate, Modern & Person-Centered Care For Every Child
+                  {about.title}
                 </h2>
 
                 <p className="text-slate-600 text-base leading-relaxed">
-                  At Radiant Autism Center, our mission is simple: to help every child build meaningful communication, motor independence, and daily life confidence through gentle, evidence-based care.
+                  {about.description1}
                 </p>
 
-                <p className="text-slate-600 text-sm leading-relaxed">
-                  We work closely with families to deliver individualized support across ABA therapy, speech-language services, and occupational therapy in a welcoming, caring environment.
-                </p>
+                {about.description2 && (
+                  <p className="text-slate-600 text-sm leading-relaxed">
+                    {about.description2}
+                  </p>
+                )}
 
                 {/* Highlights Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  {highlights.map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200/60 shadow-xs">
-                      <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                      <span className="text-xs font-bold text-slate-800">{item}</span>
-                    </div>
-                  ))}
-                </div>
+                {about.highlights && about.highlights.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    {about.highlights.map((item, idx) => (
+                      <div key={idx} className="flex items-start gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200/60 shadow-xs">
+                        <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                        <span className="text-xs font-bold text-slate-800">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="pt-4 flex flex-wrap items-center gap-4">
