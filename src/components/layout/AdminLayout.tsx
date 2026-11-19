@@ -233,8 +233,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { name: "Clinical Pillars & Care", href: "/admin/about?tab=pillars" },
       ],
     },
-    { name: "Facility Gallery", href: "/admin/gallery", icon: ImageIcon },
-    { name: "Clinical Programs", href: "/admin/services", icon: Brain },
+    { name: "Gallery", href: "/admin/gallery", icon: ImageIcon },
+    { name: "Services Program", href: "/admin/services", icon: Brain },
     { name: "Navbar & Visibility", href: "/admin/navigation", icon: Sliders },
   ];
 
