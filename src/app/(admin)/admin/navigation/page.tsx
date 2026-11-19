@@ -267,9 +267,9 @@ export default function AdminNavigationPage() {
                     { key: "about", label: "About Clinic Preview", desc: "Founding clinical mission" },
                     { key: "careApproach", label: "Care Approach Section", desc: "RBA philosophy & pillars" },
                     { key: "services", label: "Core Services Cards", desc: "ABA, Speech, OT cards" },
-                    { key: "testimonials", label: "Parent Testimonials", desc: "Family reviews & ratings" },
                     { key: "process", label: "Intake Process Steps", desc: "How families start therapy" },
                     { key: "gallery", label: "Sensory Gym Gallery", desc: "Facility photos preview" },
+                    { key: "testimonials", label: "Parent Testimonials", desc: "Family reviews above footer" },
                   ].map((sec) => {
                     const isVisible = sections[sec.key as keyof SectionsVisibility];
                     return (
@@ -367,9 +367,9 @@ export default function AdminNavigationPage() {
                     { key: "about", label: "2. About Clinic" },
                     { key: "careApproach", label: "3. Care Approach" },
                     { key: "services", label: "4. Services Cards" },
-                    { key: "testimonials", label: "5. Parent Reviews" },
-                    { key: "process", label: "6. Clinical Process" },
-                    { key: "gallery", label: "7. Sensory Gallery" },
+                    { key: "process", label: "5. Clinical Process" },
+                    { key: "gallery", label: "6. Sensory Gallery" },
+                    { key: "testimonials", label: "7. Parent Reviews (Above Footer)" },
                   ].map((s) => {
                     const isVisible = sections[s.key as keyof SectionsVisibility];
                     return (

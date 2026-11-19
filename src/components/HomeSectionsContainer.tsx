@@ -43,9 +43,9 @@ export default function HomeSectionsContainer() {
       {sections.about && <AboutSection />}
       {sections.careApproach && <CareApproachSection />}
       {sections.services && <ServicesGrid limit={4} />}
-      {sections.testimonials !== false && <Testimonials />}
       {sections.process && <OurApproachProcess />}
       {sections.gallery && <HomeGalleryPreview />}
+      {sections.testimonials !== false && <Testimonials />}
     </div>
   );
 }
