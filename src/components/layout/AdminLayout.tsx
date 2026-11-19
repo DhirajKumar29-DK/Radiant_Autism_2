@@ -235,7 +235,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     },
     { name: "Gallery", href: "/admin/gallery", icon: ImageIcon },
     { name: "Services Program", href: "/admin/services", icon: Brain },
-    { name: "Navbar & Visibility", href: "/admin/navigation", icon: Sliders },
+    { name: "Page Structure", href: "/admin/navigation", icon: Sliders },
   ];
 
   const handleLogout = async () => {

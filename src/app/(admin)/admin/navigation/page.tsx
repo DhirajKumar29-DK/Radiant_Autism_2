@@ -132,7 +132,7 @@ export default function AdminNavigationPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              UI & Navbar Visibility Controller
+              Page Structure & Navigation
             </h1>
             <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-extrabold text-xs">
               Live Website Controls

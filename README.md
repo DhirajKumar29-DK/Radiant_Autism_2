@@ -134,7 +134,7 @@ Radiant/
   * `Hero Section` &rarr; `/admin/hero` (Active state rendered in Radiant Blue)
   * `Gallery` &rarr; `/admin/gallery` (Direct link, category filters are managed on-page)
   * `Services Program` &rarr; `/admin/services` (Direct link, program creation button is on-page)
-  * `Navbar & Visibility` &rarr; `/admin/navigation`
+  * `Page Structure` &rarr; `/admin/navigation`
 * **Dropdown Accordion:**
   * **ONLY `About Section`** features an expandable submenu:
     1. `Overview & Mission` (`/admin/about?tab=overview`)
@@ -259,6 +259,6 @@ npm start
 
 1. **Git Remote Sync:** Always ensure the remote origin is `https://github.com/DhirajKumar29-DK/Radiant_Autism_2.git` before pushing.
 2. **Design System Adherence:** The primary brand color is **Radiant Blue (`#2563eb`)**. Amber or yellow highlights must not be applied to action buttons or active navigation states.
-3. **Sidebar Architecture:** Only `About Section` contains child links. All other navigation nodes (`Dashboard`, `Blogs`, `Inquiries`, `Hero Section`, `Gallery`, `Services Program`, `Navbar & Visibility`) must remain single direct links.
+3. **Sidebar Architecture:** Only `About Section` contains child links. All other navigation nodes (`Dashboard`, `Blogs`, `Inquiries`, `Hero Section`, `Gallery`, `Services Program`, `Page Structure`) must remain single direct links.
 4. **Deactivation Behavior:** Route deactivation in `/admin/navigation` is enforced server-side via `src/lib/page-visibility.ts`, routing visitors directly to the full-page 404 experience.
 5. **Production Verification:** Execute `npm run build` prior to committing to ensure strict TypeScript validation across all static and dynamic routes.
