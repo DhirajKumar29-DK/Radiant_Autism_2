@@ -1,7 +1,16 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { UploadCloud, Link as LinkIcon, X, Loader2, ImageIcon, Check } from "lucide-react";
+import Image from "next/image";
+import {
+  UploadCloud,
+  Link as LinkIcon,
+  X,
+  Loader2,
+  ImageIcon,
+  CheckCircle2,
+  Trash2,
+} from "lucide-react";
 
 interface ImageUploadFieldProps {
   label: string;
@@ -16,10 +25,13 @@ export default function ImageUploadField({
   label,
   value,
   onChange,
-  placeholder = "e.g. /hero_child_therapy.jpg or https://...",
+  placeholder = "https://images.unsplash.com/... or paste direct web image link",
   helpText,
   required = false,
 }: ImageUploadFieldProps) {
+  // Mode switcher: "upload" or "url"
+  // Default to "url" if value looks like a full URL, otherwise "upload"
+  const [mode, setMode] = useState<"upload" | "url">("upload");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -87,63 +99,82 @@ export default function ImageUploadField({
   };
 
   return (
-    <div className="space-y-2.5 text-xs">
-      {/* Field Label */}
-      <div className="flex items-center justify-between">
-        <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-          {label} {required && <span className="text-rose-500">*</span>}
-        </label>
-        {value && (
-          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-            ✓ Image Linked
+    <div className="space-y-2 text-xs">
+      {/* Top Header Bar with Label & Tab Switcher (Upload File vs Image URL) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <label className="font-extrabold text-slate-800 uppercase tracking-wider text-[11px] flex items-center gap-2">
+          <ImageIcon className="w-4 h-4 text-rose-500 shrink-0" />
+          <span>
+            {label} {required && <span className="text-rose-500">*</span>}
           </span>
-        )}
+        </label>
+
+        {/* Pill Segmented Switcher */}
+        <div className="inline-flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200/70 shrink-0">
+          <button
+            type="button"
+            onClick={() => setMode("upload")}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+              mode === "upload"
+                ? "bg-white text-slate-900 shadow-xs"
+                : "text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            <UploadCloud className="w-3.5 h-3.5" />
+            <span>Upload File</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setMode("url")}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+              mode === "url"
+                ? "bg-white text-slate-900 shadow-xs"
+                : "text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            <LinkIcon className="w-3.5 h-3.5" />
+            <span>Image URL</span>
+          </button>
+        </div>
       </div>
 
-      {/* Main Upload Box */}
-      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
-        {/* Thumbnail Preview */}
-        <div className="sm:col-span-4 relative aspect-16/10 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 group">
-          {value ? (
-            <>
-              <img
-                src={value}
-                alt={label}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/about_center_photo.jpg";
-                }}
-              />
+      {/* Input or Upload Area Based on Selected Mode */}
+      {mode === "url" ? (
+        <div className="space-y-2">
+          <div className="relative">
+            <input
+              type="text"
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder={placeholder}
+              className="w-full p-3 bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 rounded-2xl font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-xs"
+            />
+            {value && (
               <button
                 type="button"
                 onClick={() => onChange("")}
-                className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-950/70 text-white hover:bg-rose-600 transition-colors opacity-0 group-hover:opacity-100"
-                title="Remove image"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-600 transition-colors p-1"
+                title="Clear URL"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
-            </>
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 gap-1 p-2">
-              <ImageIcon className="w-6 h-6 stroke-1 text-slate-300" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">No Photo</span>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-
-        {/* Dual Mode: Option 1 (Upload File) + Option 2 (Direct URL Input) */}
-        <div className="sm:col-span-8 space-y-2.5">
-          {/* Option 1: File Upload Box */}
+      ) : (
+        <div className="space-y-2">
+          {/* File Upload Dropzone */}
           <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            className={`border-2 border-dashed rounded-2xl p-3.5 transition-all flex flex-col items-center justify-center text-center cursor-pointer ${
+            onClick={() => fileInputRef.current?.click()}
+            className={`border-2 border-dashed rounded-2xl p-4 transition-all flex flex-col items-center justify-center text-center cursor-pointer ${
               isDragging
                 ? "border-blue-500 bg-blue-50/50"
                 : "border-slate-200 bg-slate-50/80 hover:bg-white hover:border-blue-300"
             }`}
-            onClick={() => fileInputRef.current?.click()}
           >
             <input
               ref={fileInputRef}
@@ -154,65 +185,81 @@ export default function ImageUploadField({
             />
 
             {isUploading ? (
-              <div className="flex flex-col items-center gap-1.5 py-1">
-                <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
-                <span className="text-[11px] font-bold text-slate-600">
-                  Uploading file from system...
+              <div className="flex flex-col items-center gap-1.5 py-2">
+                <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+                <span className="text-xs font-bold text-slate-700">
+                  Uploading image from computer...
                 </span>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-1 py-0.5">
-                <div className="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                  <UploadCloud className="w-4 h-4" />
+              <div className="flex items-center gap-3 py-1">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <UploadCloud className="w-5 h-5" />
                 </div>
-                <div>
-                  <span className="text-xs font-black text-blue-600 hover:text-blue-700">
-                    Click to choose file from computer
-                  </span>
+                <div className="text-left">
+                  <p className="text-xs font-black text-blue-600 hover:text-blue-700">
+                    Click to choose image file from computer
+                  </p>
                   <p className="text-[10px] text-slate-400 font-medium">
-                    or drag & drop here (JPG, PNG, WEBP, SVG)
+                    or drag & drop file here (JPG, PNG, WEBP, SVG)
                   </p>
                 </div>
               </div>
             )}
           </div>
-
-          {/* Divider with text */}
-          <div className="flex items-center gap-2">
-            <div className="flex-1 border-t border-slate-200" />
-            <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 bg-white px-1">
-              OR ENTER IMAGE URL / PATH
-            </span>
-            <div className="flex-1 border-t border-slate-200" />
-          </div>
-
-          {/* Option 2: Direct URL / Path input (ALWAYS VISIBLE) */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-              <LinkIcon className="w-3.5 h-3.5" />
-            </div>
-            <input
-              type="text"
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              placeholder={placeholder}
-              className="w-full pl-9 pr-3 py-2 bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 rounded-xl font-mono text-[11px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-            />
-          </div>
-
-          {uploadError && (
-            <p className="text-[11px] font-bold text-rose-600 animate-in fade-in">
-              {uploadError}
-            </p>
-          )}
-
-          {helpText && (
-            <p className="text-[10px] text-slate-400 font-medium">
-              {helpText}
-            </p>
-          )}
         </div>
-      </div>
+      )}
+
+      {/* Upload Error Banner */}
+      {uploadError && (
+        <p className="text-[11px] font-bold text-rose-600 animate-in fade-in">
+          {uploadError}
+        </p>
+      )}
+
+      {/* Linked Image Preview Bar (If image exists) */}
+      {value && (
+        <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 border border-slate-200/90 gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 relative shrink-0">
+              <img
+                src={value}
+                alt="Preview"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "/about_center_photo.jpg";
+                }}
+              />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span className="text-[11px] font-extrabold text-slate-800">
+                  Image Ready
+                </span>
+              </div>
+              <p className="text-[10px] font-mono text-slate-500 truncate max-w-xs sm:max-w-md">
+                {value}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="p-1.5 rounded-xl bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 transition-colors shrink-0"
+            title="Remove image"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {helpText && (
+        <p className="text-[10px] text-slate-400 font-medium">
+          {helpText}
+        </p>
+      )}
     </div>
   );
 }
