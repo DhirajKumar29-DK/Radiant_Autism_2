@@ -25,6 +25,7 @@ interface SectionsVisibility {
   about: boolean;
   careApproach: boolean;
   services: boolean;
+  testimonials?: boolean;
   process: boolean;
   gallery: boolean;
 }
@@ -36,6 +37,7 @@ export default function AdminNavigationPage() {
     about: true,
     careApproach: true,
     services: true,
+    testimonials: true,
     process: true,
     gallery: true,
   });
@@ -265,6 +267,7 @@ export default function AdminNavigationPage() {
                     { key: "about", label: "About Clinic Preview", desc: "Founding clinical mission" },
                     { key: "careApproach", label: "Care Approach Section", desc: "RBA philosophy & pillars" },
                     { key: "services", label: "Core Services Cards", desc: "ABA, Speech, OT cards" },
+                    { key: "testimonials", label: "Parent Testimonials", desc: "Family reviews & ratings" },
                     { key: "process", label: "Intake Process Steps", desc: "How families start therapy" },
                     { key: "gallery", label: "Sensory Gym Gallery", desc: "Facility photos preview" },
                   ].map((sec) => {
@@ -364,8 +367,9 @@ export default function AdminNavigationPage() {
                     { key: "about", label: "2. About Clinic" },
                     { key: "careApproach", label: "3. Care Approach" },
                     { key: "services", label: "4. Services Cards" },
-                    { key: "process", label: "5. Clinical Process" },
-                    { key: "gallery", label: "6. Sensory Gallery" },
+                    { key: "testimonials", label: "5. Parent Reviews" },
+                    { key: "process", label: "6. Clinical Process" },
+                    { key: "gallery", label: "7. Sensory Gallery" },
                   ].map((s) => {
                     const isVisible = sections[s.key as keyof SectionsVisibility];
                     return (

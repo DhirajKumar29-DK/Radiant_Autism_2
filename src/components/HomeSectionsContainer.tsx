@@ -6,6 +6,7 @@ import AboutSection from "@/components/AboutSection";
 import CareApproachSection from "@/components/CareApproachSection";
 import OurApproachProcess from "@/components/OurApproachProcess";
 import ServicesGrid from "@/components/ServicesGrid";
+import Testimonials from "@/components/Testimonials";
 import HomeGalleryPreview from "@/components/HomeGalleryPreview";
 
 export default function HomeSectionsContainer() {
@@ -14,6 +15,7 @@ export default function HomeSectionsContainer() {
     about: true,
     careApproach: true,
     services: true,
+    testimonials: true,
     process: true,
     gallery: true,
   });
@@ -41,6 +43,7 @@ export default function HomeSectionsContainer() {
       {sections.about && <AboutSection />}
       {sections.careApproach && <CareApproachSection />}
       {sections.services && <ServicesGrid limit={4} />}
+      {sections.testimonials !== false && <Testimonials />}
       {sections.process && <OurApproachProcess />}
       {sections.gallery && <HomeGalleryPreview />}
     </div>

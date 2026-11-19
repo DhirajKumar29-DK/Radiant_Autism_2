@@ -134,6 +134,7 @@ Radiant/
   * `Hero Section` &rarr; `/admin/hero` (Active state rendered in Radiant Blue)
   * `Gallery` &rarr; `/admin/gallery` (Direct link, category filters are managed on-page)
   * `Services Program` &rarr; `/admin/services` (Direct link, program creation button is on-page)
+  * `Testimonials` &rarr; `/admin/testimonials` (Direct link, parent reviews & rating CRUD)
   * `Page Structure` &rarr; `/admin/navigation`
 * **Dropdown Accordion:**
   * **ONLY `About Section`** features an expandable submenu:
@@ -166,7 +167,13 @@ Radiant/
 * Configurable attributes: Program Title, URL Slug, Tagline, Card Badge Text, Badge Color Scheme, Display Order, Target Age Group, Session Format, Clinical Lead Supervisor, Short Summary, Detailed Clinical Overview, and Feature Bullet Points.
 * Toggle: `Publish to Live Website Catalog (Active)`.
 
-### 6.7 UI & Navbar Visibility Controller (`/admin/navigation`)
+### 6.7 Parent Reviews & Testimonials Manager (`/admin/testimonials`)
+* Comprehensive manager for parent reviews, star ratings (1 to 5 stars), therapy discipline tags, and child milestone reflections.
+* Integrated with `ImageUploadField` for parent photos or avatars (drag-and-drop file upload + direct URL).
+* Live toggle switch to publish or unpublish reviews from the homepage slider.
+* Styled card grid with real-time search, responsive pagination, and `ConfirmModal` for deletion.
+
+### 6.8 Page Structure & Visibility Controller (`/admin/navigation`)
 * Controls visibility of public header links and homepage section stacks.
 * **Server-Side Enforcement (`src/lib/page-visibility.ts`):**
   * Reads `SiteNavigation.navItemsJson`.
@@ -215,6 +222,7 @@ The Prisma schema (`prisma/schema.prisma`) uses MySQL and includes the following
 * **`TeamMember`:** Clinical team staff (`id`, `name`, `role`, `badge`, `image`, `bio`, `order`, `isActive`).
 * **`GalleryItem`:** Facility photos (`id`, `title`, `category`, `image`, `tag`, `isFeatured`, `order`, `isActive`).
 * **`BlogPost`:** Clinical articles (`id`, `title`, `slug`, `excerpt`, `content`, `coverImage`, `category`, `authorName`, `status`, `views`).
+* **`Testimonial`:** Parent reviews & ratings (`id`, `name`, `role`, `service`, `image`, `text`, `rating`, `displayOrder`, `isActive`).
 * **`SiteNavigation`:** Navbar links and homepage section visibility configuration (`id`, `navItemsJson`, `sectionsVisibilityJson`).
 
 ---
@@ -259,6 +267,6 @@ npm start
 
 1. **Git Remote Sync:** Always ensure the remote origin is `https://github.com/DhirajKumar29-DK/Radiant_Autism_2.git` before pushing.
 2. **Design System Adherence:** The primary brand color is **Radiant Blue (`#2563eb`)**. Amber or yellow highlights must not be applied to action buttons or active navigation states.
-3. **Sidebar Architecture:** Only `About Section` contains child links. All other navigation nodes (`Dashboard`, `Blogs`, `Inquiries`, `Hero Section`, `Gallery`, `Services Program`, `Page Structure`) must remain single direct links.
+3. **Sidebar Architecture:** Only `About Section` contains child links. All other navigation nodes (`Dashboard`, `Blogs`, `Inquiries`, `Hero Section`, `Gallery`, `Services Program`, `Testimonials`, `Page Structure`) must remain single direct links.
 4. **Deactivation Behavior:** Route deactivation in `/admin/navigation` is enforced server-side via `src/lib/page-visibility.ts`, routing visitors directly to the full-page 404 experience.
 5. **Production Verification:** Execute `npm run build` prior to committing to ensure strict TypeScript validation across all static and dynamic routes.

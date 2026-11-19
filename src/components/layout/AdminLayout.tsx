@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   User,
   ChevronDown,
+  MessageSquareQuote,
 } from "lucide-react";
 
 interface AdminUser {
@@ -235,6 +236,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     },
     { name: "Gallery", href: "/admin/gallery", icon: ImageIcon },
     { name: "Services Program", href: "/admin/services", icon: Brain },
+    { name: "Testimonials", href: "/admin/testimonials", icon: MessageSquareQuote },
     { name: "Page Structure", href: "/admin/navigation", icon: Sliders },
   ];
 
