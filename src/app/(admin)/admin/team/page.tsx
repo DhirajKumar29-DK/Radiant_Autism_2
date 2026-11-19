@@ -5,7 +5,7 @@ import Image from "next/image";
 import {
   Users,
   Plus,
-  Edit,
+  Edit3,
   Trash2,
   CheckCircle,
   XCircle,
@@ -13,11 +13,14 @@ import {
   AlertCircle,
   X,
   Save,
+  CheckCircle2,
   Award,
 } from "lucide-react";
 import AdminPagination from "@/components/common/AdminPagination";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import ImageUploadField from "@/components/admin/ImageUploadField";
+
+type StatusType = "ACTIVE" | "INACTIVE" | "DRAFT";
 
 interface TeamMember {
   id: string;
@@ -28,7 +31,10 @@ interface TeamMember {
   bio?: string | null;
   instagram?: string | null;
   order: number;
+  status: StatusType;
   isActive: boolean;
+  updatedAt?: string;
+  createdAt?: string;
 }
 
 export default function AdminTeamPage() {
@@ -37,13 +43,19 @@ export default function AdminTeamPage() {
   const [modalMode, setModalMode] = useState<"ADD" | "EDIT" | null>(null);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Pagination State
+  // Selection & Bulk Action
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const [deleteTargetIds, setDeleteTargetIds] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(6);
+  const [itemsPerPage, setItemsPerPage] = useState(8);
 
+  // Form State inside Modal
   const [formData, setFormData] = useState({
     name: "",
     role: "",
@@ -52,7 +64,7 @@ export default function AdminTeamPage() {
     bio: "",
     instagram: "",
     order: 0,
-    isActive: true,
+    status: "ACTIVE" as StatusType,
   });
 
   const fetchTeam = async () => {
@@ -61,7 +73,11 @@ export default function AdminTeamPage() {
       const res = await fetch("/api/admin/team");
       if (res.ok) {
         const data = await res.json();
-        setTeam(data.team || []);
+        const mapped: TeamMember[] = (data.team || []).map((m: any) => ({
+          ...m,
+          status: (m.status as StatusType) || (m.isActive ? "ACTIVE" : "INACTIVE"),
+        }));
+        setTeam(mapped);
       }
     } catch (err) {
       console.error("Failed to load team:", err);
@@ -83,9 +99,10 @@ export default function AdminTeamPage() {
       bio: "",
       instagram: "",
       order: team.length + 1,
-      isActive: true,
+      status: "ACTIVE",
     });
     setEditingMember(null);
+    setSaveSuccess(false);
     setModalMode("ADD");
   };
 
@@ -99,22 +116,51 @@ export default function AdminTeamPage() {
       bio: member.bio || "",
       instagram: member.instagram || "",
       order: member.order || 0,
-      isActive: member.isActive,
+      status: member.status || (member.isActive ? "ACTIVE" : "INACTIVE"),
     });
+    setSaveSuccess(false);
     setModalMode("EDIT");
   };
 
-  const handleToggleActive = async (member: TeamMember) => {
+  // Selection handlers
+  const toggleSelectAll = () => {
+    if (selectedIds.length === paginatedTeam.length && paginatedTeam.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(paginatedTeam.map((m) => m.id));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter((item) => item !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  // Quick cycle status from table
+  const cycleStatus = async (member: TeamMember) => {
+    const nextStatus: StatusType =
+      member.status === "ACTIVE"
+        ? "INACTIVE"
+        : member.status === "INACTIVE"
+        ? "DRAFT"
+        : "ACTIVE";
+
     try {
-      const updatedStatus = !member.isActive;
       const res = await fetch(`/api/admin/team/${member.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: updatedStatus }),
+        body: JSON.stringify({ status: nextStatus }),
       });
       if (res.ok) {
         setTeam((prev) =>
-          prev.map((item) => (item.id === member.id ? { ...item, isActive: updatedStatus } : item))
+          prev.map((item) =>
+            item.id === member.id
+              ? { ...item, status: nextStatus, isActive: nextStatus === "ACTIVE" }
+              : item
+          )
         );
       }
     } catch (err) {
@@ -122,9 +168,57 @@ export default function AdminTeamPage() {
     }
   };
 
+  // Trigger Delete confirmation for single or bulk
+  const confirmSingleDelete = (id: string) => {
+    setDeleteTargetIds([id]);
+    setIsConfirmDeleteOpen(true);
+  };
+
+  const confirmBulkDelete = () => {
+    if (selectedIds.length === 0) return;
+    setDeleteTargetIds(selectedIds);
+    setIsConfirmDeleteOpen(true);
+  };
+
+  const executeDelete = async () => {
+    if (deleteTargetIds.length === 0) return;
+    setIsDeleting(true);
+
+    try {
+      if (deleteTargetIds.length === 1) {
+        const id = deleteTargetIds[0];
+        const res = await fetch(`/api/admin/team/${id}`, {
+          method: "DELETE",
+        });
+        if (res.ok) {
+          setTeam((prev) => prev.filter((item) => item.id !== id));
+          setSelectedIds((prev) => prev.filter((item) => item !== id));
+        }
+      } else {
+        const res = await fetch("/api/admin/team", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: deleteTargetIds }),
+        });
+        if (res.ok) {
+          setTeam((prev) => prev.filter((item) => !deleteTargetIds.includes(item.id)));
+          setSelectedIds([]);
+        }
+      }
+      setIsConfirmDeleteOpen(false);
+      setDeleteTargetIds([]);
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Error deleting team member(s)");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSaveSuccess(false);
 
     try {
       if (modalMode === "ADD") {
@@ -134,10 +228,15 @@ export default function AdminTeamPage() {
           body: JSON.stringify(formData),
         });
         if (res.ok) {
-          fetchTeam();
-          setModalMode(null);
+          setSaveSuccess(true);
+          await fetchTeam();
+          setTimeout(() => {
+            setModalMode(null);
+            setSaveSuccess(false);
+          }, 1000);
         } else {
-          alert("Failed to create team member");
+          const err = await res.json().catch(() => ({}));
+          alert(err.error || "Failed to create team member");
         }
       } else if (modalMode === "EDIT" && editingMember) {
         const res = await fetch(`/api/admin/team/${editingMember.id}`, {
@@ -146,43 +245,100 @@ export default function AdminTeamPage() {
           body: JSON.stringify(formData),
         });
         if (res.ok) {
-          fetchTeam();
-          setModalMode(null);
+          setSaveSuccess(true);
+          await fetchTeam();
+          setTimeout(() => {
+            setModalMode(null);
+            setSaveSuccess(false);
+          }, 1000);
         } else {
-          alert("Failed to update team member");
+          const err = await res.json().catch(() => ({}));
+          alert(err.error || "Failed to update team member");
         }
       }
     } catch (err) {
       console.error("Submit error:", err);
+      alert("Network or server error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const formatUpdatedAt = (dateStr?: string) => {
+    if (!dateStr) return "Just now";
     try {
-      const res = await fetch(`/api/admin/team/${id}`, {
-        method: "DELETE",
+      const d = new Date(dateStr);
+      return d.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
       });
-      if (res.ok) {
-        setTeam((prev) => prev.filter((item) => item.id !== id));
-      }
-    } catch (err) {
-      console.error("Delete error:", err);
+    } catch {
+      return dateStr;
     }
   };
 
+  const renderStatusBadge = (st: StatusType, member: TeamMember) => {
+    switch (st) {
+      case "ACTIVE":
+        return (
+          <button
+            type="button"
+            onClick={() => cycleStatus(member)}
+            title="Click to cycle status (ACTIVE -> INACTIVE -> DRAFT)"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            ACTIVE
+          </button>
+        );
+      case "INACTIVE":
+        return (
+          <button
+            type="button"
+            onClick={() => cycleStatus(member)}
+            title="Click to cycle status (INACTIVE -> DRAFT -> ACTIVE)"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-slate-100 text-slate-600 border border-slate-300 hover:bg-slate-200 transition-colors cursor-pointer"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+            INACTIVE
+          </button>
+        );
+      case "DRAFT":
+        return (
+          <button
+            type="button"
+            onClick={() => cycleStatus(member)}
+            title="Click to cycle status (DRAFT -> ACTIVE -> INACTIVE)"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            DRAFT
+          </button>
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Paginated records
+  const totalItems = team.length;
+  const paginatedTeam = team.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
+      {/* Top Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              Clinical Team & Specialists
+              Clinical Leadership & Team
             </h1>
             <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-extrabold text-xs">
-              {team.length} Staff Members
+              {team.length} Clinicians
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-1">
@@ -190,321 +346,454 @@ export default function AdminTeamPage() {
           </p>
         </div>
 
-        <button
-          onClick={openAddModal}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold rounded-2xl shadow-lg shadow-blue-600/30 transition-all uppercase tracking-wider"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Clinical Staff</span>
-        </button>
-      </div>
+        <div className="flex items-center gap-3">
+          {selectedIds.length > 0 && (
+            <button
+              type="button"
+              onClick={confirmBulkDelete}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition-all cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4 text-rose-600" />
+              <span>Delete Selected ({selectedIds.length})</span>
+            </button>
+          )}
 
-      {/* Grid */}
-      {isLoading ? (
-        <div className="py-20 flex flex-col items-center justify-center space-y-3">
-          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-          <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">
-            Loading Clinical Staff...
-          </p>
-        </div>
-      ) : team.length === 0 ? (
-        <div className="bg-white p-16 rounded-3xl border border-slate-200 text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
-            <Users className="w-7 h-7" />
-          </div>
-          <h3 className="text-slate-900 font-bold text-base">No Clinical Staff Listed</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
-            Add your clinical director, behavior analysts, and therapy team members here.
-          </p>
           <button
+            type="button"
             onClick={openAddModal}
-            className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold rounded-2xl shadow-lg shadow-blue-600/30 transition-all uppercase tracking-wider cursor-pointer"
           >
-            Add First Staff Member
+            <Plus className="w-4 h-4 stroke-[3]" />
+            <span>Add Clinical Staff</span>
           </button>
         </div>
-      ) : (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {team.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((member) => (
-              <div
-                key={member.id}
-                className={`bg-white rounded-3xl border transition-all overflow-hidden flex flex-col justify-between ${
-                  member.isActive
-                    ? "border-slate-200/90 shadow-xs hover:shadow-md hover:border-blue-400"
-                    : "border-slate-200 opacity-60 bg-slate-50/50"
-                }`}
-              >
-                {/* Photo & Badge */}
-                <div className="relative h-60 w-full bg-slate-100 overflow-hidden group">
-                  <Image
-                    src={member.image || "/founder_portrait.jpg"}
-                    alt={member.name}
-                    fill
-                    className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+      </div>
 
-                  <div className="absolute top-3 right-3">
-                    <button
-                      onClick={() => handleToggleActive(member)}
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm backdrop-blur-md ${
-                        member.isActive
-                          ? "bg-emerald-500/90 text-white"
-                          : "bg-rose-500/90 text-white"
+      {/* Main Table View (FabFit Style with Select All & Actions) */}
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+        {isLoading ? (
+          <div className="py-20 flex flex-col items-center justify-center space-y-3">
+            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">
+              Loading Clinical Team...
+            </p>
+          </div>
+        ) : team.length === 0 ? (
+          <div className="bg-white p-16 rounded-3xl text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+              <Users className="w-7 h-7" />
+            </div>
+            <h3 className="text-slate-900 font-bold text-base">No Clinical Staff Listed</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
+              Add your clinical director, behavior analysts, and therapy team members here.
+            </p>
+            <button
+              type="button"
+              onClick={openAddModal}
+              className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold"
+            >
+              Add First Staff Member
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                  <th className="py-4 pl-6 pr-2 w-10">
+                    <input
+                      type="checkbox"
+                      checked={
+                        paginatedTeam.length > 0 &&
+                        paginatedTeam.every((m) => selectedIds.includes(m.id))
+                      }
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                  </th>
+                  <th className="py-4 px-3 w-12 text-center">#</th>
+                  <th className="py-4 px-6">Clinician</th>
+                  <th className="py-4 px-6">Role & Title</th>
+                  <th className="py-4 px-6">Specialty Badge</th>
+                  <th className="py-4 px-6">Instagram</th>
+                  <th className="py-4 px-6">Status</th>
+                  <th className="py-4 px-6">Updated</th>
+                  <th className="py-4 px-6 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {paginatedTeam.map((member, idx) => {
+                  const rowNumber = (currentPage - 1) * itemsPerPage + idx + 1;
+                  const isSelected = selectedIds.includes(member.id);
+
+                  return (
+                    <tr
+                      key={member.id}
+                      className={`hover:bg-slate-50/50 transition-colors ${
+                        isSelected ? "bg-blue-50/30" : ""
                       }`}
                     >
-                      {member.isActive ? (
-                        <>
-                          <CheckCircle className="w-3 h-3" />
-                          <span>Visible</span>
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="w-3 h-3" />
-                          <span>Hidden</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
+                      <td className="py-4 pl-6 pr-2">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelectOne(member.id)}
+                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
+                      </td>
 
-                  <div className="absolute bottom-3 left-3 right-3 text-white">
-                    {member.badge && (
-                      <span className="inline-block px-2.5 py-0.5 rounded-full bg-blue-500/90 text-white text-[9px] font-black uppercase tracking-wider mb-1 shadow-xs">
-                        {member.badge}
-                      </span>
-                    )}
-                    <h3 className="font-black text-base line-clamp-1">{member.name}</h3>
-                    <p className="text-xs text-blue-200 font-bold line-clamp-1">{member.role}</p>
-                  </div>
-                </div>
+                      <td className="py-4 px-3 font-bold text-slate-400 text-center">
+                        {rowNumber}
+                      </td>
 
-                {/* Bio & Actions */}
-                <div className="p-4 space-y-3 flex-1 flex flex-col justify-between text-xs">
-                  <p className="text-slate-600 font-medium line-clamp-3 leading-relaxed">
-                    {member.bio || "No biography details provided."}
-                  </p>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 relative shrink-0">
+                            <Image
+                              src={member.image || "/founder_portrait.jpg"}
+                              alt={member.name}
+                              fill
+                              className="object-cover object-top"
+                            />
+                          </div>
+                          <div>
+                            <p className="font-extrabold text-slate-900">{member.name}</p>
+                            <p className="text-[11px] text-slate-400 font-medium line-clamp-1">
+                              Order: {member.order}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
 
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-slate-400 font-bold">
-                      Order #{member.order}
-                    </span>
+                      <td className="py-4 px-6 font-bold text-slate-700 max-w-xs">
+                        <p className="line-clamp-2">{member.role}</p>
+                      </td>
 
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => openEditModal(member)}
-                        className="p-1.5 rounded-xl text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                        title="Edit Staff Member"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setMemberToDelete(member);
-                          setIsDeleteOpen(true);
-                        }}
-                        className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                        title="Delete Staff Member"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+                      <td className="py-4 px-6">
+                        {member.badge ? (
+                          <span className="inline-block px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px] font-extrabold border border-blue-100">
+                            {member.badge}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-medium">—</span>
+                        )}
+                      </td>
+
+                      <td className="py-4 px-6">
+                        {member.instagram ? (
+                          <a
+                            href={
+                              member.instagram.startsWith("http")
+                                ? member.instagram
+                                : `https://instagram.com/${member.instagram.replace(/^@/, "")}`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-pink-50 text-pink-700 hover:bg-pink-100 border border-pink-200/60 font-bold text-[11px] transition-colors"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-pink-500" />
+                            <span>
+                              {member.instagram.startsWith("http")
+                                ? `@${member.instagram.split("/").filter(Boolean).pop()}`
+                                : member.instagram}
+                            </span>
+                          </a>
+                        ) : (
+                          <span className="text-slate-400 font-medium">—</span>
+                        )}
+                      </td>
+
+                      {/* Dynamic Status with Quick Cycle */}
+                      <td className="py-4 px-6">
+                        {renderStatusBadge(member.status, member)}
+                      </td>
+
+                      <td className="py-4 px-6 font-semibold text-slate-500">
+                        {formatUpdatedAt(member.updatedAt || member.createdAt)}
+                      </td>
+
+                      {/* Dual Action: Edit + Delete */}
+                      <td className="py-4 px-6 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(member)}
+                            title="Edit Clinician"
+                            className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                            <span className="text-[11px]">Edit</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => confirmSingleDelete(member.id)}
+                            title="Soft Delete Clinician"
+                            className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span className="text-[11px]">Delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
+        )}
 
-          <AdminPagination
-            currentPage={currentPage}
-            totalItems={team.length}
-            itemsPerPage={itemsPerPage}
-            onPageChange={setCurrentPage}
-            onItemsPerPageChange={(val) => {
-              setItemsPerPage(val);
-              setCurrentPage(1);
-            }}
-          />
-        </div>
-      )}
+        {/* Pagination */}
+        {totalItems > itemsPerPage && (
+          <div className="p-4 border-t border-slate-100 flex justify-end">
+            <AdminPagination
+              currentPage={currentPage}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
+      </div>
 
-      {/* Delete Confirmation Modal */}
-      <ConfirmModal
-        isOpen={isDeleteOpen}
-        onClose={() => {
-          setIsDeleteOpen(false);
-          setMemberToDelete(null);
-        }}
-        onConfirm={async () => {
-          if (memberToDelete) {
-            await handleDelete(memberToDelete.id);
-            setIsDeleteOpen(false);
-            setMemberToDelete(null);
-          }
-        }}
-        title="Remove Staff Member?"
-        message={`Are you sure you want to remove ${memberToDelete?.name}? This clinical team profile will be permanently deleted from the database.`}
-        confirmText="Remove Clinician"
-        cancelText="Cancel"
-      />
-
-      {/* Add / Edit Modal */}
+      {/* POPUP MODAL (Add / Edit) */}
       {modalMode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-xl max-h-[88vh] flex flex-col overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200 my-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-slate-100">
             {/* Modal Header */}
-            <div className="px-6 sm:px-8 py-4 sm:py-5 border-b border-slate-200 flex justify-between items-center bg-white shrink-0 sticky top-0 z-20">
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-blue-600">
-                  {modalMode === "ADD" ? "New Clinical Clinician" : "Edit Clinician Profile"}
-                </span>
-                <h2 className="text-xl font-black text-slate-900 tracking-tight mt-0.5">
-                  {modalMode === "ADD" ? "Add Clinical Staff Member" : `Edit: ${formData.name}`}
-                </h2>
+                <h3 className="text-lg font-black text-slate-900 tracking-tight">
+                  {modalMode === "ADD" ? "Add Clinical Staff Member" : "Edit Clinician Profile"}
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">
+                  Update credentials, portrait photo, clinical role, Instagram profile, and bio.
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => setModalMode(null)}
-                className="p-2 rounded-2xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Modal Form */}
-            <form id="team-modal-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-4 text-xs">
+            {/* Modal Body Form */}
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+              {/* STATUS SELECTOR (Active / Inactive / Draft) */}
               <div className="space-y-1.5">
                 <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                  Full Name & Title *
+                  Staff Status
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                  placeholder="e.g. Jesenia Duran, RBA"
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                />
+                <div className="grid grid-cols-3 gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/70">
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, status: "ACTIVE" }))}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                      formData.status === "ACTIVE"
+                        ? "bg-white text-emerald-700 shadow-xs border border-emerald-200"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span>ACTIVE</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, status: "INACTIVE" }))}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                      formData.status === "INACTIVE"
+                        ? "bg-white text-slate-700 shadow-xs border border-slate-300"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-slate-400" />
+                    <span>INACTIVE</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, status: "DRAFT" }))}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                      formData.status === "DRAFT"
+                        ? "bg-white text-amber-700 shadow-xs border border-amber-200"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                    <span>DRAFT</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Name & Role */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Clinical Role / Position *
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g. Dr. Sarah Jenkins, BCBA-D"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                    Clinical Role / Designation *
                   </label>
                   <input
                     type="text"
                     required
                     value={formData.role}
                     onChange={(e) => setFormData((prev) => ({ ...prev, role: e.target.value }))}
-                    placeholder="e.g. Clinical Director & Lead RBA"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    placeholder="e.g. Registered Behaviour Analyst (RBA)"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
                   />
                 </div>
+              </div>
 
+              {/* Specialty Badge & Instagram */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Clinical Credential Badge
+                    Specialty Tag / Badge
                   </label>
                   <input
                     type="text"
                     value={formData.badge}
                     onChange={(e) => setFormData((prev) => ({ ...prev, badge: e.target.value }))}
-                    placeholder="e.g. Registered Behaviour Analyst (Ontario)"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    placeholder="e.g. Clinical Director, Senior RBA"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
                   />
                 </div>
-              </div>
-
-              <div className="space-y-4">
-                <ImageUploadField
-                  label="Portrait Photo"
-                  value={formData.image || ""}
-                  onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))}
-                  placeholder="/founder_portrait.jpg"
-                  helpText="Upload a clinical staff portrait from your system (computer) or enter a URL."
-                />
 
                 <div className="space-y-1.5">
                   <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Display Order #
+                    Instagram Handle or URL
                   </label>
                   <input
-                    type="number"
-                    value={formData.order}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, order: Number(e.target.value) }))}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-slate-800"
+                    type="text"
+                    value={formData.instagram}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, instagram: e.target.value }))}
+                    placeholder="e.g. @sarah_aba or https://instagram.com/..."
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
                   />
                 </div>
               </div>
 
+              {/* Portrait Image (Dual-mode upload: File / URL) */}
+              <ImageUploadField
+                label="Clinician Portrait Photo"
+                value={formData.image}
+                onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))}
+                recommendedSize="800 x 1000px (Portrait 4:5)"
+              />
+
+              {/* Order */}
               <div className="space-y-1.5">
                 <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                  Clinical Biography & Credentials
+                  Sort / Display Order
+                </label>
+                <input
+                  type="number"
+                  value={formData.order}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, order: parseInt(e.target.value) || 0 }))
+                  }
+                  className="w-32 p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+                />
+              </div>
+
+              {/* Bio / Description */}
+              <div className="space-y-1.5">
+                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                  Detailed Biography / Clinical Focus
                 </label>
                 <textarea
                   rows={4}
                   value={formData.bio}
                   onChange={(e) => setFormData((prev) => ({ ...prev, bio: e.target.value }))}
-                  placeholder="Detail years of experience, university credentials, certifications, specialties..."
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  placeholder="Describe clinician's credentials, years of experience, specialized therapy domains, and passion for pediatric developmental care..."
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-normal text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm leading-relaxed"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px] flex items-center justify-between">
-                  <span>Instagram Profile / Link</span>
-                  <span className="text-[10px] text-slate-400 font-medium lowercase">optional</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.instagram}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, instagram: e.target.value }))}
-                  placeholder="e.g. https://instagram.com/clinician or @clinician"
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                />
-              </div>
+              {/* Modal Footer */}
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <div>
+                  {saveSuccess && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 animate-in fade-in">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Saved Successfully!
+                    </span>
+                  )}
+                </div>
 
-              <div className="flex items-center gap-3 pt-2">
-                <input
-                  type="checkbox"
-                  id="activeMemberToggle"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, isActive: e.target.checked }))}
-                  className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300"
-                />
-                <label htmlFor="activeMemberToggle" className="font-bold text-slate-800 cursor-pointer">
-                  Display profile on public website team roster
-                </label>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setModalMode(null)}
+                    className="px-5 py-2.5 rounded-2xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-blue-600/25 transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        <span>{modalMode === "ADD" ? "Add Staff Member" : "Save Changes"}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
-
-            {/* Modal Footer (Sticky Bottom) */}
-            <div className="px-6 sm:px-8 py-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 shrink-0">
-              <button
-                type="button"
-                onClick={() => setModalMode(null)}
-                className="px-5 py-2.5 rounded-2xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                form="team-modal-form"
-                disabled={isSubmitting}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold uppercase tracking-wider shadow-md shadow-blue-600/30 transition-all disabled:opacity-50"
-              >
-                {isSubmitting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Save className="w-4 h-4" />
-                )}
-                <span>{modalMode === "ADD" ? "Add Clinician" : "Save Changes"}</span>
-              </button>
-            </div>
           </div>
         </div>
       )}
+
+      {/* CONFIRM DELETE MODAL */}
+      <ConfirmModal
+        isOpen={isConfirmDeleteOpen}
+        onClose={() => setIsConfirmDeleteOpen(false)}
+        onConfirm={executeDelete}
+        title={
+          deleteTargetIds.length > 1
+            ? `Delete ${deleteTargetIds.length} Staff Members?`
+            : "Delete Clinician Profile?"
+        }
+        message={
+          deleteTargetIds.length > 1
+            ? `Are you sure you want to soft delete the selected ${deleteTargetIds.length} clinicians? They will be deactivated and removed from public view.`
+            : "Are you sure you want to soft delete this clinician? Their profile will be hidden from the website."
+        }
+        confirmText={
+          isDeleting
+            ? "Deleting..."
+            : deleteTargetIds.length > 1
+            ? `Delete ${deleteTargetIds.length} Members`
+            : "Delete Clinician"
+        }
+        variant="danger"
+      />
     </div>
   );
 }

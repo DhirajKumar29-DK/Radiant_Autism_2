@@ -3,19 +3,23 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import ImageUploadField from "@/components/admin/ImageUploadField";
+import ConfirmModal from "@/components/common/ConfirmModal";
 import {
   Plus,
-  Edit,
   Edit3,
   Trash2,
   X,
   Loader2,
   CheckCircle,
   Building,
-  Sparkles,
   Save,
   CheckCircle2,
+  AlertCircle,
+  Eye,
+  EyeOff,
 } from "lucide-react";
+
+type StatusType = "ACTIVE" | "INACTIVE" | "DRAFT";
 
 interface AboutData {
   id?: string;
@@ -24,30 +28,35 @@ interface AboutData {
   description: string;
   centerImage: string;
   highlights: string[];
+  status: StatusType;
   updatedAt?: string;
 }
 
 export default function AdminAboutOverviewPage() {
   const [about, setAbout] = useState<AboutData>({
     badgeText: "ABOUT RADIANT AUTISM & SKILL CENTER",
-    title: "Compassionate, Modern & Person-Centered Care For Every Child",
+    title: "Dedicated Clinical Support for Every Child's Unique Potential",
     description:
-      "At Radiant Autism Center, our mission is simple: to help every child build meaningful communication, motor independence, and daily life confidence through gentle, evidence-based care.",
+      "Radiant Autism & Skill Center is a multidisciplinary pediatric clinic dedicated to delivering research-backed, compassionate developmental therapies.",
     centerImage: "/about_center_photo.jpg",
     highlights: [
-      "Registered Behaviour Analyst (RBA, Ontario) Supervision",
-      "OAP Covered Programs & Services",
-      "Person-Centered & Compassionate ABA Therapy",
-      "Integrated Speech & Occupational Therapy Support",
-      "Tailored 1:1 and Group Skill Building",
-      "Close Family Collaboration & Parent Guidance",
+      "100% RBA Supervised Clinical Programs",
+      "Eligible for Ontario Autism Program (OAP) funding",
+      "Individualized 1:1 and peer-group social rooms",
+      "Family-centered progress reporting and collaboration",
     ],
+    status: "ACTIVE",
   });
 
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Checkbox Selection & Bulk Actions
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form State inside Modal
   const [formData, setFormData] = useState({
@@ -56,6 +65,7 @@ export default function AdminAboutOverviewPage() {
     description: "",
     centerImage: "/about_center_photo.jpg",
     highlights: [] as string[],
+    status: "ACTIVE" as StatusType,
   });
   const [newHighlight, setNewHighlight] = useState("");
 
@@ -76,10 +86,9 @@ export default function AdminAboutOverviewPage() {
             }
           }
 
-          // Single description: use description1 or description1 + description2
           const singleDesc =
             data.about.description1 || data.about.description2
-              ? [data.about.description1, data.about.description2].filter(Boolean).join(" ")
+              ? [data.about.description1, data.about.description2].filter(Boolean).join("\n\n")
               : "";
 
           setAbout({
@@ -89,6 +98,7 @@ export default function AdminAboutOverviewPage() {
             description: singleDesc,
             centerImage: data.about.centerImage || "/about_center_photo.jpg",
             highlights: parsedHighlights,
+            status: (data.about.status as StatusType) || "ACTIVE",
             updatedAt: data.about.updatedAt,
           });
         }
@@ -111,6 +121,7 @@ export default function AdminAboutOverviewPage() {
       description: about.description,
       centerImage: about.centerImage || "/about_center_photo.jpg",
       highlights: [...about.highlights],
+      status: about.status || "ACTIVE",
     });
     setNewHighlight("");
     setSaveSuccess(false);
@@ -133,6 +144,70 @@ export default function AdminAboutOverviewPage() {
     }));
   };
 
+  // Selection handlers
+  const toggleSelectAll = () => {
+    if (selectedIds.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds([about.id || "about-1"]);
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter((item) => item !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  // Quick Status Toggle directly from table
+  const cycleStatus = async () => {
+    const nextStatus: StatusType =
+      about.status === "ACTIVE"
+        ? "INACTIVE"
+        : about.status === "INACTIVE"
+        ? "DRAFT"
+        : "ACTIVE";
+
+    try {
+      const res = await fetch("/api/admin/about", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (res.ok) {
+        setAbout((prev) => ({ ...prev, status: nextStatus }));
+      }
+    } catch (err) {
+      console.error("Failed to toggle status:", err);
+    }
+  };
+
+  // Delete / Soft-Delete Handler
+  const executeDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const res = await fetch("/api/admin/about", {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setAbout((prev) => ({
+          ...prev,
+          status: "INACTIVE",
+        }));
+        setSelectedIds([]);
+        setIsConfirmOpen(false);
+      } else {
+        alert("Failed to delete about section");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setIsSaving(true);
@@ -145,9 +220,11 @@ export default function AdminAboutOverviewPage() {
         body: JSON.stringify({
           badgeText: formData.badgeText,
           title: formData.title,
-          description: formData.description, // Single description saved
+          description: formData.description,
           centerImage: formData.centerImage,
           highlights: formData.highlights,
+          status: formData.status,
+          isDeleted: false,
         }),
       });
 
@@ -187,6 +264,49 @@ export default function AdminAboutOverviewPage() {
     }
   };
 
+  const renderStatusBadge = (st: StatusType) => {
+    switch (st) {
+      case "ACTIVE":
+        return (
+          <button
+            type="button"
+            onClick={cycleStatus}
+            title="Click to cycle status (ACTIVE -> INACTIVE -> DRAFT)"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            ACTIVE
+          </button>
+        );
+      case "INACTIVE":
+        return (
+          <button
+            type="button"
+            onClick={cycleStatus}
+            title="Click to cycle status (INACTIVE -> DRAFT -> ACTIVE)"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-slate-100 text-slate-600 border border-slate-300 hover:bg-slate-200 transition-colors cursor-pointer"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+            INACTIVE
+          </button>
+        );
+      case "DRAFT":
+        return (
+          <button
+            type="button"
+            onClick={cycleStatus}
+            title="Click to cycle status (DRAFT -> ACTIVE -> INACTIVE)"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            DRAFT
+          </button>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Top Header Bar */}
@@ -200,17 +320,31 @@ export default function AdminAboutOverviewPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={openEditModal}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-blue-600/25 transition-all"
-        >
-          <Plus className="w-4 h-4 stroke-[3]" />
-          <span>Edit About Entry</span>
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Bulk Delete Button when items selected */}
+          {selectedIds.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setIsConfirmOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition-all animate-in fade-in cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4 text-rose-600" />
+              <span>Delete Selected ({selectedIds.length})</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={openEditModal}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-blue-600/25 transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4 stroke-[3]" />
+            <span>Edit About Entry</span>
+          </button>
+        </div>
       </div>
 
-      {/* Main Table View (FabFit Style) */}
+      {/* Main Table View (FabFit Style with Select All & Actions) */}
       <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
         {isLoading ? (
           <div className="py-20 flex flex-col items-center justify-center space-y-3">
@@ -224,7 +358,15 @@ export default function AdminAboutOverviewPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
-                  <th className="py-4 px-6 w-12 text-center">#</th>
+                  <th className="py-4 pl-6 pr-2 w-10">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length > 0}
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                  </th>
+                  <th className="py-4 px-4 w-12 text-center">#</th>
                   <th className="py-4 px-6">Badge</th>
                   <th className="py-4 px-6">Heading</th>
                   <th className="py-4 px-6">Center Image</th>
@@ -235,7 +377,16 @@ export default function AdminAboutOverviewPage() {
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
                 <tr className="hover:bg-slate-50/50 transition-colors">
-                  <td className="py-4 px-6 font-bold text-slate-400 text-center">1</td>
+                  <td className="py-4 pl-6 pr-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(about.id || "about-1")}
+                      onChange={() => toggleSelectOne(about.id || "about-1")}
+                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                  </td>
+
+                  <td className="py-4 px-4 font-bold text-slate-400 text-center">1</td>
 
                   <td className="py-4 px-6 font-bold text-slate-900 max-w-xs">
                     <span className="inline-block px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px] font-extrabold border border-blue-100">
@@ -261,27 +412,38 @@ export default function AdminAboutOverviewPage() {
                     </div>
                   </td>
 
+                  {/* Dynamic Status with Quick Cycle */}
                   <td className="py-4 px-6">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      ACTIVE
-                    </span>
+                    {renderStatusBadge(about.status)}
                   </td>
 
                   <td className="py-4 px-6 font-semibold text-slate-500">
                     {formatUpdatedAt(about.updatedAt)}
                   </td>
 
+                  {/* Dual Action Buttons: Edit AND Delete */}
                   <td className="py-4 px-6 text-right">
-                    <button
-                      type="button"
-                      onClick={openEditModal}
-                      title="Edit About Overview"
-                      className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                      <span className="text-[11px]">Edit</span>
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={openEditModal}
+                        title="Edit About Overview"
+                        className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                        <span className="text-[11px]">Edit</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsConfirmOpen(true)}
+                        title="Soft Delete / Deactivate About Entry"
+                        className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span className="text-[11px]">Delete</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -301,7 +463,7 @@ export default function AdminAboutOverviewPage() {
                   Edit About Overview & Mission
                 </h3>
                 <p className="text-xs text-slate-500 font-medium">
-                  Update the clinic headline, single mission description, photo, and highlights.
+                  Update status, clinic headline, single mission description, photo, and highlights.
                 </p>
               </div>
               <button
@@ -315,6 +477,53 @@ export default function AdminAboutOverviewPage() {
 
             {/* Modal Body Form */}
             <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 space-y-5">
+              {/* STATUS SELECTOR (Active / Inactive / Draft) */}
+              <div className="space-y-1.5">
+                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                  Content Status
+                </label>
+                <div className="grid grid-cols-3 gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/70">
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, status: "ACTIVE" }))}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                      formData.status === "ACTIVE"
+                        ? "bg-white text-emerald-700 shadow-xs border border-emerald-200"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span>ACTIVE</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, status: "INACTIVE" }))}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                      formData.status === "INACTIVE"
+                        ? "bg-white text-slate-700 shadow-xs border border-slate-300"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-slate-400" />
+                    <span>INACTIVE</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, status: "DRAFT" }))}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                      formData.status === "DRAFT"
+                        ? "bg-white text-amber-700 shadow-xs border border-amber-200"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                    <span>DRAFT</span>
+                  </button>
+                </div>
+              </div>
+
               <div className="space-y-1.5">
                 <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
                   Badge Tagline
@@ -342,28 +551,28 @@ export default function AdminAboutOverviewPage() {
                 />
               </div>
 
-              {/* SINGLE DESCRIPTION (No Paragraph 1 and 2 split) */}
+              {/* SINGLE DESCRIPTION (Preserves all paragraph line breaks) */}
               <div className="space-y-1.5">
                 <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                  Description *
+                  Description * (Press Enter for Paragraph Spacing)
                 </label>
                 <textarea
-                  rows={4}
+                  rows={5}
                   required
                   value={formData.description}
                   onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                  placeholder="At Radiant Autism Center, our mission is simple: to help every child build meaningful communication, motor independence, and daily life confidence through gentle, evidence-based care..."
+                  placeholder="Type your introductory mission statements. Press Enter twice for separate paragraphs..."
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm leading-relaxed"
                 />
               </div>
 
-              {/* Center Photo Upload */}
+              {/* Center Photo Upload with New Segmented Switcher */}
               <ImageUploadField
                 label="Center Showcase Photo"
                 value={formData.centerImage}
                 onChange={(url) => setFormData((prev) => ({ ...prev, centerImage: url }))}
                 placeholder="/about_center_photo.jpg"
-                helpText="Upload a high-resolution clinic photo from your system (computer)."
+                helpText="Upload a high-resolution clinic photo from your computer or provide a URL."
               />
 
               {/* Clinical Highlights Bullets */}
@@ -474,6 +683,19 @@ export default function AdminAboutOverviewPage() {
           </div>
         </div>
       )}
+
+      {/* CONFIRM DELETION MODAL */}
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={executeDelete}
+        isDeleting={isDeleting}
+        itemCount={selectedIds.length > 0 ? selectedIds.length : 1}
+        title="Soft Delete About Content?"
+        message="Are you sure you want to deactivate and soft delete this About section? It will be marked as INACTIVE and hidden from public display."
+        confirmText="Confirm Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 }

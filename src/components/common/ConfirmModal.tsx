@@ -15,6 +15,7 @@ interface ConfirmModalProps {
   confirmText?: string;
   cancelText?: string;
   isDeleting?: boolean;
+  variant?: "danger" | "warning" | "info" | string;
 }
 
 export default function ConfirmModal({
@@ -29,6 +30,7 @@ export default function ConfirmModal({
   confirmText,
   cancelText,
   isDeleting = false,
+  variant = "danger",
 }: ConfirmModalProps) {
   if (!isOpen) return null;
 

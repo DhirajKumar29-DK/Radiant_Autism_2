@@ -5,6 +5,7 @@ import { verifyAdminToken } from "@/modules/auth/auth.service";
 export async function GET() {
   try {
     const services = await prisma.service.findMany({
+      where: { isDeleted: false },
       orderBy: [{ order: "asc" }, { createdAt: "asc" }],
     });
 
@@ -44,6 +45,7 @@ export async function POST(request: NextRequest) {
       whoNeedsThis,
       keyBenefits,
       faqs,
+      status,
       isActive,
       order,
     } = body;
@@ -73,6 +75,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const finalStatus = status || (isActive === false ? "INACTIVE" : "ACTIVE");
+    const finalIsActive = finalStatus === "ACTIVE";
+
     const newService = await prisma.service.create({
       data: {
         slug: cleanSlug,
@@ -100,7 +105,9 @@ export async function POST(request: NextRequest) {
         keyBenefits:
           typeof keyBenefits === "string" ? keyBenefits : JSON.stringify(keyBenefits || []),
         faqs: typeof faqs === "string" ? faqs : JSON.stringify(faqs || []),
-        isActive: isActive !== undefined ? Boolean(isActive) : true,
+        status: finalStatus,
+        isActive: finalIsActive,
+        isDeleted: false,
         order: order ? Number(order) : 0,
       },
     });
@@ -108,6 +115,44 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, service: newService });
   } catch (error: unknown) {
     console.error("Error creating service:", error);
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const token = request.cookies.get("admin_token")?.value;
+    if (!token || !verifyAdminToken(token)) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const { ids } = body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "IDs array is required for bulk delete" },
+        { status: 400 }
+      );
+    }
+
+    // Soft delete
+    await prisma.service.updateMany({
+      where: { id: { in: ids } },
+      data: {
+        isDeleted: true,
+        isActive: false,
+        status: "INACTIVE",
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Successfully deleted ${ids.length} clinical service(s)`,
+    });
+  } catch (error: unknown) {
+    console.error("Bulk delete services error:", error);
     const message = error instanceof Error ? error.message : "Internal Server Error";
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }

@@ -5,6 +5,7 @@ import { verifyAdminToken } from "@/modules/auth/auth.service";
 export async function GET() {
   try {
     const gallery = await prisma.galleryItem.findMany({
+      where: { isDeleted: false },
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     });
 
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, category, image, tag, isFeatured, order, isActive } = body;
+    const { title, category, image, tag, isFeatured, order, status, isActive } = body;
 
     if (!title || !image) {
       return NextResponse.json(
@@ -32,6 +33,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const finalStatus = status || (isActive === false ? "INACTIVE" : "ACTIVE");
+    const finalIsActive = finalStatus === "ACTIVE";
 
     const newItem = await prisma.galleryItem.create({
       data: {
@@ -41,13 +45,53 @@ export async function POST(request: NextRequest) {
         tag: tag || null,
         isFeatured: isFeatured !== undefined ? Boolean(isFeatured) : false,
         order: order ? Number(order) : 0,
-        isActive: isActive !== undefined ? Boolean(isActive) : true,
+        status: finalStatus,
+        isActive: finalIsActive,
+        isDeleted: false,
       },
     });
 
     return NextResponse.json({ success: true, item: newItem });
   } catch (error: unknown) {
     console.error("Error creating gallery item:", error);
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const token = request.cookies.get("admin_token")?.value;
+    if (!token || !verifyAdminToken(token)) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const { ids } = body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "IDs array is required for bulk delete" },
+        { status: 400 }
+      );
+    }
+
+    // Soft delete
+    await prisma.galleryItem.updateMany({
+      where: { id: { in: ids } },
+      data: {
+        isDeleted: true,
+        isActive: false,
+        status: "INACTIVE",
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Successfully deleted ${ids.length} gallery photo(s)`,
+    });
+  } catch (error: unknown) {
+    console.error("Bulk delete gallery error:", error);
     const message = error instanceof Error ? error.message : "Internal Server Error";
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }

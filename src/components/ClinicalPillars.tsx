@@ -69,7 +69,8 @@ export default function ClinicalPillars() {
             try {
               const parsed = JSON.parse(data.about.pillarsJson);
               if (Array.isArray(parsed) && parsed.length > 0) {
-                setPillars(parsed);
+                const activeOnly = parsed.filter((p: any) => !p.status || p.status === "ACTIVE");
+                setPillars(activeOnly.length > 0 ? activeOnly : parsed);
               }
             } catch (e) {
               console.error("Error parsing pillarsJson:", e);

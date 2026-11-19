@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
   BookOpen,
   Plus,
-  Edit,
+  Edit3,
   Trash2,
   ExternalLink,
   CheckCircle,
@@ -20,11 +20,14 @@ import {
   Tag,
   Search,
   FileText,
+  CheckCircle2,
 } from "lucide-react";
 import AdminPagination from "@/components/common/AdminPagination";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import RichTextEditor from "@/components/admin/RichTextEditor";
 import ImageUploadField from "@/components/admin/ImageUploadField";
+
+type BlogStatusType = "PUBLISHED" | "DRAFT";
 
 interface BlogPost {
   id: string;
@@ -33,12 +36,23 @@ interface BlogPost {
   excerpt?: string | null;
   content: string;
   authorName: string;
+  authorRole?: string | null;
   category: string;
   coverImage?: string | null;
-  status: string;
+  status: BlogStatusType;
   publishedAt?: string | null;
   createdAt: string;
+  updatedAt?: string;
 }
+
+const CATEGORIES = [
+  "ALL",
+  "ABA Therapy",
+  "OAP Funding",
+  "Speech & Language",
+  "Occupational Therapy",
+  "Parent Guides",
+];
 
 export default function AdminBlogsPage() {
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
@@ -46,17 +60,21 @@ export default function AdminBlogsPage() {
   const [modalMode, setModalMode] = useState<"ADD" | "EDIT" | null>(null);
   const [editingBlog, setEditingBlog] = useState<BlogPost | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [blogToDelete, setBlogToDelete] = useState<BlogPost | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Search and Category Filter State (FabFit Style)
+  // Search & Category Filter
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
-  const CATEGORIES = ["ALL", "ABA Therapy", "OAP Funding", "Speech & Language", "Occupational Therapy", "Parent Guides"];
+
+  // Selection & Bulk Action
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const [deleteTargetIds, setDeleteTargetIds] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(6);
+  const [itemsPerPage, setItemsPerPage] = useState(8);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -64,9 +82,10 @@ export default function AdminBlogsPage() {
     excerpt: "",
     content: "",
     author: "Jesenia Duran, RBA",
+    authorRole: "Registered Clinical Supervisor",
     category: "ABA Therapy",
     image: "/hero_child_therapy.jpg",
-    isPublished: true,
+    status: "PUBLISHED" as BlogStatusType,
   });
 
   const fetchBlogs = async () => {
@@ -75,7 +94,11 @@ export default function AdminBlogsPage() {
       const res = await fetch("/api/admin/blogs");
       if (res.ok) {
         const data = await res.json();
-        setBlogs(data.blogs || []);
+        const mapped: BlogPost[] = (data.blogs || []).map((b: any) => ({
+          ...b,
+          status: (b.status as BlogStatusType) || "DRAFT",
+        }));
+        setBlogs(mapped);
       }
     } catch (err) {
       console.error("Failed to load blogs:", err);
@@ -95,11 +118,13 @@ export default function AdminBlogsPage() {
       excerpt: "",
       content: "",
       author: "Jesenia Duran, RBA",
+      authorRole: "Registered Clinical Supervisor",
       category: "ABA Therapy",
       image: "/hero_child_therapy.jpg",
-      isPublished: true,
+      status: "PUBLISHED",
     });
     setEditingBlog(null);
+    setSaveSuccess(false);
     setModalMode("ADD");
   };
 
@@ -111,24 +136,64 @@ export default function AdminBlogsPage() {
       excerpt: blog.excerpt || "",
       content: blog.content,
       author: blog.authorName,
+      authorRole: blog.authorRole || "Registered Clinical Supervisor",
       category: blog.category,
       image: blog.coverImage || "/hero_child_therapy.jpg",
-      isPublished: blog.status === "PUBLISHED",
+      status: blog.status,
     });
+    setSaveSuccess(false);
     setModalMode("EDIT");
   };
 
-  const handleTogglePublished = async (blog: BlogPost) => {
+  // Filter & Search
+  const filteredBlogs = useMemo(() => {
+    return blogs.filter((b) => {
+      const matchCat = selectedCategory === "ALL" || b.category === selectedCategory;
+      const matchSearch =
+        !searchQuery.trim() ||
+        b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        b.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        b.authorName.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchCat && matchSearch;
+    });
+  }, [blogs, selectedCategory, searchQuery]);
+
+  const totalPages = Math.ceil(filteredBlogs.length / itemsPerPage);
+  const paginatedBlogs = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredBlogs.slice(start, start + itemsPerPage);
+  }, [filteredBlogs, currentPage, itemsPerPage]);
+
+  // Selection handlers
+  const toggleSelectAll = () => {
+    if (paginatedBlogs.length > 0 && paginatedBlogs.every((b) => selectedIds.includes(b.id))) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(paginatedBlogs.map((b) => b.id));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter((item) => item !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  // Quick cycle status
+  const cycleStatus = async (blog: BlogPost) => {
+    const nextStatus: BlogStatusType = blog.status === "PUBLISHED" ? "DRAFT" : "PUBLISHED";
+
     try {
-      const nextStatus = blog.status === "PUBLISHED" ? "DRAFT" : "PUBLISHED";
       const res = await fetch(`/api/admin/blogs/${blog.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isPublished: nextStatus === "PUBLISHED" }),
+        body: JSON.stringify({ status: nextStatus }),
       });
       if (res.ok) {
         setBlogs((prev) =>
-          prev.map((item) => (item.id === blog.id ? { ...item, status: nextStatus } : item))
+          prev.map((b) => (b.id === blog.id ? { ...b, status: nextStatus } : b))
         );
       }
     } catch (err) {
@@ -136,20 +201,84 @@ export default function AdminBlogsPage() {
     }
   };
 
+  // Delete handlers
+  const confirmSingleDelete = (id: string) => {
+    setDeleteTargetIds([id]);
+    setIsConfirmDeleteOpen(true);
+  };
+
+  const confirmBulkDelete = () => {
+    if (selectedIds.length === 0) return;
+    setDeleteTargetIds(selectedIds);
+    setIsConfirmDeleteOpen(true);
+  };
+
+  const executeDelete = async () => {
+    if (deleteTargetIds.length === 0) return;
+    setIsDeleting(true);
+
+    try {
+      if (deleteTargetIds.length === 1) {
+        const id = deleteTargetIds[0];
+        const res = await fetch(`/api/admin/blogs/${id}`, {
+          method: "DELETE",
+        });
+        if (res.ok) {
+          setBlogs((prev) => prev.filter((item) => item.id !== id));
+          setSelectedIds((prev) => prev.filter((item) => item !== id));
+        }
+      } else {
+        const res = await fetch("/api/admin/blogs", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: deleteTargetIds }),
+        });
+        if (res.ok) {
+          setBlogs((prev) => prev.filter((item) => !deleteTargetIds.includes(item.id)));
+          setSelectedIds([]);
+        }
+      }
+      setIsConfirmDeleteOpen(false);
+      setDeleteTargetIds([]);
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Error deleting article(s)");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSaveSuccess(false);
 
     try {
+      const payload = {
+        title: formData.title,
+        slug: formData.slug || formData.title.toLowerCase().replace(/[^a-z0-9]/g, "-"),
+        excerpt: formData.excerpt,
+        content: formData.content,
+        authorName: formData.author,
+        authorRole: formData.authorRole,
+        category: formData.category,
+        image: formData.image,
+        status: formData.status,
+      };
+
       if (modalMode === "ADD") {
         const res = await fetch("/api/admin/blogs", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(payload),
         });
         if (res.ok) {
-          fetchBlogs();
-          setModalMode(null);
+          setSaveSuccess(true);
+          await fetchBlogs();
+          setTimeout(() => {
+            setModalMode(null);
+            setSaveSuccess(false);
+          }, 1000);
         } else {
           const errData = await res.json();
           alert(errData.error || "Failed to create article");
@@ -158,11 +287,15 @@ export default function AdminBlogsPage() {
         const res = await fetch(`/api/admin/blogs/${editingBlog.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(payload),
         });
         if (res.ok) {
-          fetchBlogs();
-          setModalMode(null);
+          setSaveSuccess(true);
+          await fetchBlogs();
+          setTimeout(() => {
+            setModalMode(null);
+            setSaveSuccess(false);
+          }, 1000);
         } else {
           const errData = await res.json();
           alert(errData.error || "Failed to update article");
@@ -170,77 +303,120 @@ export default function AdminBlogsPage() {
       }
     } catch (err) {
       console.error("Submit error:", err);
+      alert("Network or server error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const formatDate = (dateStr?: string | null) => {
+    if (!dateStr) return "Draft";
     try {
-      const res = await fetch(`/api/admin/blogs/${id}`, {
-        method: "DELETE",
+      const d = new Date(dateStr);
+      return d.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
       });
-      if (res.ok) {
-        setBlogs((prev) => prev.filter((item) => item.id !== id));
-      }
-    } catch (err) {
-      console.error("Delete error:", err);
+    } catch {
+      return dateStr;
     }
   };
 
-  const filteredBlogs = blogs.filter((b) => {
-    const matchesCategory =
-      selectedCategory === "ALL" ||
-      b.category?.toLowerCase() === selectedCategory.toLowerCase();
-    const matchesSearch =
-      !searchQuery.trim() ||
-      b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (b.excerpt && b.excerpt.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      b.category.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
-
-  const paginatedBlogs = filteredBlogs.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const renderStatusBadge = (st: BlogStatusType, blog: BlogPost) => {
+    if (st === "PUBLISHED") {
+      return (
+        <button
+          type="button"
+          onClick={() => cycleStatus(blog)}
+          title="Click to toggle status (PUBLISHED <-> DRAFT)"
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          PUBLISHED
+        </button>
+      );
+    }
+    return (
+      <button
+        type="button"
+        onClick={() => cycleStatus(blog)}
+        title="Click to toggle status (DRAFT <-> PUBLISHED)"
+        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+        DRAFT
+      </button>
+    );
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Top Header (FabFit Style) */}
+      {/* Top Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
-              <FileText className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-                Blog Articles Manager
-              </h1>
-            </div>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+              Clinical Articles & Blog
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-extrabold text-xs">
+              {blogs.length} Articles
+            </span>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            Create, edit, and publish SEO-optimized clinical articles & parent guides.
+            Create, edit, and publish SEO-optimized clinical articles, therapy guides, and parent resources.
           </p>
         </div>
 
-        <button
-          onClick={openAddModal}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-950 hover:bg-slate-900 text-white text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>+ Create New Article</span>
-        </button>
+        <div className="flex items-center gap-3">
+          {selectedIds.length > 0 && (
+            <button
+              type="button"
+              onClick={confirmBulkDelete}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition-all cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4 text-rose-600" />
+              <span>Delete Selected ({selectedIds.length})</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={openAddModal}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold rounded-2xl shadow-lg shadow-blue-600/30 transition-all uppercase tracking-wider cursor-pointer"
+          >
+            <Plus className="w-4 h-4 stroke-[3]" />
+            <span>Create Article</span>
+          </button>
+        </div>
       </div>
 
-      {/* FabFit Style Search & Filter Row */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
-        {/* Search Input */}
-        <div className="relative flex-1 max-w-md">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-            <Search className="w-4 h-4" />
-          </div>
+      {/* Filter and Search Bar */}
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+        {/* Category Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => {
+                setSelectedCategory(cat);
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all shrink-0 cursor-pointer ${
+                selectedCategory === cat
+                  ? "bg-blue-600 text-white shadow-xs"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Search */}
+        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 w-full sm:w-64">
+          <Search className="w-3.5 h-3.5 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
@@ -248,248 +424,232 @@ export default function AdminBlogsPage() {
               setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
-            placeholder="Search by title or category..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            placeholder="Search article or author..."
+            className="bg-transparent text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none w-full"
           />
-        </div>
-
-        {/* Category Filter Pills (Image 4 Style) */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-          {CATEGORIES.map((cat) => {
-            const isSelected = selectedCategory === cat;
-            return (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => {
-                  setSelectedCategory(cat);
-                  setCurrentPage(1);
-                }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                  isSelected
-                    ? "bg-slate-950 text-white shadow-xs"
-                    : "bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200"
-                }`}
-              >
-                {cat}
-              </button>
-            );
-          })}
         </div>
       </div>
 
-      {/* Grid */}
-      {isLoading ? (
-        <div className="py-20 flex flex-col items-center justify-center space-y-3">
-          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-          <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">
-            Loading Articles...
-          </p>
-        </div>
-      ) : filteredBlogs.length === 0 ? (
-        <div className="bg-white p-16 rounded-3xl border border-slate-200 text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
-            <BookOpen className="w-7 h-7" />
+      {/* Main Table View (FabFit Style) */}
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+        {isLoading ? (
+          <div className="py-20 flex flex-col items-center justify-center space-y-3">
+            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">
+              Loading Articles...
+            </p>
           </div>
-          <h3 className="text-slate-900 font-bold text-base">
-            {searchQuery || selectedCategory !== "ALL"
-              ? "No Matching Articles Found"
-              : "No Articles Published Yet"}
-          </h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
-            {searchQuery || selectedCategory !== "ALL"
-              ? "Try adjusting your search terms or selecting another category filter."
-              : "Publish your first pediatric therapy guide or parent resource."}
-          </p>
-          {(searchQuery || selectedCategory !== "ALL") && (
+        ) : filteredBlogs.length === 0 ? (
+          <div className="bg-white p-16 rounded-3xl text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+              <BookOpen className="w-7 h-7" />
+            </div>
+            <h3 className="text-slate-900 font-bold text-base">No Articles Found</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
+              Publish your first clinical therapy article or parent education guide.
+            </p>
             <button
-              onClick={() => {
-                setSearchQuery("");
-                setSelectedCategory("ALL");
-              }}
-              className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 cursor-pointer"
+              type="button"
+              onClick={openAddModal}
+              className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold"
             >
-              Clear Filters
+              Write First Article
             </button>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {paginatedBlogs.map((blog) => {
-              const isPublished = blog.status === "PUBLISHED";
-              return (
-                <div
-                  key={blog.id}
-                  className={`bg-white rounded-3xl border transition-all overflow-hidden flex flex-col justify-between ${
-                    isPublished
-                      ? "border-slate-200/90 shadow-xs hover:shadow-md hover:border-blue-400"
-                      : "border-slate-200 opacity-60 bg-slate-50/50"
-                  }`}
-                >
-                  {/* Image Frame */}
-                  <div className="relative aspect-16/10 w-full bg-slate-100 overflow-hidden group">
-                    <Image
-                      src={blog.coverImage || "/hero_child_therapy.jpg"}
-                      alt={blog.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
-
-                    <div className="absolute top-3 left-3">
-                      <span className="px-3 py-1 rounded-full bg-slate-900/90 text-white text-[10px] font-black uppercase tracking-wider shadow-sm backdrop-blur-xs">
-                        {blog.category}
-                      </span>
-                    </div>
-
-                    <div className="absolute top-3 right-3">
-                      <button
-                        onClick={() => handleTogglePublished(blog)}
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm backdrop-blur-md cursor-pointer ${
-                          isPublished
-                            ? "bg-emerald-500/90 text-white"
-                            : "bg-amber-500/90 text-white"
-                        }`}
-                      >
-                        {isPublished ? (
-                          <>
-                            <CheckCircle className="w-3 h-3" />
-                            <span>Published</span>
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="w-3 h-3" />
-                            <span>Draft</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    <div className="absolute bottom-3 left-3 right-3 text-white">
-                      <span className="text-[10px] font-mono uppercase text-blue-200 font-bold">
-                        /{blog.slug}
-                      </span>
-                      <h3 className="font-black text-base line-clamp-1">{blog.title}</h3>
-                    </div>
-                  </div>
-
-                  {/* Body */}
-                  <div className="p-5 space-y-3 flex-1 flex flex-col justify-between text-xs">
-                    <div className="space-y-2">
-                      <p className="text-slate-600 font-medium line-clamp-2 leading-relaxed">
-                        {blog.excerpt || (blog.content ? blog.content.replace(/<[^>]*>/g, "").slice(0, 100) + "..." : "No excerpt")}
-                      </p>
-
-                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                        <span className="flex items-center gap-1 font-bold">
-                          <User className="w-3 h-3 text-slate-400" />
-                          {blog.authorName}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-slate-400" />
-                          {new Date(blog.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Actions Footer */}
-                    <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                      <Link
-                        href={`/blogs/${blog.slug}`}
-                        target="_blank"
-                        className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-blue-600 hover:text-blue-700 transition-colors uppercase tracking-wider"
-                      >
-                        <span>Read Article</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </Link>
-
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => openEditModal(blog)}
-                          className="p-2 rounded-xl text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-                          title="Edit Article"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setBlogToDelete(blog);
-                            setIsDeleteOpen(true);
-                          }}
-                          className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                          title="Delete Article"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
           </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                  <th className="py-4 pl-6 pr-2 w-10">
+                    <input
+                      type="checkbox"
+                      checked={
+                        paginatedBlogs.length > 0 &&
+                        paginatedBlogs.every((b) => selectedIds.includes(b.id))
+                      }
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                  </th>
+                  <th className="py-4 px-3 w-12 text-center">#</th>
+                  <th className="py-4 px-6">Article</th>
+                  <th className="py-4 px-6">Category</th>
+                  <th className="py-4 px-6">Author</th>
+                  <th className="py-4 px-6">Status</th>
+                  <th className="py-4 px-6">Published</th>
+                  <th className="py-4 px-6 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {paginatedBlogs.map((blog, idx) => {
+                  const rowNumber = (currentPage - 1) * itemsPerPage + idx + 1;
+                  const isSelected = selectedIds.includes(blog.id);
 
-          <AdminPagination
-            currentPage={currentPage}
-            totalItems={filteredBlogs.length}
-            itemsPerPage={itemsPerPage}
-            onPageChange={setCurrentPage}
-            onItemsPerPageChange={(val) => {
-              setItemsPerPage(val);
-              setCurrentPage(1);
-            }}
-            pageSizeOptions={[6, 9, 12, 24]}
-          />
-        </div>
-      )}
+                  return (
+                    <tr
+                      key={blog.id}
+                      className={`hover:bg-slate-50/50 transition-colors ${
+                        isSelected ? "bg-blue-50/30" : ""
+                      }`}
+                    >
+                      <td className="py-4 pl-6 pr-2">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelectOne(blog.id)}
+                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
+                      </td>
 
-      {/* Delete Confirmation Modal */}
-      <ConfirmModal
-        isOpen={isDeleteOpen}
-        onClose={() => {
-          setIsDeleteOpen(false);
-          setBlogToDelete(null);
-        }}
-        onConfirm={async () => {
-          if (blogToDelete) {
-            await handleDelete(blogToDelete.id);
-            setIsDeleteOpen(false);
-            setBlogToDelete(null);
-          }
-        }}
-        title="Delete Clinical Article?"
-        message={`Are you sure you want to delete "${blogToDelete?.title}"? This article will be permanently removed from the website catalog and database.`}
-        confirmText="Delete Article"
-        cancelText="Cancel"
-      />
+                      <td className="py-4 px-3 font-bold text-slate-400 text-center">
+                        {rowNumber}
+                      </td>
 
-      {/* Add / Edit Modal */}
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 relative shrink-0">
+                            <Image
+                              src={blog.coverImage || "/hero_child_therapy.jpg"}
+                              alt={blog.title}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          <div>
+                            <p className="font-extrabold text-slate-900 line-clamp-1">{blog.title}</p>
+                            <p className="text-[11px] text-blue-600 font-mono font-medium">
+                              /{blog.slug}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="py-4 px-6">
+                        <span className="inline-block px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px] font-extrabold border border-blue-100">
+                          {blog.category}
+                        </span>
+                      </td>
+
+                      <td className="py-4 px-6 font-semibold text-slate-700">
+                        {blog.authorName}
+                      </td>
+
+                      {/* Status Badge with Click-to-Cycle */}
+                      <td className="py-4 px-6">
+                        {renderStatusBadge(blog.status, blog)}
+                      </td>
+
+                      <td className="py-4 px-6 font-semibold text-slate-500">
+                        {formatDate(blog.publishedAt || blog.createdAt)}
+                      </td>
+
+                      {/* Dual Action: Edit + Delete */}
+                      <td className="py-4 px-6 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(blog)}
+                            title="Edit Article"
+                            className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                            <span className="text-[11px]">Edit</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => confirmSingleDelete(blog.id)}
+                            title="Soft Delete Article"
+                            className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span className="text-[11px]">Delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="p-4 border-t border-slate-100 flex justify-end">
+            <AdminPagination
+              currentPage={currentPage}
+              totalItems={filteredBlogs.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* POPUP MODAL (Add / Edit) */}
       {modalMode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-4xl max-h-[88vh] flex flex-col overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200 my-auto">
-            {/* Modal Header (Sticky Top) */}
-            <div className="px-6 sm:px-8 py-4 sm:py-5 border-b border-slate-200 flex justify-between items-center bg-white shrink-0 sticky top-0 z-20">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[92vh] overflow-hidden flex flex-col border border-slate-100">
+            {/* Modal Header */}
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-blue-600">
-                  {modalMode === "ADD" ? "New Publication" : "Edit Publication"}
-                </span>
-                <h2 className="text-xl font-black text-slate-900 tracking-tight mt-0.5">
-                  {modalMode === "ADD" ? "Write Clinical Article" : `Edit: ${formData.title}`}
-                </h2>
+                <h3 className="text-lg font-black text-slate-900 tracking-tight">
+                  {modalMode === "ADD" ? "Create New Article" : "Edit Article"}
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">
+                  Update title, slug, category, author info, cover image, and article content.
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => setModalMode(null)}
-                className="p-2 rounded-2xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Modal Form Body (Scrollable) */}
-            <form id="blog-modal-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-5 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Modal Body Form */}
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+              {/* STATUS SELECTOR (PUBLISHED / DRAFT) */}
+              <div className="space-y-1.5">
+                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                  Publishing Status
+                </label>
+                <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/70">
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, status: "PUBLISHED" }))}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                      formData.status === "PUBLISHED"
+                        ? "bg-white text-emerald-700 shadow-xs border border-emerald-200"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span>PUBLISHED</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, status: "DRAFT" }))}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                      formData.status === "DRAFT"
+                        ? "bg-white text-amber-700 shadow-xs border border-amber-200"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                    <span>DRAFT</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Title & Slug */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
                     Article Title *
@@ -499,21 +659,15 @@ export default function AdminBlogsPage() {
                     required
                     value={formData.title}
                     onChange={(e) => {
-                      const newTitle = e.target.value;
+                      const t = e.target.value;
                       setFormData((prev) => ({
                         ...prev,
-                        title: newTitle,
-                        slug:
-                          modalMode === "ADD"
-                            ? newTitle
-                                .toLowerCase()
-                                .replace(/[^a-z0-9]+/g, "-")
-                                .replace(/^-|-$/g, "")
-                            : prev.slug,
+                        title: t,
+                        slug: prev.slug || t.toLowerCase().replace(/[^a-z0-9]/g, "-"),
                       }));
                     }}
-                    placeholder="e.g. Navigating Ontario Autism Program (OAP) Funding"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    placeholder="e.g. Understanding Early Signs of Autism in Toddlers"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
 
@@ -526,120 +680,147 @@ export default function AdminBlogsPage() {
                     required
                     value={formData.slug}
                     onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
-                    placeholder="e.g. navigating-oap-funding"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-slate-800"
+                    placeholder="e.g. early-signs-of-autism"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Category & Author */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Category
+                    Category *
                   </label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   >
-                    <option value="ABA Therapy">ABA Therapy</option>
-                    <option value="Speech & Language">Speech & Language</option>
-                    <option value="Sensory & Motor">Sensory & Motor</option>
-                    <option value="Parent Guides">Parent Guides</option>
-                    <option value="OAP Funding">OAP Funding</option>
+                    {CATEGORIES.filter((c) => c !== "ALL").map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Author Name / Clinician
+                    Author Name
                   </label>
                   <input
                     type="text"
                     value={formData.author}
                     onChange={(e) => setFormData((prev) => ({ ...prev, author: e.target.value }))}
                     placeholder="e.g. Jesenia Duran, RBA"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
-
-              <div className="space-y-4">
-                <ImageUploadField
-                  label="Featured Cover Image"
-                  value={formData.image || ""}
-                  onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))}
-                  placeholder="/hero_child_therapy.jpg"
-                  helpText="Upload a featured cover image from your system (computer) or enter a URL."
-                />
-              </div>
               </div>
 
+              {/* Cover Image */}
+              <ImageUploadField
+                label="Article Cover Media (16:9 Aspect Ratio)"
+                value={formData.image}
+                onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))}
+                recommendedSize="1200 x 675px"
+              />
+
+              {/* Excerpt */}
               <div className="space-y-1.5">
                 <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                  Article Excerpt / Summary
+                  Article Excerpt / Meta Description
                 </label>
                 <textarea
                   rows={2}
                   value={formData.excerpt}
                   onChange={(e) => setFormData((prev) => ({ ...prev, excerpt: e.target.value }))}
-                  placeholder="Short introductory summary displayed on catalog cards..."
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-700"
+                  placeholder="Short engaging preview summary displayed on article cards and search results..."
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-normal text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
 
-              {/* FabFit Style Rich Text Editor */}
+              {/* Full Content */}
               <div className="space-y-1.5">
                 <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                  Full Article Content (Rich Text Editor) *
+                  Full Article Content (Markdown / HTML) *
                 </label>
                 <RichTextEditor
                   value={formData.content}
                   onChange={(val) => setFormData((prev) => ({ ...prev, content: val }))}
-                  placeholder="Write the clinical article content with headers, colors, bullet points, formatting..."
-                  minHeight="280px"
+                  placeholder="Write the comprehensive clinical article, case examples, parent tips, and key takeaways here..."
                 />
               </div>
 
-              <div className="flex items-center gap-3 pt-2">
-                <input
-                  type="checkbox"
-                  id="publishedToggle"
-                  checked={formData.isPublished}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, isPublished: e.target.checked }))}
-                  className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300"
-                />
-                <label htmlFor="publishedToggle" className="font-bold text-slate-800 cursor-pointer">
-                  Publish article live on website
-                </label>
+              {/* Modal Footer */}
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <div>
+                  {saveSuccess && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 animate-in fade-in">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Saved Successfully!
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setModalMode(null)}
+                    className="px-5 py-2.5 rounded-2xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-blue-600/25 transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        <span>{modalMode === "ADD" ? "Publish Article" : "Save Changes"}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
-
-            {/* Modal Footer (Sticky Bottom) */}
-            <div className="px-6 sm:px-8 py-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 shrink-0">
-              <button
-                type="button"
-                onClick={() => setModalMode(null)}
-                className="px-5 py-2.5 rounded-2xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                form="blog-modal-form"
-                disabled={isSubmitting}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold uppercase tracking-wider shadow-md shadow-blue-600/30 transition-all disabled:opacity-50"
-              >
-                {isSubmitting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Save className="w-4 h-4" />
-                )}
-                <span>{modalMode === "ADD" ? "Publish Article" : "Save Changes"}</span>
-              </button>
-            </div>
           </div>
         </div>
       )}
+
+      {/* CONFIRM DELETE MODAL */}
+      <ConfirmModal
+        isOpen={isConfirmDeleteOpen}
+        onClose={() => setIsConfirmDeleteOpen(false)}
+        onConfirm={executeDelete}
+        title={
+          deleteTargetIds.length > 1
+            ? `Delete ${deleteTargetIds.length} Articles?`
+            : "Delete Article?"
+        }
+        message={
+          deleteTargetIds.length > 1
+            ? `Are you sure you want to soft delete the selected ${deleteTargetIds.length} articles? They will be drafted and hidden from the website.`
+            : "Are you sure you want to soft delete this article? It will be drafted and hidden from the website."
+        }
+        confirmText={
+          isDeleting
+            ? "Deleting..."
+            : deleteTargetIds.length > 1
+            ? `Delete ${deleteTargetIds.length} Articles`
+            : "Delete Article"
+        }
+        variant="danger"
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 export async function GET() {
   try {
     const testimonials = await prisma.testimonial.findMany({
+      where: { isDeleted: false },
       orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
     });
     return NextResponse.json({ success: true, testimonials });
@@ -19,7 +20,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, role, service, image, text, rating, displayOrder, isActive } = body;
+    const { name, role, service, image, text, rating, displayOrder, status, isActive } = body;
 
     if (!name || !text) {
       return NextResponse.json(
@@ -27,6 +28,9 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    const finalStatus = status || (isActive === false ? "INACTIVE" : "ACTIVE");
+    const finalIsActive = finalStatus === "ACTIVE";
 
     const testimonial = await prisma.testimonial.create({
       data: {
@@ -37,7 +41,9 @@ export async function POST(req: NextRequest) {
         text: text.trim(),
         rating: Math.min(5, Math.max(1, parseInt(String(rating || 5), 10))),
         displayOrder: parseInt(String(displayOrder || 0), 10) || 0,
-        isActive: isActive !== false,
+        status: finalStatus,
+        isActive: finalIsActive,
+        isDeleted: false,
       },
     });
 
@@ -46,6 +52,41 @@ export async function POST(req: NextRequest) {
     console.error("Error creating testimonial:", error);
     return NextResponse.json(
       { success: false, error: "Failed to create testimonial" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const body = await req.json().catch(() => ({}));
+    const { ids } = body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "IDs array is required for bulk delete" },
+        { status: 400 }
+      );
+    }
+
+    // Soft delete
+    await prisma.testimonial.updateMany({
+      where: { id: { in: ids } },
+      data: {
+        isDeleted: true,
+        isActive: false,
+        status: "INACTIVE",
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Successfully deleted ${ids.length} testimonial(s)`,
+    });
+  } catch (error) {
+    console.error("Bulk delete testimonials error:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to bulk delete testimonials" },
       { status: 500 }
     );
   }

@@ -22,7 +22,16 @@ export async function PUT(
     if (body.tag !== undefined) dataToUpdate.tag = body.tag;
     if (body.isFeatured !== undefined) dataToUpdate.isFeatured = Boolean(body.isFeatured);
     if (body.order !== undefined) dataToUpdate.order = Number(body.order);
-    if (body.isActive !== undefined) dataToUpdate.isActive = Boolean(body.isActive);
+    
+    if (body.status !== undefined) {
+      dataToUpdate.status = body.status;
+      dataToUpdate.isActive = body.status === "ACTIVE";
+    } else if (body.isActive !== undefined) {
+      dataToUpdate.isActive = Boolean(body.isActive);
+      dataToUpdate.status = body.isActive ? "ACTIVE" : "INACTIVE";
+    }
+
+    if (body.isDeleted !== undefined) dataToUpdate.isDeleted = Boolean(body.isDeleted);
 
     const updated = await prisma.galleryItem.update({
       where: { id },
@@ -48,11 +57,17 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    await prisma.galleryItem.delete({
+    // Soft delete
+    await prisma.galleryItem.update({
       where: { id },
+      data: {
+        isDeleted: true,
+        isActive: false,
+        status: "INACTIVE",
+      },
     });
 
-    return NextResponse.json({ success: true, message: "Gallery item deleted successfully" });
+    return NextResponse.json({ success: true, message: "Gallery item soft deleted successfully" });
   } catch (error: unknown) {
     console.error("Error deleting gallery item:", error);
     const message = error instanceof Error ? error.message : "Internal Server Error";

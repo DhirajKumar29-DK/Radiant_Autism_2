@@ -4,7 +4,10 @@ import prisma from "@/lib/prisma";
 export async function GET() {
   try {
     const testimonials = await prisma.testimonial.findMany({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        isDeleted: false,
+      },
       orderBy: { displayOrder: "asc" },
     });
     return NextResponse.json({ success: true, testimonials });

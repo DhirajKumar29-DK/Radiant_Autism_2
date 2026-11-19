@@ -68,7 +68,9 @@ model Service {
   whoNeedsThis       String?  @db.LongText
   keyBenefits        String?  @db.LongText
   faqs               String?  @db.LongText
+  status             String   @default("ACTIVE")
   isActive           Boolean  @default(true)
+  isDeleted          Boolean  @default(false)
   order              Int      @default(0)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -121,6 +123,8 @@ model AboutSection {
   facilityImage      String?
   facilityPointsJson String?  @db.LongText
   pillarsJson        String?  @db.LongText
+  status             String   @default("ACTIVE")
+  isDeleted          Boolean  @default(false)
   updatedAt          DateTime @updatedAt
 }
 
@@ -133,7 +137,9 @@ model TeamMember {
   bio       String?  @db.Text
   instagram String?
   order     Int      @default(0)
+  status    String   @default("ACTIVE")
   isActive  Boolean  @default(true)
+  isDeleted Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -146,7 +152,9 @@ model GalleryItem {
   tag        String?
   isFeatured Boolean  @default(false)
   order      Int      @default(0)
+  status     String   @default("ACTIVE")
   isActive   Boolean  @default(true)
+  isDeleted  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
@@ -166,6 +174,7 @@ model BlogPost {
   views           Int       @default(0)
   metaTitle       String?
   metaDescription String?   @db.Text
+  isDeleted       Boolean   @default(false)
   publishedAt     DateTime? @default(now())
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -187,7 +196,9 @@ model Testimonial {
   text         String   @db.Text
   rating       Int      @default(5)
   displayOrder Int      @default(0)
+  status       String   @default("ACTIVE")
   isActive     Boolean  @default(true)
+  isDeleted    Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

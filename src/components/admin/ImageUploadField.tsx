@@ -18,6 +18,7 @@ interface ImageUploadFieldProps {
   onChange: (url: string) => void;
   placeholder?: string;
   helpText?: string;
+  recommendedSize?: string;
   required?: boolean;
 }
 
@@ -27,6 +28,7 @@ export default function ImageUploadField({
   onChange,
   placeholder = "https://images.unsplash.com/... or paste direct web image link",
   helpText,
+  recommendedSize,
   required = false,
 }: ImageUploadFieldProps) {
   // Mode switcher: "upload" or "url"
@@ -255,9 +257,9 @@ export default function ImageUploadField({
         </div>
       )}
 
-      {helpText && (
+      {(helpText || recommendedSize) && (
         <p className="text-[10px] text-slate-400 font-medium">
-          {helpText}
+          {helpText || (recommendedSize ? `Recommended: ${recommendedSize}` : null)}
         </p>
       )}
     </div>

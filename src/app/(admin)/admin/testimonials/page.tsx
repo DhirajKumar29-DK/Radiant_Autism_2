@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import {
   Plus,
@@ -9,16 +9,17 @@ import {
   X,
   Star,
   Search,
-  Quote,
   Loader2,
   CheckCircle,
   MessageSquareQuote,
-  Eye,
-  EyeOff,
+  Save,
+  CheckCircle2,
 } from "lucide-react";
 import AdminPagination from "@/components/common/AdminPagination";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import ImageUploadField from "@/components/admin/ImageUploadField";
+
+type StatusType = "ACTIVE" | "INACTIVE" | "DRAFT";
 
 interface Testimonial {
   id: string;
@@ -29,8 +30,10 @@ interface Testimonial {
   text: string;
   rating: number;
   displayOrder: number;
+  status: StatusType;
   isActive: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export default function AdminTestimonialsPage() {
@@ -41,6 +44,14 @@ export default function AdminTestimonialsPage() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Testimonial | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Selection & Bulk Action
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const [deleteTargetIds, setDeleteTargetIds] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -51,16 +62,12 @@ export default function AdminTestimonialsPage() {
     text: "",
     rating: 5,
     displayOrder: 1,
-    isActive: true,
+    status: "ACTIVE" as StatusType,
   });
-
-  // Delete State
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(6);
+  const [itemsPerPage, setItemsPerPage] = useState(8);
 
   const fetchTestimonials = async () => {
     setIsLoading(true);
@@ -68,7 +75,11 @@ export default function AdminTestimonialsPage() {
       const res = await fetch("/api/admin/testimonials");
       if (res.ok) {
         const data = await res.json();
-        setTestimonials(data.testimonials || []);
+        const mapped: Testimonial[] = (data.testimonials || []).map((t: any) => ({
+          ...t,
+          status: (t.status as StatusType) || (t.isActive ? "ACTIVE" : "INACTIVE"),
+        }));
+        setTestimonials(mapped);
       }
     } catch (err) {
       console.error("Failed to fetch testimonials:", err);
@@ -91,8 +102,9 @@ export default function AdminTestimonialsPage() {
       text: "",
       rating: 5,
       displayOrder: testimonials.length + 1,
-      isActive: true,
+      status: "ACTIVE",
     });
+    setSaveSuccess(false);
     setIsModalOpen(true);
   };
 
@@ -106,13 +118,131 @@ export default function AdminTestimonialsPage() {
       text: item.text,
       rating: item.rating,
       displayOrder: item.displayOrder,
-      isActive: item.isActive,
+      status: item.status || (item.isActive ? "ACTIVE" : "INACTIVE"),
     });
+    setSaveSuccess(false);
     setIsModalOpen(true);
+  };
+
+  // Filter & Search
+  const filteredItems = useMemo(() => {
+    if (!searchQuery.trim()) return testimonials;
+    const q = searchQuery.toLowerCase();
+    return testimonials.filter(
+      (item) =>
+        item.name.toLowerCase().includes(q) ||
+        item.role.toLowerCase().includes(q) ||
+        (item.service && item.service.toLowerCase().includes(q)) ||
+        item.text.toLowerCase().includes(q)
+    );
+  }, [testimonials, searchQuery]);
+
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredItems.slice(start, start + itemsPerPage);
+  }, [filteredItems, currentPage, itemsPerPage]);
+
+  // Selection handlers
+  const toggleSelectAll = () => {
+    if (paginatedItems.length > 0 && paginatedItems.every((t) => selectedIds.includes(t.id))) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(paginatedItems.map((t) => t.id));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter((item) => item !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  // Quick cycle status
+  const cycleStatus = async (item: Testimonial) => {
+    const nextStatus: StatusType =
+      item.status === "ACTIVE"
+        ? "INACTIVE"
+        : item.status === "INACTIVE"
+        ? "DRAFT"
+        : "ACTIVE";
+
+    try {
+      const res = await fetch(`/api/admin/testimonials/${item.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (res.ok) {
+        setTestimonials((prev) =>
+          prev.map((t) =>
+            t.id === item.id
+              ? { ...t, status: nextStatus, isActive: nextStatus === "ACTIVE" }
+              : t
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Status toggle error:", err);
+    }
+  };
+
+  // Delete handlers
+  const confirmSingleDelete = (id: string) => {
+    setDeleteTargetIds([id]);
+    setIsConfirmDeleteOpen(true);
+  };
+
+  const confirmBulkDelete = () => {
+    if (selectedIds.length === 0) return;
+    setDeleteTargetIds(selectedIds);
+    setIsConfirmDeleteOpen(true);
+  };
+
+  const executeDelete = async () => {
+    if (deleteTargetIds.length === 0) return;
+    setIsDeleting(true);
+
+    try {
+      if (deleteTargetIds.length === 1) {
+        const id = deleteTargetIds[0];
+        const res = await fetch(`/api/admin/testimonials/${id}`, {
+          method: "DELETE",
+        });
+        if (res.ok) {
+          setTestimonials((prev) => prev.filter((item) => item.id !== id));
+          setSelectedIds((prev) => prev.filter((item) => item !== id));
+        }
+      } else {
+        const res = await fetch("/api/admin/testimonials", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: deleteTargetIds }),
+        });
+        if (res.ok) {
+          setTestimonials((prev) =>
+            prev.filter((item) => !deleteTargetIds.includes(item.id))
+          );
+          setSelectedIds([]);
+        }
+      }
+      setIsConfirmDeleteOpen(false);
+      setDeleteTargetIds([]);
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Error deleting testimonial(s)");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
+    setSaveSuccess(false);
+
     try {
       const payload = {
         ...formData,
@@ -120,99 +250,122 @@ export default function AdminTestimonialsPage() {
         displayOrder: Number(formData.displayOrder) || 0,
       };
 
-      let res;
-      if (selectedItem) {
-        res = await fetch(`/api/admin/testimonials/${selectedItem.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-      } else {
-        res = await fetch("/api/admin/testimonials", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-      }
+      const url = selectedItem
+        ? `/api/admin/testimonials/${selectedItem.id}`
+        : "/api/admin/testimonials";
+      const method = selectedItem ? "PUT" : "POST";
 
-      if (res.ok) {
-        setIsModalOpen(false);
-        fetchTestimonials();
-      } else {
-        const data = await res.json();
-        alert(`Failed to save: ${data.error || "Unknown error"}`);
-      }
-    } catch (err) {
-      console.error("Error saving testimonial:", err);
-      alert("Failed to save testimonial");
-    }
-  };
-
-  const triggerDelete = (id: string) => {
-    setDeleteTargetId(id);
-    setIsConfirmOpen(true);
-  };
-
-  const executeDelete = async () => {
-    if (!deleteTargetId) return;
-    try {
-      const res = await fetch(`/api/admin/testimonials/${deleteTargetId}`, {
-        method: "DELETE",
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
+
       if (res.ok) {
-        setTestimonials((prev) => prev.filter((t) => t.id !== deleteTargetId));
+        setSaveSuccess(true);
+        await fetchTestimonials();
+        setTimeout(() => {
+          setIsModalOpen(false);
+          setSaveSuccess(false);
+        }, 1000);
+      } else {
+        const error = await res.json().catch(() => ({}));
+        alert(error.error || "Failed to save testimonial");
       }
     } catch (err) {
-      console.error("Error deleting testimonial:", err);
+      console.error("Save error:", err);
+      alert("Network error while saving");
     } finally {
-      setDeleteTargetId(null);
+      setIsSaving(false);
     }
   };
 
-  // Filtered & Paginated
-  const filtered = testimonials.filter((t) => {
-    const q = searchQuery.toLowerCase();
-    return (
-      t.name.toLowerCase().includes(q) ||
-      t.role.toLowerCase().includes(q) ||
-      (t.service && t.service.toLowerCase().includes(q)) ||
-      t.text.toLowerCase().includes(q)
-    );
-  });
-
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedItems = filtered.slice(startIndex, startIndex + itemsPerPage);
+  const renderStatusBadge = (st: StatusType, item: Testimonial) => {
+    switch (st) {
+      case "ACTIVE":
+        return (
+          <button
+            type="button"
+            onClick={() => cycleStatus(item)}
+            title="Click to cycle status (ACTIVE -> INACTIVE -> DRAFT)"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            ACTIVE
+          </button>
+        );
+      case "INACTIVE":
+        return (
+          <button
+            type="button"
+            onClick={() => cycleStatus(item)}
+            title="Click to cycle status (INACTIVE -> DRAFT -> ACTIVE)"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-slate-100 text-slate-600 border border-slate-300 hover:bg-slate-200 transition-colors cursor-pointer"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+            INACTIVE
+          </button>
+        );
+      case "DRAFT":
+        return (
+          <button
+            type="button"
+            onClick={() => cycleStatus(item)}
+            title="Click to cycle status (DRAFT -> ACTIVE -> INACTIVE)"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            DRAFT
+          </button>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className="flex flex-col h-full gap-6 max-w-7xl mx-auto">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Top Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              Parent Reviews & Testimonials
+              Client Testimonials & Stories
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[11px] font-black uppercase">
+            <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-extrabold text-xs">
               {testimonials.length} Reviews
             </span>
           </div>
-          <p className="text-slate-500 text-xs font-medium mt-1">
-            Manage authentic feedback, star ratings, and child therapy success stories displayed on the homepage.
+          <p className="text-xs text-slate-500 font-medium mt-1">
+            Manage authentic family feedback, star ratings, and child therapy success stories displayed on the website.
           </p>
         </div>
 
-        <button
-          onClick={openAddModal}
-          className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-black text-xs uppercase tracking-wider shadow-md shadow-blue-600/25 transition-all cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>+ ADD TESTIMONIAL</span>
-        </button>
+        <div className="flex items-center gap-3">
+          {selectedIds.length > 0 && (
+            <button
+              type="button"
+              onClick={confirmBulkDelete}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition-all cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4 text-rose-600" />
+              <span>Delete Selected ({selectedIds.length})</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={openAddModal}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold rounded-2xl shadow-lg shadow-blue-600/30 transition-all uppercase tracking-wider cursor-pointer"
+          >
+            <Plus className="w-4 h-4 stroke-[3]" />
+            <span>Add Testimonial</span>
+          </button>
+        </div>
       </div>
 
       {/* Search Input Bar */}
-      <div className="flex items-center gap-3 bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs">
         <Search className="w-4 h-4 text-slate-400 ml-2" />
         <input
           type="text"
@@ -221,11 +374,12 @@ export default function AdminTestimonialsPage() {
             setSearchQuery(e.target.value);
             setCurrentPage(1);
           }}
-          placeholder="Search by parent name, child age, therapy type, or review content..."
-          className="w-full bg-transparent text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-hidden"
+          placeholder="Search by parent name, child relation, therapy program, or review quote..."
+          className="w-full bg-transparent text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none"
         />
         {searchQuery && (
           <button
+            type="button"
             onClick={() => setSearchQuery("")}
             className="p-1 text-slate-400 hover:text-slate-600 mr-1"
           >
@@ -234,327 +388,446 @@ export default function AdminTestimonialsPage() {
         )}
       </div>
 
-      {/* Cards Grid */}
-      {isLoading ? (
-        <div className="py-20 flex flex-col items-center justify-center text-slate-400">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-3" />
-          <span className="text-xs font-bold">Loading client testimonials...</span>
-        </div>
-      ) : paginatedItems.length === 0 ? (
-        <div className="py-20 flex flex-col items-center justify-center text-center p-8 bg-white rounded-3xl border border-slate-200">
-          <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
-            <MessageSquareQuote className="w-8 h-8" />
+      {/* Main Table View (FabFit Style) */}
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+        {isLoading ? (
+          <div className="py-20 flex flex-col items-center justify-center space-y-3">
+            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">
+              Loading Testimonials...
+            </p>
           </div>
-          <h3 className="text-base font-black text-slate-800">No Testimonials Found</h3>
-          <p className="text-xs text-slate-500 max-w-sm mt-1">
-            {searchQuery
-              ? `No reviews match "${searchQuery}". Try clearing search.`
-              : "Click the '+ ADD TESTIMONIAL' button above to publish your first parent review."}
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {paginatedItems.map((item) => (
-            <div
-              key={item.id}
-              className={`bg-white rounded-2xl border transition-all flex flex-col justify-between p-5 shadow-xs hover:shadow-md relative overflow-hidden ${
-                item.isActive ? "border-slate-200" : "border-slate-200/60 opacity-60 bg-slate-50/50"
-              }`}
-            >
-              <div className="space-y-4">
-                {/* Card Top: Stars & Status */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1 text-amber-400">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-3.5 h-3.5 ${
-                          i < item.rating
-                            ? "fill-amber-400 text-amber-400"
-                            : "fill-slate-200 text-slate-200"
-                        }`}
-                      />
-                    ))}
-                    <span className="text-[11px] font-black text-slate-700 ml-1">
-                      {item.rating}.0
-                    </span>
-                  </div>
-
-                  <span
-                    className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
-                      item.isActive
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : "bg-slate-100 text-slate-500 border border-slate-200"
-                    }`}
-                  >
-                    {item.isActive ? "ACTIVE" : "INACTIVE"}
-                  </span>
-                </div>
-
-                {/* Review Text */}
-                <div className="relative">
-                  <Quote className="w-5 h-5 text-blue-100 absolute -top-1 -left-1 pointer-events-none" />
-                  <p className="text-xs text-slate-700 font-medium leading-relaxed pl-5 line-clamp-4 italic">
-                    &quot;{item.text}&quot;
-                  </p>
-                </div>
-
-                {/* Therapy Tag */}
-                {item.service && (
-                  <div>
-                    <span className="inline-block px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-extrabold uppercase tracking-wide border border-blue-100">
-                      {item.service}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Card Footer: Author Profile & Actions */}
-              <div className="pt-4 border-t border-slate-100 mt-4 flex items-center justify-between">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 overflow-hidden relative shrink-0">
-                    {item.image ? (
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center font-black text-blue-600 text-xs">
-                        {item.name.charAt(0)}
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="text-xs font-black text-slate-900 truncate">{item.name}</h4>
-                    <p className="text-[10px] text-slate-500 font-bold truncate">{item.role}</p>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                  <button
-                    onClick={() => openEditModal(item)}
-                    className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 rounded-lg transition-colors cursor-pointer"
-                    title="Edit Review"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => triggerDelete(item.id)}
-                    className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 rounded-lg transition-colors cursor-pointer"
-                    title="Delete Review"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="bg-white p-16 rounded-3xl text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+              <MessageSquareQuote className="w-7 h-7" />
             </div>
-          ))}
-        </div>
-      )}
+            <h3 className="text-slate-900 font-bold text-base">No Testimonials Found</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
+              {searchQuery
+                ? `No reviews match "${searchQuery}". Try clearing search.`
+                : "Add your first family testimonial to showcase parent trust and child outcomes."}
+            </p>
+            <button
+              type="button"
+              onClick={openAddModal}
+              className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold"
+            >
+              Add First Testimonial
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                  <th className="py-4 pl-6 pr-2 w-10">
+                    <input
+                      type="checkbox"
+                      checked={
+                        paginatedItems.length > 0 &&
+                        paginatedItems.every((t) => selectedIds.includes(t.id))
+                      }
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                  </th>
+                  <th className="py-4 px-3 w-12 text-center">#</th>
+                  <th className="py-4 px-6">Family / Client</th>
+                  <th className="py-4 px-6">Program / Service</th>
+                  <th className="py-4 px-6">Rating</th>
+                  <th className="py-4 px-6">Quote Snippet</th>
+                  <th className="py-4 px-6">Status</th>
+                  <th className="py-4 px-6 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {paginatedItems.map((item, idx) => {
+                  const rowNumber = (currentPage - 1) * itemsPerPage + idx + 1;
+                  const isSelected = selectedIds.includes(item.id);
 
-      {/* Pagination */}
-      {!isLoading && filtered.length > 0 && (
-        <AdminPagination
-          currentPage={currentPage}
-          totalItems={filtered.length}
-          itemsPerPage={itemsPerPage}
-          onPageChange={setCurrentPage}
-          onItemsPerPageChange={(val) => {
-            setItemsPerPage(val);
-            setCurrentPage(1);
-          }}
-          pageSizeOptions={[6, 9, 15, 30]}
-        />
-      )}
+                  return (
+                    <tr
+                      key={item.id}
+                      className={`hover:bg-slate-50/50 transition-colors ${
+                        isSelected ? "bg-blue-50/30" : ""
+                      }`}
+                    >
+                      <td className="py-4 pl-6 pr-2">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelectOne(item.id)}
+                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
+                      </td>
 
-      {/* Add / Edit Modal (2-Column Architecture, Never Cut Off) */}
+                      <td className="py-4 px-3 font-bold text-slate-400 text-center">
+                        {rowNumber}
+                      </td>
+
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200 relative shrink-0">
+                            {item.image ? (
+                              <Image
+                                src={item.image}
+                                alt={item.name}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center font-black text-blue-600 text-xs">
+                                {item.name.charAt(0)}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-extrabold text-slate-900">{item.name}</p>
+                            <p className="text-[11px] text-slate-400 font-medium line-clamp-1">
+                              {item.role}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="py-4 px-6">
+                        {item.service ? (
+                          <span className="inline-block px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px] font-extrabold border border-blue-100">
+                            {item.service}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-medium">—</span>
+                        )}
+                      </td>
+
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-1 text-amber-400">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-3.5 h-3.5 ${
+                                i < item.rating
+                                  ? "fill-amber-400 text-amber-400"
+                                  : "fill-slate-200 text-slate-200"
+                              }`}
+                            />
+                          ))}
+                          <span className="text-[11px] font-black text-slate-700 ml-1">
+                            {item.rating}.0
+                          </span>
+                        </div>
+                      </td>
+
+                      <td className="py-4 px-6 font-medium text-slate-600 max-w-sm">
+                        <p className="line-clamp-2 leading-relaxed italic">
+                          &quot;{item.text}&quot;
+                        </p>
+                      </td>
+
+                      {/* Status Badge with Click-to-Cycle */}
+                      <td className="py-4 px-6">
+                        {renderStatusBadge(item.status, item)}
+                      </td>
+
+                      {/* Dual Action: Edit + Delete */}
+                      <td className="py-4 px-6 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(item)}
+                            title="Edit Testimonial"
+                            className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                            <span className="text-[11px]">Edit</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => confirmSingleDelete(item.id)}
+                            title="Soft Delete Testimonial"
+                            className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span className="text-[11px]">Delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="p-4 border-t border-slate-100 flex justify-end">
+            <AdminPagination
+              currentPage={currentPage}
+              totalItems={filteredItems.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* POPUP MODAL (Add / Edit) */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-          <div className="fixed inset-0" onClick={() => setIsModalOpen(false)} />
-
-          <div className="relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-4xl max-h-[88vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-slate-200 my-auto z-10">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-slate-100">
             {/* Modal Header */}
-            <div className="px-6 sm:px-8 py-4 sm:py-5 border-b border-slate-200 flex justify-between items-center bg-white shrink-0 sticky top-0 z-20">
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-blue-600">
-                  Client Testimonial
-                </span>
-                <h2 className="text-xl font-black text-slate-900 tracking-tight mt-0.5">
-                  {selectedItem ? "Edit Testimonial" : "Add New Testimonial"}
-                </h2>
+                <h3 className="text-lg font-black text-slate-900 tracking-tight">
+                  {selectedItem ? "Edit Testimonial" : "Add Parent Testimonial"}
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">
+                  Update client name, relation/role, service tag, star rating, and review text.
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Scrollable Form Body */}
-            <form id="testimonialForm" onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 text-xs">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Left Column */}
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700">
-                      Parent / Client Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="e.g. Priya & Rahul M."
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    />
-                  </div>
+            {/* Modal Body Form */}
+            <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 space-y-5">
+              {/* STATUS SELECTOR (Active / Inactive / Draft) */}
+              <div className="space-y-1.5">
+                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                  Review Status
+                </label>
+                <div className="grid grid-cols-3 gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/70">
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, status: "ACTIVE" }))}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                      formData.status === "ACTIVE"
+                        ? "bg-white text-emerald-700 shadow-xs border border-emerald-200"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span>ACTIVE</span>
+                  </button>
 
-                  <div className="space-y-1.5">
-                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700">
-                      Relationship / Role *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.role}
-                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                      placeholder="e.g. Parents of 5-year-old Aarav"
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    />
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, status: "INACTIVE" }))}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                      formData.status === "INACTIVE"
+                        ? "bg-white text-slate-700 shadow-xs border border-slate-300"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-slate-400" />
+                    <span>INACTIVE</span>
+                  </button>
 
-                  <div className="space-y-1.5">
-                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700">
-                      Therapy Discipline / Program
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.service}
-                      onChange={(e) => setFormData({ ...formData, service: e.target.value })}
-                      placeholder="e.g. Speech & ABA Therapy"
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    />
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, status: "DRAFT" }))}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                      formData.status === "DRAFT"
+                        ? "bg-white text-amber-700 shadow-xs border border-amber-200"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                    <span>DRAFT</span>
+                  </button>
+                </div>
+              </div>
 
-                  {/* Rating Selector */}
-                  <div className="space-y-1.5">
-                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700">
-                      Star Rating ({formData.rating} Stars)
-                    </label>
-                    <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-2xl">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, rating: star })}
-                          className="p-1 text-amber-400 hover:scale-110 transition-transform cursor-pointer"
-                        >
-                          <Star
-                            className={`w-6 h-6 ${
-                              star <= formData.rating
-                                ? "fill-amber-400 text-amber-400"
-                                : "fill-slate-200 text-slate-200"
-                            }`}
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700">
-                        Display Order
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={formData.displayOrder}
-                        onChange={(e) =>
-                          setFormData({ ...formData, displayOrder: parseInt(e.target.value, 10) || 1 })
-                        }
-                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700">
-                        Website Status
-                      </label>
-                      <label className="flex items-center gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-2xl cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={formData.isActive}
-                          onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                          className="w-4 h-4 rounded-md text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className="text-xs font-bold text-slate-800">Publish Active</span>
-                      </label>
-                    </div>
-                  </div>
+              {/* Name & Relation */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                    Client / Parent Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g. Maria Gonzalez"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+                  />
                 </div>
 
-                {/* Right Column */}
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700">
-                      Testimonial Quote / Review Text *
-                    </label>
-                    <textarea
-                      required
-                      rows={5}
-                      value={formData.text}
-                      onChange={(e) => setFormData({ ...formData, text: e.target.value })}
-                      placeholder="Write the full feedback or clinical milestone story here..."
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 leading-relaxed"
-                    />
-                  </div>
-
-                  {/* Dual Image Upload Field */}
-                  <ImageUploadField
-                    label="Parent / Child Photo or Avatar"
-                    value={formData.image}
-                    onChange={(url) => setFormData({ ...formData, image: url })}
+                <div className="space-y-1.5">
+                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                    Relation / Role
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.role}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, role: e.target.value }))}
+                    placeholder="e.g. Parent of 4-year-old Lucas"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
                   />
                 </div>
               </div>
-            </form>
 
-            {/* Modal Footer */}
-            <div className="px-8 py-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="px-6 py-2.5 border border-slate-200 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                form="testimonialForm"
-                className="px-7 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-lg shadow-blue-600/30 transition-all cursor-pointer"
-              >
-                Save Testimonial
-              </button>
-            </div>
+              {/* Service & Rating */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                    Therapy Program / Service
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.service}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, service: e.target.value }))}
+                    placeholder="e.g. Early Intervention ABA, Speech Therapy"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                    Star Rating (1 - 5)
+                  </label>
+                  <div className="flex items-center gap-2 pt-1">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, rating: s }))}
+                        className="p-1 hover:scale-110 transition-transform cursor-pointer"
+                      >
+                        <Star
+                          className={`w-6 h-6 ${
+                            s <= formData.rating
+                              ? "fill-amber-400 text-amber-400"
+                              : "fill-slate-200 text-slate-200"
+                          }`}
+                        />
+                      </button>
+                    ))}
+                    <span className="text-xs font-black text-slate-700 ml-2">
+                      {formData.rating} Stars
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Photo Upload Field */}
+              <ImageUploadField
+                label="Parent / Child Photo (Optional)"
+                value={formData.image}
+                onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))}
+                recommendedSize="400 x 400px (Square Avatar)"
+              />
+
+              {/* Display Order */}
+              <div className="space-y-1.5">
+                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                  Display Order
+                </label>
+                <input
+                  type="number"
+                  value={formData.displayOrder}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      displayOrder: parseInt(e.target.value) || 0,
+                    }))
+                  }
+                  className="w-32 p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+              </div>
+
+              {/* Review Text */}
+              <div className="space-y-1.5">
+                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                  Testimonial / Review Content *
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  value={formData.text}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, text: e.target.value }))}
+                  placeholder="Share the family's journey, milestones achieved at Radiant Autism Services, and personal experiences with our clinical team..."
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-normal text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 leading-relaxed"
+                />
+              </div>
+
+              {/* Modal Footer */}
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <div>
+                  {saveSuccess && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 animate-in fade-in">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Saved Successfully!
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-5 py-2.5 rounded-2xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-blue-600/25 transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        <span>{selectedItem ? "Save Changes" : "Publish Testimonial"}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
-      {/* Global Confirmation Modal */}
+      {/* CONFIRM DELETE MODAL */}
       <ConfirmModal
-        isOpen={isConfirmOpen}
-        onClose={() => setIsConfirmOpen(false)}
+        isOpen={isConfirmDeleteOpen}
+        onClose={() => setIsConfirmDeleteOpen(false)}
         onConfirm={executeDelete}
-        title="Delete Testimonial?"
-        message="Are you sure you want to remove this client review from the live website? This action cannot be undone."
-        itemCount={1}
+        title={
+          deleteTargetIds.length > 1
+            ? `Delete ${deleteTargetIds.length} Testimonials?`
+            : "Delete Testimonial?"
+        }
+        message={
+          deleteTargetIds.length > 1
+            ? `Are you sure you want to soft delete the selected ${deleteTargetIds.length} testimonials? They will be hidden from the website.`
+            : "Are you sure you want to soft delete this testimonial? It will be hidden from the website."
+        }
+        confirmText={
+          isDeleting
+            ? "Deleting..."
+            : deleteTargetIds.length > 1
+            ? `Delete ${deleteTargetIds.length} Reviews`
+            : "Delete Review"
+        }
+        variant="danger"
       />
     </div>
   );

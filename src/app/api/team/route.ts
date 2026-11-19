@@ -4,7 +4,10 @@ import prisma from "@/lib/prisma";
 export async function GET() {
   try {
     const team = await prisma.teamMember.findMany({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        isDeleted: false,
+      },
       orderBy: [{ order: "asc" }, { createdAt: "asc" }],
     });
 

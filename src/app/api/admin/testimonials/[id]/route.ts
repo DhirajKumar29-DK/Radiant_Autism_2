@@ -8,27 +8,30 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await req.json();
-    const { name, role, service, image, text, rating, displayOrder, isActive } = body;
+    const { name, role, service, image, text, rating, displayOrder, status, isActive, isDeleted } = body;
 
-    if (!name || !text) {
-      return NextResponse.json(
-        { success: false, error: "Name and Testimonial text are required fields." },
-        { status: 400 }
-      );
+    const dataToUpdate: any = {};
+    if (name !== undefined) dataToUpdate.name = name.trim();
+    if (role !== undefined) dataToUpdate.role = (role || "").trim();
+    if (service !== undefined) dataToUpdate.service = (service || "").trim() || null;
+    if (image !== undefined) dataToUpdate.image = image || null;
+    if (text !== undefined) dataToUpdate.text = text.trim();
+    if (rating !== undefined) dataToUpdate.rating = Math.min(5, Math.max(1, parseInt(String(rating || 5), 10)));
+    if (displayOrder !== undefined) dataToUpdate.displayOrder = parseInt(String(displayOrder || 0), 10) || 0;
+    
+    if (status !== undefined) {
+      dataToUpdate.status = status;
+      dataToUpdate.isActive = status === "ACTIVE";
+    } else if (isActive !== undefined) {
+      dataToUpdate.isActive = Boolean(isActive);
+      dataToUpdate.status = isActive ? "ACTIVE" : "INACTIVE";
     }
+
+    if (isDeleted !== undefined) dataToUpdate.isDeleted = Boolean(isDeleted);
 
     const updated = await prisma.testimonial.update({
       where: { id },
-      data: {
-        name: name.trim(),
-        role: (role || "").trim(),
-        service: (service || "").trim() || null,
-        image: image || null,
-        text: text.trim(),
-        rating: Math.min(5, Math.max(1, parseInt(String(rating || 5), 10))),
-        displayOrder: parseInt(String(displayOrder || 0), 10) || 0,
-        isActive: Boolean(isActive),
-      },
+      data: dataToUpdate,
     });
 
     return NextResponse.json({ success: true, testimonial: updated });
@@ -47,8 +50,17 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    await prisma.testimonial.delete({ where: { id } });
-    return NextResponse.json({ success: true, message: "Testimonial deleted successfully" });
+    // Soft delete
+    await prisma.testimonial.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        isActive: false,
+        status: "INACTIVE",
+      },
+    });
+
+    return NextResponse.json({ success: true, message: "Testimonial soft deleted successfully" });
   } catch (error) {
     console.error("Error deleting testimonial:", error);
     return NextResponse.json(

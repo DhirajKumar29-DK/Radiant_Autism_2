@@ -48,13 +48,18 @@ export async function PUT(
     if (body.category !== undefined) dataToUpdate.category = body.category;
     if (body.image !== undefined) dataToUpdate.coverImage = body.image;
     if (body.coverImage !== undefined) dataToUpdate.coverImage = body.coverImage;
-    if (body.isPublished !== undefined) {
+    if (body.status !== undefined) {
+      dataToUpdate.status = body.status;
+      if (body.status === "PUBLISHED" && !body.publishedAt) {
+        dataToUpdate.publishedAt = new Date();
+      }
+    } else if (body.isPublished !== undefined) {
       dataToUpdate.status = body.isPublished ? "PUBLISHED" : "DRAFT";
       if (body.isPublished && !body.publishedAt) {
         dataToUpdate.publishedAt = new Date();
       }
     }
-    if (body.status !== undefined) dataToUpdate.status = body.status;
+    if (body.isDeleted !== undefined) dataToUpdate.isDeleted = Boolean(body.isDeleted);
 
     const updated = await prisma.blogPost.update({
       where: { id },
@@ -80,11 +85,16 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    await prisma.blogPost.delete({
+    // Soft delete
+    await prisma.blogPost.update({
       where: { id },
+      data: {
+        isDeleted: true,
+        status: "DRAFT",
+      },
     });
 
-    return NextResponse.json({ success: true, message: "Blog post deleted successfully" });
+    return NextResponse.json({ success: true, message: "Blog post soft deleted successfully" });
   } catch (error: unknown) {
     console.error("Error deleting blog post:", error);
     const message = error instanceof Error ? error.message : "Internal Server Error";

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import ImageUploadField from "@/components/admin/ImageUploadField";
+import ConfirmModal from "@/components/common/ConfirmModal";
 import {
   Plus,
   Edit3,
@@ -15,11 +16,14 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
+type StatusType = "ACTIVE" | "INACTIVE" | "DRAFT";
+
 interface FacilityData {
   facilityHeading: string;
   facilityDesc: string;
   facilityImage: string;
   facilityPoints: string[];
+  status: StatusType;
   updatedAt?: string;
 }
 
@@ -37,6 +41,7 @@ export default function AdminAboutFacilityPage() {
       "Our Radiant Autism Services centre offers purpose-built space thoughtfully designed to support learning, sensory comfort, dignity, and child safety.",
     facilityImage: "/gallery_sensory_gym.jpg",
     facilityPoints: DEFAULT_POINTS,
+    status: "ACTIVE",
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -44,12 +49,18 @@ export default function AdminAboutFacilityPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  // Checkbox Selection & Bulk Actions
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // Modal Form State
   const [formData, setFormData] = useState({
     facilityHeading: "",
     facilityDesc: "",
     facilityImage: "/gallery_sensory_gym.jpg",
     facilityPoints: [] as string[],
+    status: "ACTIVE" as StatusType,
   });
   const [newPoint, setNewPoint] = useState("");
 
@@ -78,6 +89,7 @@ export default function AdminAboutFacilityPage() {
               "Our Radiant Autism Services centre offers purpose-built space thoughtfully designed to support learning, sensory comfort, dignity, and child safety.",
             facilityImage: data.about.facilityImage || "/gallery_sensory_gym.jpg",
             facilityPoints: points,
+            status: (data.about.status as StatusType) || "ACTIVE",
             updatedAt: data.about.updatedAt,
           });
         }
@@ -99,6 +111,7 @@ export default function AdminAboutFacilityPage() {
       facilityDesc: facility.facilityDesc,
       facilityImage: facility.facilityImage || "/gallery_sensory_gym.jpg",
       facilityPoints: [...facility.facilityPoints],
+      status: facility.status || "ACTIVE",
     });
     setNewPoint("");
     setSaveSuccess(false);
@@ -121,6 +134,71 @@ export default function AdminAboutFacilityPage() {
     }));
   };
 
+  const toggleSelectAll = () => {
+    if (selectedIds.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(["facility-1"]);
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter((item) => item !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  const cycleStatus = async () => {
+    const nextStatus: StatusType =
+      facility.status === "ACTIVE"
+        ? "INACTIVE"
+        : facility.status === "INACTIVE"
+        ? "DRAFT"
+        : "ACTIVE";
+
+    try {
+      const res = await fetch("/api/admin/about", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (res.ok) {
+        setFacility((prev) => ({ ...prev, status: nextStatus }));
+      }
+    } catch (err) {
+      console.error("Failed to toggle status:", err);
+    }
+  };
+
+  const executeDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const res = await fetch("/api/admin/about", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          facilityPoints: [],
+          status: "INACTIVE",
+        }),
+      });
+      if (res.ok) {
+        setFacility((prev) => ({
+          ...prev,
+          facilityPoints: [],
+          status: "INACTIVE",
+        }));
+        setSelectedIds([]);
+        setIsConfirmOpen(false);
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setIsSaving(true);
@@ -135,6 +213,7 @@ export default function AdminAboutFacilityPage() {
           facilityDesc: formData.facilityDesc,
           facilityImage: formData.facilityImage,
           facilityPoints: formData.facilityPoints,
+          status: formData.status,
         }),
       });
 
@@ -174,6 +253,49 @@ export default function AdminAboutFacilityPage() {
     }
   };
 
+  const renderStatusBadge = (st: StatusType) => {
+    switch (st) {
+      case "ACTIVE":
+        return (
+          <button
+            type="button"
+            onClick={cycleStatus}
+            title="Click to cycle status (ACTIVE -> INACTIVE -> DRAFT)"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            ACTIVE
+          </button>
+        );
+      case "INACTIVE":
+        return (
+          <button
+            type="button"
+            onClick={cycleStatus}
+            title="Click to cycle status (INACTIVE -> DRAFT -> ACTIVE)"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-slate-100 text-slate-600 border border-slate-300 hover:bg-slate-200 transition-colors cursor-pointer"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+            INACTIVE
+          </button>
+        );
+      case "DRAFT":
+        return (
+          <button
+            type="button"
+            onClick={cycleStatus}
+            title="Click to cycle status (DRAFT -> ACTIVE -> INACTIVE)"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            DRAFT
+          </button>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Top Header Bar */}
@@ -187,14 +309,27 @@ export default function AdminAboutFacilityPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={openEditModal}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-blue-600/25 transition-all"
-        >
-          <Plus className="w-4 h-4 stroke-[3]" />
-          <span>Edit Facility Entry</span>
-        </button>
+        <div className="flex items-center gap-3">
+          {selectedIds.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setIsConfirmOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition-all cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4 text-rose-600" />
+              <span>Delete Selected ({selectedIds.length})</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={openEditModal}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-blue-600/25 transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4 stroke-[3]" />
+            <span>Edit Facility Entry</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Table View (FabFit Style) */}
@@ -211,7 +346,15 @@ export default function AdminAboutFacilityPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
-                  <th className="py-4 px-6 w-12 text-center">#</th>
+                  <th className="py-4 pl-6 pr-2 w-10">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length > 0}
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                  </th>
+                  <th className="py-4 px-4 w-12 text-center">#</th>
                   <th className="py-4 px-6">Facility Heading</th>
                   <th className="py-4 px-6">Description</th>
                   <th className="py-4 px-6">Showcase Photo</th>
@@ -223,7 +366,16 @@ export default function AdminAboutFacilityPage() {
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
                 <tr className="hover:bg-slate-50/50 transition-colors">
-                  <td className="py-4 px-6 font-bold text-slate-400 text-center">1</td>
+                  <td className="py-4 pl-6 pr-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes("facility-1")}
+                      onChange={() => toggleSelectOne("facility-1")}
+                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                  </td>
+
+                  <td className="py-4 px-4 font-bold text-slate-400 text-center">1</td>
 
                   <td className="py-4 px-6 font-black text-slate-900 max-w-xs">
                     <div className="flex items-center gap-2">
@@ -233,7 +385,7 @@ export default function AdminAboutFacilityPage() {
                   </td>
 
                   <td className="py-4 px-6 font-medium text-slate-600 max-w-sm">
-                    <p className="line-clamp-2 leading-relaxed">{facility.facilityDesc}</p>
+                    <p className="line-clamp-2 leading-relaxed whitespace-pre-line">{facility.facilityDesc}</p>
                   </td>
 
                   <td className="py-4 px-6">
@@ -254,10 +406,7 @@ export default function AdminAboutFacilityPage() {
                   </td>
 
                   <td className="py-4 px-6">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      ACTIVE
-                    </span>
+                    {renderStatusBadge(facility.status)}
                   </td>
 
                   <td className="py-4 px-6 font-semibold text-slate-500">
@@ -265,15 +414,27 @@ export default function AdminAboutFacilityPage() {
                   </td>
 
                   <td className="py-4 px-6 text-right">
-                    <button
-                      type="button"
-                      onClick={openEditModal}
-                      title="Edit Facility Details"
-                      className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                      <span className="text-[11px]">Edit</span>
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={openEditModal}
+                        title="Edit Facility Details"
+                        className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                        <span className="text-[11px]">Edit</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsConfirmOpen(true)}
+                        title="Soft Delete / Clear Facility Points"
+                        className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span className="text-[11px]">Delete</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -293,7 +454,7 @@ export default function AdminAboutFacilityPage() {
                   Edit Facility Tour & Spaces
                 </h3>
                 <p className="text-xs text-slate-500 font-medium">
-                  Update sensory gym heading, space description, photo, and key facility feature points.
+                  Update status, sensory gym heading, space description, photo, and key facility feature points.
                 </p>
               </div>
               <button
@@ -307,6 +468,53 @@ export default function AdminAboutFacilityPage() {
 
             {/* Modal Body Form */}
             <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 space-y-5">
+              {/* STATUS SELECTOR */}
+              <div className="space-y-1.5">
+                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                  Content Status
+                </label>
+                <div className="grid grid-cols-3 gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/70">
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, status: "ACTIVE" }))}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                      formData.status === "ACTIVE"
+                        ? "bg-white text-emerald-700 shadow-xs border border-emerald-200"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span>ACTIVE</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, status: "INACTIVE" }))}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                      formData.status === "INACTIVE"
+                        ? "bg-white text-slate-700 shadow-xs border border-slate-300"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-slate-400" />
+                    <span>INACTIVE</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, status: "DRAFT" }))}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                      formData.status === "DRAFT"
+                        ? "bg-white text-amber-700 shadow-xs border border-amber-200"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                    <span>DRAFT</span>
+                  </button>
+                </div>
+              </div>
+
               <div className="space-y-1.5">
                 <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
                   Facility Heading *
@@ -323,10 +531,10 @@ export default function AdminAboutFacilityPage() {
 
               <div className="space-y-1.5">
                 <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                  Facility Description *
+                  Facility Description * (Press Enter for Paragraph Spacing)
                 </label>
                 <textarea
-                  rows={3}
+                  rows={4}
                   required
                   value={formData.facilityDesc}
                   onChange={(e) => setFormData((prev) => ({ ...prev, facilityDesc: e.target.value }))}
@@ -344,7 +552,7 @@ export default function AdminAboutFacilityPage() {
                 helpText="Upload a sensory gym or therapy suite photo from your computer."
               />
 
-              {/* Facility Feature Points (Aapke Screenshot Wale Points) */}
+              {/* Facility Feature Points */}
               <div className="space-y-3 pt-2 border-t border-slate-100">
                 <div className="flex items-center justify-between">
                   <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
@@ -372,7 +580,7 @@ export default function AdminAboutFacilityPage() {
                   <button
                     type="button"
                     onClick={handleAddPoint}
-                    className="px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 shrink-0"
+                    className="px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 shrink-0 cursor-pointer"
                   >
                     Add
                   </button>
@@ -391,7 +599,7 @@ export default function AdminAboutFacilityPage() {
                       <button
                         type="button"
                         onClick={() => handleRemovePoint(idx)}
-                        className="text-slate-400 hover:text-red-600 p-1 rounded-lg transition-colors"
+                        className="text-slate-400 hover:text-red-600 p-1 rounded-lg transition-colors cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -415,7 +623,7 @@ export default function AdminAboutFacilityPage() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-5 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
+                    className="px-5 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -423,7 +631,7 @@ export default function AdminAboutFacilityPage() {
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl text-xs font-extrabold uppercase tracking-wider transition-all disabled:opacity-50 ${
+                    className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl text-xs font-extrabold uppercase tracking-wider transition-all disabled:opacity-50 cursor-pointer ${
                       saveSuccess
                         ? "bg-emerald-600 text-white"
                         : "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30"
@@ -452,6 +660,19 @@ export default function AdminAboutFacilityPage() {
           </div>
         </div>
       )}
+
+      {/* CONFIRM DELETION MODAL */}
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={executeDelete}
+        isDeleting={isDeleting}
+        itemCount={selectedIds.length > 0 ? selectedIds.length : 1}
+        title="Soft Delete Facility Points?"
+        message="Are you sure you want to deactivate and remove facility feature points? You can re-add them at any time."
+        confirmText="Confirm Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 }

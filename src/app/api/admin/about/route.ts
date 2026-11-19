@@ -32,6 +32,8 @@ export async function GET() {
             "Sensory integration rooms equipped with swings, foam pits, and sensory regulation tools.",
             "Quiet 1:1 learning suites designed for focused ABA and Speech-Language sessions.",
           ]),
+          status: "ACTIVE",
+          isDeleted: false,
         },
       });
     }
@@ -68,6 +70,8 @@ export async function PUT(request: NextRequest) {
       facilityPointsJson,
       pillars,
       pillarsJson,
+      status,
+      isDeleted,
     } = body;
 
     let existing = await prisma.aboutSection.findFirst();
@@ -112,6 +116,9 @@ export async function PUT(request: NextRequest) {
       payload.pillarsJson = pillarsJson;
     }
 
+    if (status !== undefined) payload.status = status;
+    if (isDeleted !== undefined) payload.isDeleted = Boolean(isDeleted);
+
     let updated;
     if (existing) {
       updated = await prisma.aboutSection.update({
@@ -127,6 +134,35 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ success: true, about: updated });
   } catch (error: unknown) {
     console.error("Error updating about section:", error);
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const token = request.cookies.get("admin_token")?.value;
+    if (!token || !verifyAdminToken(token)) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    let existing = await prisma.aboutSection.findFirst();
+    if (existing) {
+      await prisma.aboutSection.update({
+        where: { id: existing.id },
+        data: {
+          status: "INACTIVE",
+          isDeleted: true,
+        },
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "About section content has been soft-deleted and deactivated.",
+    });
+  } catch (error: unknown) {
+    console.error("Error deleting about section:", error);
     const message = error instanceof Error ? error.message : "Internal Server Error";
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }

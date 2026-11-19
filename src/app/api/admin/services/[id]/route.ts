@@ -58,7 +58,9 @@ export async function PUT(
       "whoNeedsThis",
       "keyBenefits",
       "faqs",
+      "status",
       "isActive",
+      "isDeleted",
       "order",
     ];
 
@@ -73,8 +75,14 @@ export async function PUT(
           dataToUpdate[field] = JSON.stringify(body[field]);
         } else if (field === "order") {
           dataToUpdate[field] = Number(body[field]);
+        } else if (field === "status") {
+          dataToUpdate.status = body.status;
+          dataToUpdate.isActive = body.status === "ACTIVE";
         } else if (field === "isActive") {
-          dataToUpdate[field] = Boolean(body[field]);
+          dataToUpdate.isActive = Boolean(body.isActive);
+          dataToUpdate.status = body.isActive ? "ACTIVE" : "INACTIVE";
+        } else if (field === "isDeleted") {
+          dataToUpdate.isDeleted = Boolean(body.isDeleted);
         } else {
           dataToUpdate[field] = body[field];
         }
@@ -105,11 +113,17 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    await prisma.service.delete({
+    // Soft delete
+    await prisma.service.update({
       where: { id },
+      data: {
+        isDeleted: true,
+        isActive: false,
+        status: "INACTIVE",
+      },
     });
 
-    return NextResponse.json({ success: true, message: "Service deleted successfully" });
+    return NextResponse.json({ success: true, message: "Service soft deleted successfully" });
   } catch (error: unknown) {
     console.error("Error deleting service:", error);
     const message = error instanceof Error ? error.message : "Internal Server Error";

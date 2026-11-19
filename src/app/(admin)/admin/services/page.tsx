@@ -6,7 +6,7 @@ import Image from "next/image";
 import {
   Brain,
   Plus,
-  Edit,
+  Edit3,
   Trash2,
   ExternalLink,
   CheckCircle,
@@ -15,17 +15,13 @@ import {
   AlertCircle,
   X,
   Save,
-  Layers,
-  Sparkles,
-  ShieldCheck,
-  Activity,
-  Smile,
-  Compass,
-  MessageCircle,
+  CheckCircle2,
 } from "lucide-react";
 import AdminPagination from "@/components/common/AdminPagination";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import ImageUploadField from "@/components/admin/ImageUploadField";
+
+type StatusType = "ACTIVE" | "INACTIVE" | "DRAFT";
 
 interface ServiceItem {
   id: string;
@@ -45,8 +41,11 @@ interface ServiceItem {
   duration?: string | null;
   clinicalLead?: string | null;
   features?: string | null;
+  status: StatusType;
   isActive: boolean;
   order: number;
+  updatedAt?: string;
+  createdAt?: string;
 }
 
 export default function AdminServicesPage() {
@@ -55,12 +54,17 @@ export default function AdminServicesPage() {
   const [modalMode, setModalMode] = useState<"ADD" | "EDIT" | null>(null);
   const [editingService, setEditingService] = useState<ServiceItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [serviceToDelete, setServiceToDelete] = useState<ServiceItem | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Selection & Bulk Action
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const [deleteTargetIds, setDeleteTargetIds] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(6);
+  const [itemsPerPage, setItemsPerPage] = useState(8);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -77,8 +81,8 @@ export default function AdminServicesPage() {
     sessionFormat: "1:1 Individualized Clinical Sessions",
     duration: "Customized Care Plan",
     clinicalLead: "Registered Behaviour Analyst (RBA)",
-    featuresText: "",
-    isActive: true,
+    featuresText: "RBA Supervised Clinical Care\nAges 2 to 20 Years\nIndividualized Care Plan",
+    status: "ACTIVE" as StatusType,
     order: 0,
   });
 
@@ -88,7 +92,11 @@ export default function AdminServicesPage() {
       const res = await fetch("/api/admin/services");
       if (res.ok) {
         const data = await res.json();
-        setServices(data.services || []);
+        const mapped: ServiceItem[] = (data.services || []).map((s: any) => ({
+          ...s,
+          status: (s.status as StatusType) || (s.isActive ? "ACTIVE" : "INACTIVE"),
+        }));
+        setServices(mapped);
       }
     } catch (err) {
       console.error("Failed to load services:", err);
@@ -117,10 +125,11 @@ export default function AdminServicesPage() {
       duration: "Customized Care Plan",
       clinicalLead: "Registered Behaviour Analyst (RBA)",
       featuresText: "RBA Supervised Clinical Care\nAges 2 to 20 Years\nIndividualized Care Plan",
-      isActive: true,
+      status: "ACTIVE",
       order: services.length + 1,
     });
     setEditingService(null);
+    setSaveSuccess(false);
     setModalMode("ADD");
   };
 
@@ -164,42 +173,117 @@ export default function AdminServicesPage() {
       duration: svc.duration || "Customized Care Plan",
       clinicalLead: svc.clinicalLead || "Registered Behaviour Analyst (RBA)",
       featuresText: parsedFeatures.join("\n"),
-      isActive: svc.isActive,
+      status: svc.status || (svc.isActive ? "ACTIVE" : "INACTIVE"),
       order: svc.order || 0,
     });
+    setSaveSuccess(false);
     setModalMode("EDIT");
   };
 
-  const handleToggleActive = async (svc: ServiceItem) => {
+  // Selection handlers
+  const toggleSelectAll = () => {
+    if (paginatedServices.length > 0 && paginatedServices.every((s) => selectedIds.includes(s.id))) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(paginatedServices.map((s) => s.id));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter((item) => item !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  // Quick cycle status from table
+  const cycleStatus = async (svc: ServiceItem) => {
+    const nextStatus: StatusType =
+      svc.status === "ACTIVE"
+        ? "INACTIVE"
+        : svc.status === "INACTIVE"
+        ? "DRAFT"
+        : "ACTIVE";
+
     try {
-      const updatedStatus = !svc.isActive;
       const res = await fetch(`/api/admin/services/${svc.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: updatedStatus }),
+        body: JSON.stringify({ status: nextStatus }),
       });
       if (res.ok) {
         setServices((prev) =>
-          prev.map((item) => (item.id === svc.id ? { ...item, isActive: updatedStatus } : item))
+          prev.map((s) =>
+            s.id === svc.id
+              ? { ...s, status: nextStatus, isActive: nextStatus === "ACTIVE" }
+              : s
+          )
         );
       }
     } catch (err) {
-      console.error("Failed to toggle status:", err);
+      console.error("Status toggle error:", err);
+    }
+  };
+
+  // Delete handlers
+  const confirmSingleDelete = (id: string) => {
+    setDeleteTargetIds([id]);
+    setIsConfirmDeleteOpen(true);
+  };
+
+  const confirmBulkDelete = () => {
+    if (selectedIds.length === 0) return;
+    setDeleteTargetIds(selectedIds);
+    setIsConfirmDeleteOpen(true);
+  };
+
+  const executeDelete = async () => {
+    if (deleteTargetIds.length === 0) return;
+    setIsDeleting(true);
+
+    try {
+      if (deleteTargetIds.length === 1) {
+        const id = deleteTargetIds[0];
+        const res = await fetch(`/api/admin/services/${id}`, {
+          method: "DELETE",
+        });
+        if (res.ok) {
+          setServices((prev) => prev.filter((item) => item.id !== id));
+          setSelectedIds((prev) => prev.filter((item) => item !== id));
+        }
+      } else {
+        const res = await fetch("/api/admin/services", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: deleteTargetIds }),
+        });
+        if (res.ok) {
+          setServices((prev) => prev.filter((item) => !deleteTargetIds.includes(item.id)));
+          setSelectedIds([]);
+        }
+      }
+      setIsConfirmDeleteOpen(false);
+      setDeleteTargetIds([]);
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Error deleting service(s)");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSaveSuccess(false);
 
     try {
-      // Split features by newline
       const featuresArray = formData.featuresText
         .split("\n")
         .map((f) => f.trim())
         .filter(Boolean);
 
-      // Split overview paragraphs by double newline
       const overviewArray = formData.overviewParagraphs
         .split("\n\n")
         .map((p) => p.trim())
@@ -222,7 +306,8 @@ export default function AdminServicesPage() {
         duration: formData.duration,
         clinicalLead: formData.clinicalLead,
         features: JSON.stringify(featuresArray),
-        isActive: formData.isActive,
+        status: formData.status,
+        isActive: formData.status === "ACTIVE",
         order: Number(formData.order),
       };
 
@@ -233,8 +318,12 @@ export default function AdminServicesPage() {
           body: JSON.stringify(payload),
         });
         if (res.ok) {
-          fetchServices();
-          setModalMode(null);
+          setSaveSuccess(true);
+          await fetchServices();
+          setTimeout(() => {
+            setModalMode(null);
+            setSaveSuccess(false);
+          }, 1000);
         } else {
           const errData = await res.json();
           alert(errData.error || "Failed to create service");
@@ -246,8 +335,12 @@ export default function AdminServicesPage() {
           body: JSON.stringify(payload),
         });
         if (res.ok) {
-          fetchServices();
-          setModalMode(null);
+          setSaveSuccess(true);
+          await fetchServices();
+          setTimeout(() => {
+            setModalMode(null);
+            setSaveSuccess(false);
+          }, 1000);
         } else {
           const errData = await res.json();
           alert(errData.error || "Failed to update service");
@@ -255,259 +348,336 @@ export default function AdminServicesPage() {
       }
     } catch (err) {
       console.error("Submit error:", err);
+      alert("Network or server error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      const res = await fetch(`/api/admin/services/${id}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        setServices((prev) => prev.filter((item) => item.id !== id));
-      }
-    } catch (err) {
-      console.error("Delete error:", err);
+  const renderStatusBadge = (st: StatusType, svc: ServiceItem) => {
+    switch (st) {
+      case "ACTIVE":
+        return (
+          <button
+            type="button"
+            onClick={() => cycleStatus(svc)}
+            title="Click to cycle status (ACTIVE -> INACTIVE -> DRAFT)"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            ACTIVE
+          </button>
+        );
+      case "INACTIVE":
+        return (
+          <button
+            type="button"
+            onClick={() => cycleStatus(svc)}
+            title="Click to cycle status (INACTIVE -> DRAFT -> ACTIVE)"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-slate-100 text-slate-600 border border-slate-300 hover:bg-slate-200 transition-colors cursor-pointer"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+            INACTIVE
+          </button>
+        );
+      case "DRAFT":
+        return (
+          <button
+            type="button"
+            onClick={() => cycleStatus(svc)}
+            title="Click to cycle status (DRAFT -> ACTIVE -> INACTIVE)"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            DRAFT
+          </button>
+        );
+      default:
+        return null;
     }
   };
 
+  // Paginated items
+  const totalItems = services.length;
+  const paginatedServices = services.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
+      {/* Top Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
               Clinical Services & Therapy Programs
             </h1>
             <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-extrabold text-xs">
-              {services.length} Active
+              {services.length} Programs
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            Manage pediatric therapy offerings, descriptions, clinical leads, age groups, and visibility on the live website.
+            Manage pediatric therapy offerings, clinical leads, age brackets, descriptions, and live website visibility.
           </p>
         </div>
 
-        <button
-          onClick={openAddModal}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold rounded-2xl shadow-lg shadow-blue-600/30 transition-all uppercase tracking-wider"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add New Clinical Program</span>
-        </button>
-      </div>
+        <div className="flex items-center gap-3">
+          {selectedIds.length > 0 && (
+            <button
+              type="button"
+              onClick={confirmBulkDelete}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition-all cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4 text-rose-600" />
+              <span>Delete Selected ({selectedIds.length})</span>
+            </button>
+          )}
 
-      {/* Services Grid */}
-      {isLoading ? (
-        <div className="py-20 flex flex-col items-center justify-center space-y-3">
-          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-          <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">
-            Loading Clinical Programs...
-          </p>
-        </div>
-      ) : services.length === 0 ? (
-        <div className="bg-white p-16 rounded-3xl border border-slate-200 text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
-            <Brain className="w-7 h-7" />
-          </div>
-          <h3 className="text-slate-900 font-bold text-base">No Clinical Programs Registered</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
-            Click the button above to add your first pediatric clinical service program.
-          </p>
           <button
+            type="button"
             onClick={openAddModal}
-            className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold rounded-2xl shadow-lg shadow-blue-600/30 transition-all uppercase tracking-wider cursor-pointer"
           >
-            Create Program
+            <Plus className="w-4 h-4 stroke-[3]" />
+            <span>Add Clinical Program</span>
           </button>
         </div>
-      ) : (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {services.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((svc) => (
-              <div
-                key={svc.id}
-                className={`bg-white rounded-3xl border transition-all overflow-hidden flex flex-col justify-between ${
-                  svc.isActive
-                    ? "border-slate-200/90 shadow-xs hover:shadow-md hover:border-blue-400"
-                    : "border-slate-200 opacity-60 bg-slate-50/50"
-                }`}
-              >
-                {/* Top Image Preview & Badge */}
-                <div className="relative h-44 w-full bg-slate-100 overflow-hidden group">
-                  <Image
-                    src={svc.image || "/hero_child_therapy.jpg"}
-                    alt={svc.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
+      </div>
 
-                  <div className="absolute top-3 left-3 flex items-center gap-2">
-                    <span
-                      className={`px-3 py-1 rounded-full text-white text-[10px] font-black uppercase tracking-wider shadow-sm ${
-                        svc.badgeBg || "bg-blue-600"
-                      }`}
-                    >
-                      {svc.badge || "Clinical Care"}
-                    </span>
-                  </div>
-
-                  <div className="absolute top-3 right-3">
-                    <button
-                      onClick={() => handleToggleActive(svc)}
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm backdrop-blur-md ${
-                        svc.isActive
-                          ? "bg-emerald-500/90 text-white"
-                          : "bg-rose-500/90 text-white"
-                      }`}
-                    >
-                      {svc.isActive ? (
-                        <>
-                          <CheckCircle className="w-3 h-3" />
-                          <span>Visible</span>
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="w-3 h-3" />
-                          <span>Hidden</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  <div className="absolute bottom-3 left-3 right-3 text-white">
-                    <span className="text-[10px] font-mono uppercase text-blue-200 font-bold">
-                      /{svc.slug}
-                    </span>
-                    <h3 className="font-black text-base line-clamp-1">{svc.title}</h3>
-                  </div>
-                </div>
-
-                {/* Body Content */}
-                <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <p className="text-xs text-slate-600 font-medium line-clamp-2 leading-relaxed">
-                      {svc.shortDescription || svc.tagline || "No description provided."}
-                    </p>
-
-                    <div className="pt-2 border-t border-slate-100 space-y-1.5 text-[11px]">
-                      <div className="flex items-center justify-between text-slate-500">
-                        <span className="font-bold">Target Age:</span>
-                        <span className="font-extrabold text-slate-800">{svc.ageGroup || "All Ages"}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-slate-500">
-                        <span className="font-bold">Clinical Lead:</span>
-                        <span className="font-extrabold text-slate-800 line-clamp-1 max-w-[170px] text-right">
-                          {svc.clinicalLead || "RBA Team"}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-slate-500">
-                        <span className="font-bold">Display Order:</span>
-                        <span className="font-mono font-bold text-slate-700">#{svc.order}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions Footer */}
-                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                    <Link
-                      href={`/services/${svc.slug}`}
-                      target="_blank"
-                      className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-blue-600 hover:text-blue-700 transition-colors uppercase tracking-wider"
-                    >
-                      <span>Preview Page</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </Link>
-
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => openEditModal(svc)}
-                        className="p-2 rounded-xl text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                        title="Edit Service"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setServiceToDelete(svc);
-                          setIsDeleteOpen(true);
-                        }}
-                        className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                        title="Delete Service"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+      {/* Main Table View (FabFit Style) */}
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+        {isLoading ? (
+          <div className="py-20 flex flex-col items-center justify-center space-y-3">
+            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">
+              Loading Clinical Programs...
+            </p>
           </div>
+        ) : services.length === 0 ? (
+          <div className="bg-white p-16 rounded-3xl text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+              <Brain className="w-7 h-7" />
+            </div>
+            <h3 className="text-slate-900 font-bold text-base">No Clinical Programs Registered</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
+              Click the button above to add your first pediatric clinical service program.
+            </p>
+            <button
+              type="button"
+              onClick={openAddModal}
+              className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold"
+            >
+              Create Program
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                  <th className="py-4 pl-6 pr-2 w-10">
+                    <input
+                      type="checkbox"
+                      checked={
+                        paginatedServices.length > 0 &&
+                        paginatedServices.every((s) => selectedIds.includes(s.id))
+                      }
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                  </th>
+                  <th className="py-4 px-3 w-12 text-center">#</th>
+                  <th className="py-4 px-6">Program / Service</th>
+                  <th className="py-4 px-6">Badge Pill</th>
+                  <th className="py-4 px-6">Target Age</th>
+                  <th className="py-4 px-6">Clinical Lead</th>
+                  <th className="py-4 px-6">Status</th>
+                  <th className="py-4 px-6 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {paginatedServices.map((svc, idx) => {
+                  const rowNumber = (currentPage - 1) * itemsPerPage + idx + 1;
+                  const isSelected = selectedIds.includes(svc.id);
 
-          <AdminPagination
-            currentPage={currentPage}
-            totalItems={services.length}
-            itemsPerPage={itemsPerPage}
-            onPageChange={setCurrentPage}
-            onItemsPerPageChange={(val) => {
-              setItemsPerPage(val);
-              setCurrentPage(1);
-            }}
-          />
-        </div>
-      )}
+                  return (
+                    <tr
+                      key={svc.id}
+                      className={`hover:bg-slate-50/50 transition-colors ${
+                        isSelected ? "bg-blue-50/30" : ""
+                      }`}
+                    >
+                      <td className="py-4 pl-6 pr-2">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelectOne(svc.id)}
+                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
+                      </td>
 
-      {/* Delete Confirmation Modal */}
-      <ConfirmModal
-        isOpen={isDeleteOpen}
-        onClose={() => {
-          setIsDeleteOpen(false);
-          setServiceToDelete(null);
-        }}
-        onConfirm={async () => {
-          if (serviceToDelete) {
-            await handleDelete(serviceToDelete.id);
-            setIsDeleteOpen(false);
-            setServiceToDelete(null);
-          }
-        }}
-        title="Delete Clinical Program?"
-        message={`Are you sure you want to delete "${serviceToDelete?.title}"? This program will be permanently removed from the website catalog and database.`}
-        confirmText="Delete Program"
-        cancelText="Cancel"
-      />
+                      <td className="py-4 px-3 font-bold text-slate-400 text-center">
+                        {rowNumber}
+                      </td>
 
-      {/* Add / Edit Program Modal */}
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 relative shrink-0">
+                            <Image
+                              src={svc.image || "/hero_child_therapy.jpg"}
+                              alt={svc.title}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          <div>
+                            <p className="font-extrabold text-slate-900">{svc.title}</p>
+                            <p className="text-[11px] text-blue-600 font-mono font-medium">
+                              /{svc.slug}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="py-4 px-6">
+                        <span className="inline-block px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px] font-extrabold border border-blue-100">
+                          {svc.badge || "Clinical Care"}
+                        </span>
+                      </td>
+
+                      <td className="py-4 px-6 font-bold text-slate-700">
+                        {svc.ageGroup || "All Ages"}
+                      </td>
+
+                      <td className="py-4 px-6 font-medium text-slate-600 max-w-xs">
+                        <p className="line-clamp-1">{svc.clinicalLead || "Clinical Team"}</p>
+                      </td>
+
+                      {/* Status Badge with Click-to-Cycle */}
+                      <td className="py-4 px-6">
+                        {renderStatusBadge(svc.status, svc)}
+                      </td>
+
+                      {/* Dual Action: Edit + Delete */}
+                      <td className="py-4 px-6 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(svc)}
+                            title="Edit Service"
+                            className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                            <span className="text-[11px]">Edit</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => confirmSingleDelete(svc.id)}
+                            title="Soft Delete Service"
+                            className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span className="text-[11px]">Delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalItems > itemsPerPage && (
+          <div className="p-4 border-t border-slate-100 flex justify-end">
+            <AdminPagination
+              currentPage={currentPage}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* POPUP MODAL (Add / Edit) */}
       {modalMode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-4xl max-h-[88vh] flex flex-col overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200 my-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-slate-100">
             {/* Modal Header */}
-            <div className="px-6 sm:px-8 py-4 sm:py-5 border-b border-slate-200 flex justify-between items-center bg-white shrink-0 sticky top-0 z-20">
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-blue-600">
-                  {modalMode === "ADD" ? "New Therapy Offering" : "Update Program Details"}
-                </span>
-                <h2 className="text-xl font-black text-slate-900 tracking-tight mt-0.5">
-                  {modalMode === "ADD" ? "Create Clinical Service" : `Edit: ${formData.title}`}
-                </h2>
+                <h3 className="text-lg font-black text-slate-900 tracking-tight">
+                  {modalMode === "ADD" ? "Add Clinical Therapy Service" : "Edit Clinical Service"}
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">
+                  Update program headline, slug, clinical lead, age group, photo, and features.
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => setModalMode(null)}
-                className="p-2 rounded-2xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Modal Form */}
-            <form id="service-modal-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-5 text-xs">
-              {/* Row 1: Title & Slug */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Modal Body Form */}
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+              {/* STATUS SELECTOR (Active / Inactive / Draft) */}
+              <div className="space-y-1.5">
+                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                  Program Visibility Status
+                </label>
+                <div className="grid grid-cols-3 gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/70">
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, status: "ACTIVE" }))}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                      formData.status === "ACTIVE"
+                        ? "bg-white text-emerald-700 shadow-xs border border-emerald-200"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span>ACTIVE</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, status: "INACTIVE" }))}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                      formData.status === "INACTIVE"
+                        ? "bg-white text-slate-700 shadow-xs border border-slate-300"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-slate-400" />
+                    <span>INACTIVE</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, status: "DRAFT" }))}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                      formData.status === "DRAFT"
+                        ? "bg-white text-amber-700 shadow-xs border border-amber-200"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                    <span>DRAFT</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Title & Slug */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
                     Program Title *
@@ -517,27 +687,21 @@ export default function AdminServicesPage() {
                     required
                     value={formData.title}
                     onChange={(e) => {
-                      const newTitle = e.target.value;
+                      const t = e.target.value;
                       setFormData((prev) => ({
                         ...prev,
-                        title: newTitle,
-                        slug:
-                          modalMode === "ADD"
-                            ? newTitle
-                                .toLowerCase()
-                                .replace(/[^a-z0-9]+/g, "-")
-                                .replace(/^-|-$/g, "")
-                            : prev.slug,
+                        title: t,
+                        slug: prev.slug || t.toLowerCase().replace(/[^a-z0-9]/g, "-"),
                       }));
                     }}
-                    placeholder="e.g. Applied Behavior Analysis (ABA)"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    placeholder="e.g. ABA Therapy"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    URL Slug * (Unique)
+                    URL Slug *
                   </label>
                   <input
                     type="text"
@@ -545,85 +709,42 @@ export default function AdminServicesPage() {
                     value={formData.slug}
                     onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
                     placeholder="e.g. aba-therapy"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
               </div>
 
-              {/* Row 2: Tagline & Image */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Badge & Clinical Lead */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Tagline (One-line Hook)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.tagline}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, tagline: e.target.value }))}
-                    placeholder="e.g. Evidence-based behavioral support for childhood growth."
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <ImageUploadField
-                    label="Program Image"
-                    value={formData.image || ""}
-                    onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))}
-                    placeholder="/hero_child_therapy.jpg"
-                    helpText="Upload a clinical program photo from your system (computer) or enter a URL."
-                  />
-                </div>
-              </div>
-
-              {/* Row 3: Badge, Badge Color & Order */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Card Badge Text
+                    Badge Tagline
                   </label>
                   <input
                     type="text"
                     value={formData.badge}
                     onChange={(e) => setFormData((prev) => ({ ...prev, badge: e.target.value }))}
-                    placeholder="e.g. OAP Covered"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    placeholder="e.g. OAP Covered, Registered Clinician"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Badge Color Scheme
-                  </label>
-                  <select
-                    value={formData.badgeBg}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, badgeBg: e.target.value }))}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                  >
-                    <option value="bg-blue-600">Blue (Default / ABA)</option>
-                    <option value="bg-teal-600">Teal (Speech SLP)</option>
-                    <option value="bg-amber-600">Amber (Occupational OT)</option>
-                    <option value="bg-purple-600">Purple (Life Skills)</option>
-                    <option value="bg-emerald-600">Emerald (Social Groups)</option>
-                    <option value="bg-indigo-600">Indigo (Parent Coaching)</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Display Order
+                    Clinical Lead / Supervisor
                   </label>
                   <input
-                    type="number"
-                    value={formData.order}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, order: Number(e.target.value) }))}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    type="text"
+                    value={formData.clinicalLead}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, clinicalLead: e.target.value }))}
+                    placeholder="e.g. Registered Behaviour Analyst (RBA)"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
               </div>
 
-              {/* Row 4: Clinical Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Age Bracket & Session Format */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
                     Target Age Group
@@ -633,7 +754,7 @@ export default function AdminServicesPage() {
                     value={formData.ageGroup}
                     onChange={(e) => setFormData((prev) => ({ ...prev, ageGroup: e.target.value }))}
                     placeholder="e.g. 2 to 20 Years"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
 
@@ -644,119 +765,117 @@ export default function AdminServicesPage() {
                   <input
                     type="text"
                     value={formData.sessionFormat}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, sessionFormat: e.target.value }))
-                    }
-                    placeholder="e.g. 1:1 & Small Group Individualized"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    onChange={(e) => setFormData((prev) => ({ ...prev, sessionFormat: e.target.value }))}
+                    placeholder="e.g. 1:1 Individualized Sessions"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
+              </div>
 
-                <div className="space-y-1.5">
-                  <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                    Clinical Lead Supervisor
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.clinicalLead}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, clinicalLead: e.target.value }))
-                    }
-                    placeholder="e.g. Jesenia Duran, RBA"
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                  />
-                </div>
+              {/* Photo Upload */}
+              <ImageUploadField
+                label="Program Cover Image"
+                value={formData.image}
+                onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))}
+                recommendedSize="1200 x 800px"
+              />
+
+              {/* Features List */}
+              <div className="space-y-1.5">
+                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                  Clinical Highlights / Features (One per line)
+                </label>
+                <textarea
+                  rows={3}
+                  value={formData.featuresText}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, featuresText: e.target.value }))}
+                  placeholder="RBA Supervised Clinical Care&#10;Ages 2 to 20 Years&#10;Individualized Care Plan"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 leading-relaxed font-mono"
+                />
               </div>
 
               {/* Short Description */}
               <div className="space-y-1.5">
                 <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                  Card Short Summary
+                  Brief Summary / Card Description
                 </label>
                 <textarea
                   rows={2}
                   value={formData.shortDescription}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, shortDescription: e.target.value }))
-                  }
-                  placeholder="Summary shown on the cards on the Services page..."
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  onChange={(e) => setFormData((prev) => ({ ...prev, shortDescription: e.target.value }))}
+                  placeholder="Brief clinical description displayed on the homepage cards..."
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-normal text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
 
-              {/* Overview Paragraphs */}
-              <div className="space-y-1.5">
-                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                  Detailed Clinical Overview (Separate paragraphs with double Enter)
-                </label>
-                <textarea
-                  rows={4}
-                  value={formData.overviewParagraphs}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, overviewParagraphs: e.target.value }))
-                  }
-                  placeholder="Detailed breakdown shown on the single service page..."
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                />
-              </div>
+              {/* Modal Footer */}
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <div>
+                  {saveSuccess && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 animate-in fade-in">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Saved Successfully!
+                    </span>
+                  )}
+                </div>
 
-              {/* Bullet Features */}
-              <div className="space-y-1.5">
-                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                  Key Features / Bullets (One per line)
-                </label>
-                <textarea
-                  rows={3}
-                  value={formData.featuresText}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, featuresText: e.target.value }))
-                  }
-                  placeholder="RBA Supervised Clinical Care&#10;Target Verbal & Life Skills&#10;OAP Funding Covered"
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                />
-              </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setModalMode(null)}
+                    className="px-5 py-2.5 rounded-2xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
 
-              {/* Visibility Checkbox */}
-              <div className="flex items-center gap-3 pt-2">
-                <input
-                  type="checkbox"
-                  id="isActiveToggle"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, isActive: e.target.checked }))}
-                  className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300"
-                />
-                <label htmlFor="isActiveToggle" className="font-bold text-slate-800 cursor-pointer">
-                  Publish to Live Website Catalog (Active)
-                </label>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-blue-600/25 transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        <span>{modalMode === "ADD" ? "Create Program" : "Save Changes"}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
-
-            {/* Modal Sticky Footer */}
-            <div className="px-6 sm:px-8 py-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 shrink-0">
-              <button
-                type="button"
-                onClick={() => setModalMode(null)}
-                className="px-5 py-2.5 rounded-2xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                form="service-modal-form"
-                disabled={isSubmitting}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold uppercase tracking-wider shadow-md shadow-blue-600/30 transition-all disabled:opacity-50"
-              >
-                {isSubmitting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Save className="w-4 h-4" />
-                )}
-                <span>{modalMode === "ADD" ? "Create Program" : "Save Changes"}</span>
-              </button>
-            </div>
           </div>
         </div>
       )}
+
+      {/* CONFIRM DELETE MODAL */}
+      <ConfirmModal
+        isOpen={isConfirmDeleteOpen}
+        onClose={() => setIsConfirmDeleteOpen(false)}
+        onConfirm={executeDelete}
+        title={
+          deleteTargetIds.length > 1
+            ? `Delete ${deleteTargetIds.length} Programs?`
+            : "Delete Clinical Program?"
+        }
+        message={
+          deleteTargetIds.length > 1
+            ? `Are you sure you want to soft delete the selected ${deleteTargetIds.length} clinical programs? They will be hidden from the website.`
+            : "Are you sure you want to soft delete this clinical program? It will be hidden from the website."
+        }
+        confirmText={
+          isDeleting
+            ? "Deleting..."
+            : deleteTargetIds.length > 1
+            ? `Delete ${deleteTargetIds.length} Programs`
+            : "Delete Program"
+        }
+        variant="danger"
+      />
     </div>
   );
 }
