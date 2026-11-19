@@ -109,15 +109,12 @@ function AdminSidebarNav({
                     const [childBase, childQuery] = child.href.split("?");
                     let activeSub = false;
 
-                    if (pathname === childBase) {
-                      if (childQuery) {
-                        const params = new URLSearchParams(childQuery);
-                        const tabVal = params.get("tab");
-                        activeSub = currentTab === tabVal;
-                      } else {
-                        // child has no query (e.g. /admin/team)
-                        activeSub = !currentTab;
-                      }
+                    if (childQuery) {
+                      const params = new URLSearchParams(childQuery);
+                      const tabVal = params.get("tab");
+                      activeSub = pathname === childBase && currentTab === tabVal;
+                    } else {
+                      activeSub = pathname === childBase;
                     }
 
                     return (
@@ -228,10 +225,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       href: "/admin/about",
       icon: Building,
       children: [
-        { name: "Overview & Mission", href: "/admin/about?tab=overview" },
-        { name: "Facility Tour & Spaces", href: "/admin/about?tab=facility" },
+        { name: "Overview & Mission", href: "/admin/about" },
+        { name: "Facility Tour & Spaces", href: "/admin/about/facility" },
         { name: "Clinical Leadership & Team", href: "/admin/team" },
-        { name: "Clinical Pillars & Care", href: "/admin/about?tab=pillars" },
+        { name: "Clinical Pillars & Care", href: "/admin/about/pillars" },
       ],
     },
     { name: "Gallery", href: "/admin/gallery", icon: ImageIcon },

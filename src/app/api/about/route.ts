@@ -9,24 +9,60 @@ export async function GET() {
       about = await prisma.aboutSection.create({
         data: {
           badgeText: "ABOUT RADIANT AUTISM & SKILL CENTER",
-          title: "Compassionate, Modern & Person-Centered Care For Every Child",
+          title: "Dedicated Clinical Support for Every Child's Unique Potential",
           description1:
-            "At Radiant Autism Center, our mission is simple: to help every child build meaningful communication, motor independence, and daily life confidence through gentle, evidence-based care.",
-          description2:
-            "We work closely with families to deliver individualized support across ABA therapy, speech-language services, and occupational therapy in a welcoming, caring environment.",
+            "Radiant Autism & Skill Center is a multidisciplinary pediatric clinic dedicated to delivering research-backed, compassionate developmental therapies.",
           centerImage: "/about_center_photo.jpg",
           highlightsJson: JSON.stringify([
-            "Registered Behaviour Analyst (RBA, Ontario) Supervision",
-            "OAP Covered Programs & Services",
-            "Person-Centered & Compassionate ABA Therapy",
-            "Integrated Speech & Occupational Therapy Support",
-            "Tailored 1:1 and Group Skill Building",
-            "Close Family Collaboration & Parent Guidance",
+            "100% RBA Supervised Clinical Programs",
+            "Eligible for Ontario Autism Program (OAP) funding",
+            "Individualized 1:1 and peer-group social rooms",
+            "Family-centered progress reporting and collaboration",
           ]),
           facilityHeading: "Modern Sensory-Rich Clinical Environment",
           facilityDesc:
             "Our clinic features custom sensory gyms, private 1:1 intervention suites, gross-motor play zones, and parent observation rooms designed for safety, focus, and warmth.",
           facilityImage: "/gallery_sensory_gym.jpg",
+          facilityPointsJson: JSON.stringify([
+            "On-site large gymnasium area for gross motor skills, movement, and play.",
+            "A dedicated life skills area to practice real-world daily routines (self-care, dressing, structured tasks).",
+            "Sensory integration rooms equipped with swings, foam pits, and sensory regulation tools.",
+            "Quiet 1:1 learning suites designed for focused ABA and Speech-Language sessions.",
+          ]),
+          pillarsJson: JSON.stringify([
+            {
+              id: "01",
+              title: "Person-Centered ABA",
+              badge: "Empowerment",
+              desc: "Every intervention honors the child's individual personality, dignity, strengths, and natural communication pace.",
+              icon: "HeartHandshake",
+              points: ["Dignity-first approach", "Positive Reinforcement"],
+            },
+            {
+              id: "02",
+              title: "1:1 RBA Supervision",
+              badge: "RBA Led",
+              desc: "Registered Behaviour Analysts (Ontario) directly design, continuously monitor, and adjust clinical progress for every child.",
+              icon: "Award",
+              points: ["Certified Clinicians", "VB-MAPP & ABLLS-R"],
+            },
+            {
+              id: "03",
+              title: "Multidisciplinary Integration",
+              badge: "360° Care",
+              desc: "Seamlessly combining speech-language pathology, occupational sensory care, and pediatric physio for holistic development.",
+              icon: "Users",
+              points: ["Speech + OT + ABA", "Unified Goal Roadmap"],
+            },
+            {
+              id: "04",
+              title: "OAP Covered & CEU Programs",
+              badge: "Accredited",
+              desc: "Clinical center offering OAP eligible family support funding programs and professional clinical development.",
+              icon: "ShieldCheck",
+              points: ["OAP Covered Services", "Parent CEU Training"],
+            },
+          ]),
         },
       });
     }

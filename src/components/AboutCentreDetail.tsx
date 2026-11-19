@@ -8,11 +8,12 @@ interface AboutDetailData {
   badgeText: string;
   title: string;
   description1: string;
-  description2: string;
+  description2?: string;
   centerImage: string;
   facilityHeading: string;
   facilityDesc: string;
   facilityImage: string;
+  facilityPoints: string[];
 }
 
 const DEFAULT_DETAIL: AboutDetailData = {
@@ -20,13 +21,17 @@ const DEFAULT_DETAIL: AboutDetailData = {
   title: "About Radiant Autism Services & Our Centre",
   description1:
     "Radiant Autism Services provides high-quality, OAP-covered autism and developmental therapies. Our clinical team delivers compassionate, family-centred ABA, Speech-Language Pathology (SLP), and Occupational Therapy (OT).",
-  description2:
-    "We are proud to be recognized as a trusted centre where families feel supported, respected, and confident in the individualized care their child receives every single day.",
   centerImage: "/about_center_photo.jpg",
   facilityHeading: "Our Purpose-Built Facility & Spaces",
   facilityDesc:
     "Our Radiant Autism Services centre offers purpose-built space thoughtfully designed to support learning, sensory comfort, dignity, and child safety.",
   facilityImage: "/gallery_sensory_gym.jpg",
+  facilityPoints: [
+    "On-site large gymnasium area for gross motor skills, movement, and play.",
+    "A dedicated life skills area to practice real-world daily routines (self-care, dressing, structured tasks).",
+    "Sensory integration rooms equipped with swings, foam pits, and sensory regulation tools.",
+    "Quiet 1:1 learning suites designed for focused ABA and Speech-Language sessions.",
+  ],
 };
 
 export default function AboutCentreDetail() {
@@ -40,15 +45,28 @@ export default function AboutCentreDetail() {
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.about && isMounted) {
+            let points = DEFAULT_DETAIL.facilityPoints;
+            if (data.about.facilityPointsJson) {
+              try {
+                const parsed = JSON.parse(data.about.facilityPointsJson);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                  points = parsed;
+                }
+              } catch (e) {
+                console.error("Error parsing facility points:", e);
+              }
+            }
+
             setDetail({
               badgeText: data.about.badgeText || DEFAULT_DETAIL.badgeText,
               title: data.about.title || DEFAULT_DETAIL.title,
               description1: data.about.description1 || DEFAULT_DETAIL.description1,
-              description2: data.about.description2 || DEFAULT_DETAIL.description2,
+              description2: data.about.description2,
               centerImage: data.about.centerImage || DEFAULT_DETAIL.centerImage,
               facilityHeading: data.about.facilityHeading || DEFAULT_DETAIL.facilityHeading,
               facilityDesc: data.about.facilityDesc || DEFAULT_DETAIL.facilityDesc,
               facilityImage: data.about.facilityImage || DEFAULT_DETAIL.facilityImage,
+              facilityPoints: points,
             });
           }
         }
@@ -72,7 +90,6 @@ export default function AboutCentreDetail() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24 relative z-10">
-
         {/* Row 1: Image Left + Text Right (About Radiant Autism Services & Our Centre) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-6">
@@ -149,13 +166,9 @@ export default function AboutCentreDetail() {
                   {detail.facilityDesc}
                 </p>
 
+                {/* DYNAMIC FACILITY POINTS FROM DATABASE */}
                 <div className="space-y-3 pt-2">
-                  {[
-                    "On-site large gymnasium area for gross motor skills, movement, and play.",
-                    "A dedicated life skills area to practice real-world daily routines (self-care, dressing, structured tasks).",
-                    "Sensory integration rooms equipped with swings, foam pits, and sensory regulation tools.",
-                    "Quiet 1:1 learning suites designed for focused ABA and Speech-Language sessions.",
-                  ].map((item, idx) => (
+                  {detail.facilityPoints.map((item, idx) => (
                     <div key={idx} className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
                       <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                       <span className="text-slate-800 text-sm font-bold leading-normal">{item}</span>
@@ -184,7 +197,6 @@ export default function AboutCentreDetail() {
             </ScrollReveal>
           </div>
         </div>
-
       </div>
     </section>
   );

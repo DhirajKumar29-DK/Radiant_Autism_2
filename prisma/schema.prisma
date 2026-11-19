@@ -109,17 +109,19 @@ model PageHero {
 }
 
 model AboutSection {
-  id              String   @id @default(uuid())
-  badgeText       String?
-  title           String   @db.Text
-  description1    String?  @db.Text
-  description2    String?  @db.Text
-  centerImage     String?
-  highlightsJson  String?  @db.LongText
-  facilityHeading String?  @db.Text
-  facilityDesc    String?  @db.Text
-  facilityImage   String?
-  updatedAt       DateTime @updatedAt
+  id                 String   @id @default(uuid())
+  badgeText          String?
+  title              String   @db.Text
+  description1       String?  @db.Text
+  description2       String?  @db.Text
+  centerImage        String?
+  highlightsJson     String?  @db.LongText
+  facilityHeading    String?  @db.Text
+  facilityDesc       String?  @db.Text
+  facilityImage      String?
+  facilityPointsJson String?  @db.LongText
+  pillarsJson        String?  @db.LongText
+  updatedAt          DateTime @updatedAt
 }
 
 model TeamMember {
@@ -129,6 +131,7 @@ model TeamMember {
   badge     String?
   image     String?
   bio       String?  @db.Text
+  instagram String?
   order     Int      @default(0)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())

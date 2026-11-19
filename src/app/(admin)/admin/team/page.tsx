@@ -26,6 +26,7 @@ interface TeamMember {
   badge?: string | null;
   image?: string | null;
   bio?: string | null;
+  instagram?: string | null;
   order: number;
   isActive: boolean;
 }
@@ -49,6 +50,7 @@ export default function AdminTeamPage() {
     badge: "Clinical Specialist",
     image: "/founder_portrait.jpg",
     bio: "",
+    instagram: "",
     order: 0,
     isActive: true,
   });
@@ -79,6 +81,7 @@ export default function AdminTeamPage() {
       badge: "Clinical Specialist",
       image: "/founder_portrait.jpg",
       bio: "",
+      instagram: "",
       order: team.length + 1,
       isActive: true,
     });
@@ -94,6 +97,7 @@ export default function AdminTeamPage() {
       badge: member.badge || "",
       image: member.image || "/founder_portrait.jpg",
       bio: member.bio || "",
+      instagram: member.instagram || "",
       order: member.order || 0,
       isActive: member.isActive,
     });
@@ -444,6 +448,20 @@ export default function AdminTeamPage() {
                   onChange={(e) => setFormData((prev) => ({ ...prev, bio: e.target.value }))}
                   placeholder="Detail years of experience, university credentials, certifications, specialties..."
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px] flex items-center justify-between">
+                  <span>Instagram Profile / Link</span>
+                  <span className="text-[10px] text-slate-400 font-medium lowercase">optional</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.instagram}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, instagram: e.target.value }))}
+                  placeholder="e.g. https://instagram.com/clinician or @clinician"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
 

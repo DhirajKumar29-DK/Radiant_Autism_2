@@ -21,6 +21,7 @@ export async function PUT(
     if (body.badge !== undefined) dataToUpdate.badge = body.badge;
     if (body.image !== undefined) dataToUpdate.image = body.image;
     if (body.bio !== undefined) dataToUpdate.bio = body.bio;
+    if (body.instagram !== undefined) dataToUpdate.instagram = body.instagram || null;
     if (body.order !== undefined) dataToUpdate.order = Number(body.order);
     if (body.isActive !== undefined) dataToUpdate.isActive = Boolean(body.isActive);
 

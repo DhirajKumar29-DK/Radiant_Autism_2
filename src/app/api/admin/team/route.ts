@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, role, badge, image, bio, order, isActive } = body;
+    const { name, role, badge, image, bio, instagram, order, isActive } = body;
 
     if (!name || !role) {
       return NextResponse.json(
@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
         badge: badge || "Clinical Specialist",
         image: image || "/founder_portrait.jpg",
         bio: bio || null,
+        instagram: instagram || null,
         order: order ? Number(order) : 0,
         isActive: isActive !== undefined ? Boolean(isActive) : true,
       },

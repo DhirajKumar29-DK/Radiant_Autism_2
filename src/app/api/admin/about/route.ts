@@ -26,6 +26,12 @@ export async function GET() {
           facilityDesc:
             "Our clinic features custom sensory gyms, private 1:1 intervention suites, gross-motor play zones, and parent observation rooms designed for safety, focus, and warmth.",
           facilityImage: "/gallery_sensory_gym.jpg",
+          facilityPointsJson: JSON.stringify([
+            "On-site large gymnasium area for gross motor skills, movement, and play.",
+            "A dedicated life skills area to practice real-world daily routines (self-care, dressing, structured tasks).",
+            "Sensory integration rooms equipped with swings, foam pits, and sensory regulation tools.",
+            "Quiet 1:1 learning suites designed for focused ABA and Speech-Language sessions.",
+          ]),
         },
       });
     }
@@ -49,29 +55,63 @@ export async function PUT(request: NextRequest) {
     const {
       badgeText,
       title,
+      description,
       description1,
       description2,
       centerImage,
       highlights,
+      highlightsJson,
       facilityHeading,
       facilityDesc,
       facilityImage,
+      facilityPoints,
+      facilityPointsJson,
+      pillars,
+      pillarsJson,
     } = body;
 
-    const payload = {
-      badgeText: badgeText || null,
-      title: title || "Dedicated Clinical Support for Every Child's Unique Potential",
-      description1: description1 || null,
-      description2: description2 || null,
-      centerImage: centerImage || null,
-      highlightsJson:
-        typeof highlights === "string" ? highlights : JSON.stringify(highlights || []),
-      facilityHeading: facilityHeading || null,
-      facilityDesc: facilityDesc || null,
-      facilityImage: facilityImage || null,
-    };
-
     let existing = await prisma.aboutSection.findFirst();
+
+    // Preserve existing values if a specific section is being saved
+    const payload: any = {};
+
+    if (badgeText !== undefined) payload.badgeText = badgeText || null;
+    if (title !== undefined) payload.title = title || "";
+    if (description !== undefined) {
+      payload.description1 = description || null;
+      payload.description2 = null; // Clean up paragraph 2 since user requested single description
+    } else if (description1 !== undefined) {
+      payload.description1 = description1 || null;
+      if (description2 !== undefined) payload.description2 = description2 || null;
+    }
+
+    if (centerImage !== undefined) payload.centerImage = centerImage || null;
+
+    if (highlights !== undefined) {
+      payload.highlightsJson =
+        typeof highlights === "string" ? highlights : JSON.stringify(highlights || []);
+    } else if (highlightsJson !== undefined) {
+      payload.highlightsJson = highlightsJson;
+    }
+
+    if (facilityHeading !== undefined) payload.facilityHeading = facilityHeading || null;
+    if (facilityDesc !== undefined) payload.facilityDesc = facilityDesc || null;
+    if (facilityImage !== undefined) payload.facilityImage = facilityImage || null;
+
+    if (facilityPoints !== undefined) {
+      payload.facilityPointsJson =
+        typeof facilityPoints === "string" ? facilityPoints : JSON.stringify(facilityPoints || []);
+    } else if (facilityPointsJson !== undefined) {
+      payload.facilityPointsJson = facilityPointsJson;
+    }
+
+    if (pillars !== undefined) {
+      payload.pillarsJson =
+        typeof pillars === "string" ? pillars : JSON.stringify(pillars || []);
+    } else if (pillarsJson !== undefined) {
+      payload.pillarsJson = pillarsJson;
+    }
+
     let updated;
     if (existing) {
       updated = await prisma.aboutSection.update({
