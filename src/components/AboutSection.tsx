@@ -139,14 +139,14 @@ export default function AboutSection() {
                   {about.title}
                 </h2>
 
-                <p className="text-slate-600 text-base leading-relaxed">
+                <div className="text-slate-600 text-base leading-relaxed whitespace-pre-line space-y-3">
                   {about.description1}
-                </p>
+                </div>
 
                 {about.description2 && (
-                  <p className="text-slate-600 text-sm leading-relaxed">
+                  <div className="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
                     {about.description2}
-                  </p>
+                  </div>
                 )}
 
                 {/* Highlights Grid */}

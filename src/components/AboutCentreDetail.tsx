@@ -10,6 +10,7 @@ interface AboutDetailData {
   description1: string;
   description2?: string;
   centerImage: string;
+  highlights: string[];
   facilityHeading: string;
   facilityDesc: string;
   facilityImage: string;
@@ -17,11 +18,17 @@ interface AboutDetailData {
 }
 
 const DEFAULT_DETAIL: AboutDetailData = {
-  badgeText: "OUR CLINICAL CENTER",
-  title: "About Radiant Autism Services & Our Centre",
+  badgeText: "ABOUT RADIANT AUTISM & SKILL CENTER",
+  title: "Dedicated Clinical Support for Every Child's Unique Potential",
   description1:
-    "Radiant Autism Services provides high-quality, OAP-covered autism and developmental therapies. Our clinical team delivers compassionate, family-centred ABA, Speech-Language Pathology (SLP), and Occupational Therapy (OT).",
+    "Radiant Autism & Skill Center is a multidisciplinary pediatric clinic dedicated to delivering research-backed, compassionate developmental therapies.\n\nSupervised by our Registered Behaviour Analyst (RBA, Ontario), our team collaborates closely with families to establish individualized milestones.",
   centerImage: "/about_center_photo.jpg",
+  highlights: [
+    "100% RBA Supervised Clinical Programs",
+    "Eligible for Ontario Autism Program (OAP) funding",
+    "Individualized 1:1 and peer-group social rooms",
+    "Family-centered progress reporting and collaboration",
+  ],
   facilityHeading: "Our Purpose-Built Facility & Spaces",
   facilityDesc:
     "Our Radiant Autism Services centre offers purpose-built space thoughtfully designed to support learning, sensory comfort, dignity, and child safety.",
@@ -45,6 +52,7 @@ export default function AboutCentreDetail() {
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.about && isMounted) {
+            // Parse Facility Points
             let points = DEFAULT_DETAIL.facilityPoints;
             if (data.about.facilityPointsJson) {
               try {
@@ -57,12 +65,26 @@ export default function AboutCentreDetail() {
               }
             }
 
+            // Parse Clinical Highlights Bullets
+            let highlights = DEFAULT_DETAIL.highlights;
+            if (data.about.highlightsJson) {
+              try {
+                const parsedH = JSON.parse(data.about.highlightsJson);
+                if (Array.isArray(parsedH) && parsedH.length > 0) {
+                  highlights = parsedH;
+                }
+              } catch (e) {
+                console.error("Error parsing highlightsJson:", e);
+              }
+            }
+
             setDetail({
               badgeText: data.about.badgeText || DEFAULT_DETAIL.badgeText,
               title: data.about.title || DEFAULT_DETAIL.title,
               description1: data.about.description1 || DEFAULT_DETAIL.description1,
               description2: data.about.description2,
               centerImage: data.about.centerImage || DEFAULT_DETAIL.centerImage,
+              highlights: highlights,
               facilityHeading: data.about.facilityHeading || DEFAULT_DETAIL.facilityHeading,
               facilityDesc: data.about.facilityDesc || DEFAULT_DETAIL.facilityDesc,
               facilityImage: data.about.facilityImage || DEFAULT_DETAIL.facilityImage,
@@ -90,7 +112,7 @@ export default function AboutCentreDetail() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24 relative z-10">
-        {/* Row 1: Image Left + Text Right (About Radiant Autism Services & Our Centre) */}
+        {/* Row 1: Image Left + Text Right (Overview & Mission) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-6">
             <ScrollReveal direction="right">
@@ -116,39 +138,44 @@ export default function AboutCentreDetail() {
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/90 text-blue-700 border border-blue-200/80 text-xs font-extrabold uppercase tracking-wider">
                   <Building className="w-4 h-4 text-blue-600" />
-                  <span>{detail.badgeText || "OUR CLINICAL CENTER"}</span>
+                  <span>{detail.badgeText || "ABOUT RADIANT AUTISM & SKILL CENTER"}</span>
                 </div>
 
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-tight">
-                  {detail.title || "About Radiant Autism Services & Our Centre"}
+                  {detail.title}
                 </h2>
 
-                <p className="text-slate-600 text-base leading-relaxed font-medium">
+                {/* DESCRIPTION WITH EXACT LINE BREAKS AND PARAGRAPH SPACING */}
+                <div className="text-slate-600 text-base leading-relaxed font-medium whitespace-pre-line space-y-3">
                   {detail.description1}
-                </p>
+                </div>
 
                 {detail.description2 && (
-                  <p className="text-slate-600 text-base leading-relaxed font-medium">
+                  <div className="text-slate-600 text-base leading-relaxed font-medium whitespace-pre-line">
                     {detail.description2}
-                  </p>
+                  </div>
                 )}
 
-                <div className="pt-2 flex flex-wrap items-center gap-4">
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-extrabold text-slate-800">
-                    <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                    <span>RBA Supervised</span>
+                {/* DYNAMIC CLINICAL HIGHLIGHTS BULLETS (SAME AS ADMIN & HOMEPAGE) */}
+                {detail.highlights && detail.highlights.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3">
+                    {detail.highlights.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-start gap-2.5 p-3 rounded-2xl bg-white border border-slate-200/80 shadow-xs"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                        <span className="text-xs font-bold text-slate-800">{item}</span>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-extrabold text-slate-800">
-                    <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                    <span>OAP Covered Services</span>
-                  </div>
-                </div>
+                )}
               </div>
             </ScrollReveal>
           </div>
         </div>
 
-        {/* Row 2: Text Left + Image Right (Our Purpose-Built Centre & Spaces) */}
+        {/* Row 2: Text Left + Image Right (Our Purpose-Built Facility & Spaces) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-6 space-y-6 order-2 lg:order-1">
             <ScrollReveal direction="right">
@@ -162,9 +189,9 @@ export default function AboutCentreDetail() {
                   {detail.facilityHeading || "Our Purpose-Built Facility & Spaces"}
                 </h2>
 
-                <p className="text-slate-600 text-base leading-relaxed font-medium">
+                <div className="text-slate-600 text-base leading-relaxed font-medium whitespace-pre-line">
                   {detail.facilityDesc}
-                </p>
+                </div>
 
                 {/* DYNAMIC FACILITY POINTS FROM DATABASE */}
                 <div className="space-y-3 pt-2">
