@@ -85,13 +85,15 @@ export default function AdminNavigationPage() {
       if (res.ok) {
         if (showToast) {
           setSaveSuccess(true);
-          setTimeout(() => setSaveSuccess(false), 2500);
+          setTimeout(() => setSaveSuccess(false), 3000);
         }
       } else {
-        alert("Failed to save navigation settings");
+        const data = await res.json().catch(() => ({}));
+        alert(`Failed to save: ${data.error || "Please login again or check connection."}`);
       }
     } catch (err) {
       console.error("Save error:", err);
+      alert("Network error: Failed to save navigation settings");
     } finally {
       setIsSaving(false);
     }
@@ -120,8 +122,8 @@ export default function AdminNavigationPage() {
     saveChanges(navItems, updated, true);
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e && e.preventDefault) e.preventDefault();
     await saveChanges(navItems, sections, true);
   };
 
@@ -301,19 +303,41 @@ export default function AdminNavigationPage() {
                 </div>
               </div>
 
-              {/* Save Button */}
-              <div className="flex items-center justify-end">
+              {/* Save Button with Realtime Feedback */}
+              <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
+                {saveSuccess && (
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-black animate-in fade-in slide-in-from-bottom-2 duration-200 shadow-xs">
+                    <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>✓ Settings Saved & Applied to Live Site!</span>
+                  </div>
+                )}
+
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={() => handleSave()}
                   disabled={isSaving}
-                  className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-blue-600/30 transition-all disabled:opacity-50"
+                  className={`inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl text-xs font-extrabold uppercase tracking-wider shadow-lg transition-all cursor-pointer ${
+                    saveSuccess
+                      ? "bg-emerald-600 text-white shadow-emerald-600/30"
+                      : "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/30 active:scale-95"
+                  } disabled:opacity-50`}
                 >
                   {isSaving ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Saving Settings...</span>
+                    </>
+                  ) : saveSuccess ? (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Saved Successfully!</span>
+                    </>
                   ) : (
-                    <Save className="w-4 h-4" />
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>Save Navigation Settings</span>
+                    </>
                   )}
-                  <span>Save Navigation Settings</span>
                 </button>
               </div>
             </div>

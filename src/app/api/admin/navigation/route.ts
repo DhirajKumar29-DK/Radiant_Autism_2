@@ -16,6 +16,7 @@ const DEFAULT_SECTIONS_VISIBILITY = {
   about: true,
   careApproach: true,
   services: true,
+  testimonials: true,
   process: true,
   gallery: true,
 };
@@ -48,6 +49,7 @@ function normalizeSections(raw: any): any {
     about: raw.about !== undefined ? Boolean(raw.about) : (raw.aboutSummary !== undefined ? Boolean(raw.aboutSummary) : true),
     careApproach: raw.careApproach !== undefined ? Boolean(raw.careApproach) : (raw.ourApproach !== undefined ? Boolean(raw.ourApproach) : true),
     services: raw.services !== undefined ? Boolean(raw.services) : (raw.servicesGrid !== undefined ? Boolean(raw.servicesGrid) : true),
+    testimonials: raw.testimonials !== undefined ? Boolean(raw.testimonials) : true,
     process: raw.process !== undefined ? Boolean(raw.process) : true,
     gallery: raw.gallery !== undefined ? Boolean(raw.gallery) : (raw.galleryPreview !== undefined ? Boolean(raw.galleryPreview) : true),
   };
