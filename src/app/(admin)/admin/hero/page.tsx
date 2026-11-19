@@ -459,8 +459,8 @@ export default function HeroAdminPage() {
                           </button>
                           <button
                             onClick={() => triggerSingleDelete(hero.id)}
-                            className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 rounded-lg transition-colors"
-                            title="Delete Hero"
+                            className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 rounded-lg transition-colors cursor-pointer"
+                            title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -666,8 +666,8 @@ export default function HeroAdminPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                     <div className="space-y-1.5">
-                      <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700">
-                        Slide Status
+                      <label className="block text-xs font-bold text-slate-800">
+                        Status
                       </label>
                       <select
                         value={formData.status}
@@ -677,11 +677,11 @@ export default function HeroAdminPage() {
                             status: e.target.value as "ACTIVE" | "INACTIVE" | "DRAFT",
                           })
                         }
-                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 cursor-pointer"
+                        className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-medium text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
                       >
-                        <option value="ACTIVE">🟢 Published (Active - Live on website)</option>
-                        <option value="DRAFT">🟡 Draft (Hidden / In Progress)</option>
-                        <option value="INACTIVE">⚪ Inactive (Deactivated / Hidden)</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                        <option value="DRAFT">Draft</option>
                       </select>
                     </div>
 
@@ -733,8 +733,8 @@ export default function HeroAdminPage() {
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={executeDelete}
-        title="Delete Hero Slide?"
-        message="Are you sure you want to delete this hero carousel slide? This action cannot be undone."
+        title="Confirm Deletion"
+        message="Are you sure you want to delete this hero slide? Please confirm to proceed."
         itemCount={Array.isArray(deleteTarget) ? deleteTarget.length : 1}
       />
     </div>

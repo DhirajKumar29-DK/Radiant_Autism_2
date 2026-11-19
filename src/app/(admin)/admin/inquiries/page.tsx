@@ -437,7 +437,7 @@ export default function AdminInquiriesPage() {
                             setInquiryToDelete(appt);
                             setIsDeleteOpen(true);
                           }}
-                          title="Delete Inquiry"
+                          title="Delete"
                           className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -477,9 +477,9 @@ export default function AdminInquiriesPage() {
             setInquiryToDelete(null);
           }
         }}
-        title="Delete Inquiry Record?"
-        message={`Are you sure you want to delete inquiry ticket #${inquiryToDelete?.ticketId} from ${inquiryToDelete?.fullName}? This consultation request will be permanently removed from the records.`}
-        confirmText="Delete Record"
+        title="Confirm Deletion"
+        message={`Are you sure you want to delete inquiry ticket #${inquiryToDelete?.ticketId} from ${inquiryToDelete?.fullName}? Please confirm to proceed.`}
+        confirmText="Delete"
         cancelText="Cancel"
       />
 

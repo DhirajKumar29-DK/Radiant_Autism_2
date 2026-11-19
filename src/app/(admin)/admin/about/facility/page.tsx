@@ -428,7 +428,7 @@ export default function AdminAboutFacilityPage() {
                       <button
                         type="button"
                         onClick={() => setIsConfirmOpen(true)}
-                        title="Soft Delete / Clear Facility Points"
+                        title="Delete"
                         className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -561,21 +561,21 @@ export default function AdminAboutFacilityPage() {
                 </div>
               </div>
 
-              {/* Status DDL (Publish or Draft at bottom of form) */}
+              {/* Status Dropdown */}
               <div className="space-y-1.5 pt-3 border-t border-slate-100">
-                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                  Publication Status (Publish or Draft)
+                <label className="block text-xs font-bold text-slate-800">
+                  Status
                 </label>
                 <select
                   value={formData.status}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, status: e.target.value as StatusType }))
                   }
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                  className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-medium text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
                 >
-                  <option value="ACTIVE">🟢 Published (Active - Live on website)</option>
-                  <option value="DRAFT">🟡 Draft (Hidden / In Progress)</option>
-                  <option value="INACTIVE">⚪ Inactive (Deactivated / Hidden)</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                  <option value="DRAFT">Draft</option>
                 </select>
               </div>
 
@@ -639,9 +639,9 @@ export default function AdminAboutFacilityPage() {
         onConfirm={executeDelete}
         isDeleting={isDeleting}
         itemCount={selectedIds.length > 0 ? selectedIds.length : 1}
-        title="Soft Delete Facility Points?"
-        message="Are you sure you want to deactivate and remove facility feature points? You can re-add them at any time."
-        confirmText="Confirm Delete"
+        title="Confirm Deletion"
+        message="Are you sure you want to delete this? Please confirm to proceed."
+        confirmText="Delete"
         cancelText="Cancel"
       />
     </div>

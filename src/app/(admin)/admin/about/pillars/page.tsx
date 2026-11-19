@@ -499,7 +499,7 @@ export default function AdminAboutPillarsPage() {
                           <button
                             type="button"
                             onClick={() => confirmSingleDelete(item.id)}
-                            title="Delete Pillar"
+                            title="Delete"
                             className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -650,21 +650,21 @@ export default function AdminAboutPillarsPage() {
                 </div>
               </div>
 
-              {/* Status DDL (Publish or Draft at bottom of form) */}
+              {/* Status Dropdown */}
               <div className="space-y-1.5 pt-3 border-t border-slate-100">
-                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                  Pillar Status (Publish or Draft)
+                <label className="block text-xs font-bold text-slate-800">
+                  Status
                 </label>
                 <select
                   value={formData.status}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, status: e.target.value as StatusType }))
                   }
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                  className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-medium text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
                 >
-                  <option value="ACTIVE">🟢 Published (Active - Live on website)</option>
-                  <option value="DRAFT">🟡 Draft (Hidden / In Progress)</option>
-                  <option value="INACTIVE">⚪ Inactive (Deactivated / Hidden)</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                  <option value="DRAFT">Draft</option>
                 </select>
               </div>
 
@@ -717,23 +717,14 @@ export default function AdminAboutPillarsPage() {
         isOpen={isConfirmDeleteOpen}
         onClose={() => setIsConfirmDeleteOpen(false)}
         onConfirm={executeDelete}
-        title={
-          deleteTargetIds.length > 1
-            ? `Delete ${deleteTargetIds.length} Clinical Pillars?`
-            : "Delete Clinical Pillar?"
-        }
+        title="Confirm Deletion"
         message={
           deleteTargetIds.length > 1
-            ? `Are you sure you want to remove the selected ${deleteTargetIds.length} clinical pillars from the About Us page?`
-            : "Are you sure you want to delete this clinical pillar?"
+            ? `Are you sure you want to delete the selected ${deleteTargetIds.length} items? Please confirm to proceed.`
+            : "Are you sure you want to delete this? Please confirm to proceed."
         }
-        confirmText={
-          isDeleting
-            ? "Deleting..."
-            : deleteTargetIds.length > 1
-            ? `Delete ${deleteTargetIds.length} Pillars`
-            : "Delete Pillar"
-        }
+        confirmText="Delete"
+        cancelText="Cancel"
         variant="danger"
       />
     </div>
