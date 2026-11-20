@@ -8,13 +8,20 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // Check if already authenticated
+  // Check if already authenticated and load saved email if remembered
   useEffect(() => {
+    const savedEmail = localStorage.getItem("radiant_remember_email");
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+
     const checkAuth = async () => {
       try {
         const res = await fetch("/api/auth/me");
@@ -45,12 +52,17 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({ email: email.trim(), password, rememberMe }),
       });
 
       const data = await res.json();
 
       if (res.ok && data.success) {
+        if (rememberMe) {
+          localStorage.setItem("radiant_remember_email", email.trim());
+        } else {
+          localStorage.removeItem("radiant_remember_email");
+        }
         router.push("/admin");
       } else {
         setError(data.error || "Invalid email or password.");
@@ -163,6 +175,22 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+            </div>
+
+            {/* Remember Me Checkbox */}
+            <div className="flex items-center justify-between pt-1">
+              <label htmlFor="rememberMe" className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  id="rememberMe"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded-md border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900 cursor-pointer accent-blue-600"
+                />
+                <span className="text-xs font-semibold text-slate-300 hover:text-white transition-colors">
+                  Remember me
+                </span>
+              </label>
             </div>
 
             {/* Submit Button */}
