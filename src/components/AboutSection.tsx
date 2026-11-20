@@ -136,11 +136,9 @@ export default function AboutSection({ initialData }: { initialData?: AboutData 
                   {about.title}
                 </h2>
 
-                <div className="text-slate-600 text-base sm:text-lg leading-[1.75] font-normal space-y-4">
-                  {(about.description1 || "").split("\n\n").map((para, idx) => (
-                    <p key={idx}>{para}</p>
-                  ))}
-                  {about.description2 && <p>{about.description2}</p>}
+                <div className="text-slate-600 text-base sm:text-lg leading-[1.75] font-normal whitespace-pre-line space-y-4">
+                  {about.description1}
+                  {about.description2 && <div className="mt-4">{about.description2}</div>}
                 </div>
 
                 {/* Highlights Grid */}
