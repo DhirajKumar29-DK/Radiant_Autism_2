@@ -8,7 +8,7 @@ export async function GET() {
         isActive: true,
         isDeleted: false,
       },
-      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
     });
 
     return NextResponse.json({ success: true, gallery });

@@ -8,7 +8,7 @@ export async function GET() {
         isActive: true,
         isDeleted: false,
       },
-      orderBy: { displayOrder: "asc" },
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
     });
     return NextResponse.json({ success: true, testimonials });
   } catch (error) {

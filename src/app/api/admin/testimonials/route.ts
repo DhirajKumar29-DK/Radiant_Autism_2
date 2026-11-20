@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const testimonials = await prisma.testimonial.findMany({
       where: { isDeleted: false },
-      orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
     });
     return NextResponse.json({ success: true, testimonials });
   } catch (error) {

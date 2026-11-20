@@ -6,7 +6,7 @@ export async function GET() {
   try {
     const team = await prisma.teamMember.findMany({
       where: { isDeleted: false },
-      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
     });
 
     return NextResponse.json({ success: true, team });

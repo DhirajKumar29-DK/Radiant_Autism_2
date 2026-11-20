@@ -6,7 +6,7 @@ export async function GET() {
   try {
     const gallery = await prisma.galleryItem.findMany({
       where: { isDeleted: false },
-      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
     });
 
     return NextResponse.json({ success: true, gallery });

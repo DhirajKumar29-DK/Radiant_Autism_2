@@ -37,7 +37,7 @@ export default async function GalleryPage() {
           isActive: true,
           isDeleted: false,
         },
-        orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+        orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
       }),
       prisma.hero.findFirst({
         where: { pageKey: "gallery", status: "ACTIVE" },
