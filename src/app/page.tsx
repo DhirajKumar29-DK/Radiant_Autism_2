@@ -49,6 +49,7 @@ export default async function HomePage() {
 
       initialAbout = {
         badgeText: aboutRecord.badgeText || "ABOUT RADIANT AUTISM & SKILL CENTER",
+        imageBadge: aboutRecord.imageBadge || "OAP Covered Services",
         title: aboutRecord.title || "Dedicated Clinical Support for Every Child's Unique Potential",
         description1: aboutRecord.description1 || "",
         description2: aboutRecord.description2 || "",

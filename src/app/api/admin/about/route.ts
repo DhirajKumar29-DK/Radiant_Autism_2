@@ -56,6 +56,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const {
       badgeText,
+      imageBadge,
       title,
       description,
       description1,
@@ -80,6 +81,7 @@ export async function PUT(request: NextRequest) {
     const payload: any = {};
 
     if (badgeText !== undefined) payload.badgeText = badgeText || null;
+    if (imageBadge !== undefined) payload.imageBadge = imageBadge || null;
     if (title !== undefined) payload.title = title || "";
     if (description !== undefined) {
       payload.description1 = description || null;

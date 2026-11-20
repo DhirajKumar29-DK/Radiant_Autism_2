@@ -225,6 +225,13 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                     className="w-full h-full object-cover transition-transform duration-700 animate-kenburns group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+                  {/* Floating Badge on Service Photo (Dynamic from Admin Category Badge) */}
+                  {service.badge && (
+                    <div className="absolute top-4 left-4 bg-slate-900/85 backdrop-blur-md border border-white/20 text-white px-3.5 py-1.5 rounded-full text-xs font-extrabold shadow-md flex items-center gap-2 z-10">
+                      <ShieldCheck className="w-4 h-4 text-blue-400" />
+                      <span>{service.badge}</span>
+                    </div>
+                  )}
                   <div className="absolute bottom-6 left-6 right-6 text-white space-y-1">
                     <span className="text-xs font-black uppercase tracking-wider text-blue-300">Radiant Clinical Center</span>
                     <p className="text-sm font-bold text-slate-100">Certified 1:1 Clinical Excellence & Compassionate Care</p>

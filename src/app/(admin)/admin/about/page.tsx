@@ -24,6 +24,7 @@ type StatusType = "ACTIVE" | "INACTIVE" | "DRAFT";
 interface AboutData {
   id?: string;
   badgeText: string;
+  imageBadge?: string;
   title: string;
   description: string;
   centerImage: string;
@@ -35,6 +36,7 @@ interface AboutData {
 export default function AdminAboutOverviewPage() {
   const [about, setAbout] = useState<AboutData>({
     badgeText: "ABOUT RADIANT AUTISM & SKILL CENTER",
+    imageBadge: "OAP Covered Services",
     title: "Dedicated Clinical Support for Every Child's Unique Potential",
     description:
       "Radiant Autism & Skill Center is a multidisciplinary pediatric clinic dedicated to delivering research-backed, compassionate developmental therapies.",
@@ -61,6 +63,7 @@ export default function AdminAboutOverviewPage() {
   // Form State inside Modal
   const [formData, setFormData] = useState({
     badgeText: "",
+    imageBadge: "OAP Covered Services",
     title: "",
     description: "",
     centerImage: "/about_center_photo.jpg",
@@ -94,6 +97,7 @@ export default function AdminAboutOverviewPage() {
           setAbout({
             id: data.about.id,
             badgeText: data.about.badgeText || "ABOUT RADIANT AUTISM & SKILL CENTER",
+            imageBadge: data.about.imageBadge || "OAP Covered Services",
             title: data.about.title || "Dedicated Clinical Support for Every Child's Unique Potential",
             description: singleDesc,
             centerImage: data.about.centerImage || "/about_center_photo.jpg",
@@ -117,6 +121,7 @@ export default function AdminAboutOverviewPage() {
   const openEditModal = () => {
     setFormData({
       badgeText: about.badgeText,
+      imageBadge: about.imageBadge || "OAP Covered Services",
       title: about.title,
       description: about.description,
       centerImage: about.centerImage || "/about_center_photo.jpg",
@@ -219,6 +224,7 @@ export default function AdminAboutOverviewPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           badgeText: formData.badgeText,
+          imageBadge: formData.imageBadge,
           title: formData.title,
           description: formData.description,
           centerImage: formData.centerImage,
@@ -525,6 +531,23 @@ export default function AdminAboutOverviewPage() {
                 placeholder="/about_center_photo.jpg"
                 helpText="Upload a high-resolution clinic photo from your computer or provide a URL."
               />
+
+              {/* Photo Floating Badge (e.g. OAP Covered Services) */}
+              <div className="space-y-1.5">
+                <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                  Photo Floating Badge Tag (Image ke upar ka badge)
+                </label>
+                <input
+                  type="text"
+                  value={formData.imageBadge}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, imageBadge: e.target.value }))}
+                  placeholder="e.g. OAP Covered Services"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                />
+                <span className="text-[11px] text-slate-400 font-medium">
+                  Ye badge showcase photo ke top-left floating tag me dikhta hai (Home & About dono page pe).
+                </span>
+              </div>
 
               {/* Clinical Highlights Bullets */}
               <div className="space-y-3 pt-2 border-t border-slate-100">

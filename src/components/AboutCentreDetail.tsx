@@ -6,6 +6,7 @@ import ScrollReveal from "@/common/ScrollReveal";
 
 interface AboutDetailData {
   badgeText: string;
+  imageBadge?: string;
   title: string;
   description1: string;
   description2?: string;
@@ -19,6 +20,7 @@ interface AboutDetailData {
 
 const DEFAULT_DETAIL: AboutDetailData = {
   badgeText: "ABOUT RADIANT AUTISM & SKILL CENTER",
+  imageBadge: "OAP Covered Services",
   title: "Dedicated Clinical Support for Every Child's Unique Potential",
   description1:
     "Radiant Autism & Skill Center is a multidisciplinary pediatric clinic dedicated to delivering research-backed, compassionate developmental therapies.\n\nSupervised by our Registered Behaviour Analyst (RBA, Ontario), our team collaborates closely with families to establish individualized milestones.",
@@ -80,6 +82,7 @@ export default function AboutCentreDetail() {
 
             setDetail({
               badgeText: data.about.badgeText || DEFAULT_DETAIL.badgeText,
+              imageBadge: data.about.imageBadge || DEFAULT_DETAIL.imageBadge,
               title: data.about.title || DEFAULT_DETAIL.title,
               description1: data.about.description1 || DEFAULT_DETAIL.description1,
               description2: data.about.description2,
@@ -127,7 +130,7 @@ export default function AboutCentreDetail() {
                 {/* Floating Badge */}
                 <div className="absolute top-4 left-4 bg-slate-900/85 backdrop-blur-md border border-white/20 text-white px-3.5 py-1.5 rounded-full text-xs font-extrabold shadow-md flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-blue-400" />
-                  <span>OAP Covered Services</span>
+                  <span>{detail.imageBadge || "OAP Covered Services"}</span>
                 </div>
               </div>
             </ScrollReveal>

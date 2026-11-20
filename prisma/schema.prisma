@@ -114,6 +114,7 @@ model PageHero {
 model AboutSection {
   id                 String   @id @default(uuid())
   badgeText          String?
+  imageBadge         String?  @default("OAP Covered Services")
   title              String   @db.Text
   description1       String?  @db.Text
   description2       String?  @db.Text
