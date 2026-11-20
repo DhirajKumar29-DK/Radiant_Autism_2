@@ -315,9 +315,9 @@ export default function AdminInquiriesPage() {
   const paginatedInquiries = inquiries.slice(startIndex, endIndex);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="flex flex-col h-full min-h-0 space-y-4 max-w-7xl mx-auto w-full">
       {/* Top Header (Radiant Theme) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">
             Assessments & Inquiries
@@ -351,7 +351,7 @@ export default function AdminInquiriesPage() {
       </div>
 
       {/* Filter Tabs (Radiant Blue Theme) */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+      <div className="shrink-0 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         {[
           { id: "ALL", label: "All", count: counts.all },
           { id: "NEW", label: `New ${counts.new}`, highlight: true },
@@ -382,7 +382,7 @@ export default function AdminInquiriesPage() {
       </div>
 
       {/* Search & Secondary Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="shrink-0 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full sm:max-w-md">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -451,7 +451,7 @@ export default function AdminInquiriesPage() {
         ) : (
           <>
             {/* Scrollable Container (Sticky Header + Hidden Scrollbar) */}
-            <div className="overflow-y-auto overflow-x-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="overflow-y-auto overflow-x-auto flex-1 min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <table className="w-full text-left text-xs border-collapse min-w-[950px]">
                 <thead className="sticky top-0 z-10 shadow-2xs bg-slate-50 border-b border-slate-200 text-slate-600 uppercase tracking-wider text-[11px] font-extrabold">
                   <tr>

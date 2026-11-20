@@ -96,8 +96,8 @@ export default function AdminTeamPage() {
     setFormData({
       name: "",
       role: "",
-      badge: "Clinical Specialist",
-      image: "/founder_portrait.jpg",
+      badge: "",
+      image: "",
       bio: "",
       instagram: "",
       order: team.length + 1,
@@ -331,9 +331,9 @@ export default function AdminTeamPage() {
   );
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="flex flex-col h-full min-h-0 space-y-4 max-w-7xl mx-auto w-full">
       {/* Top Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
@@ -399,7 +399,7 @@ export default function AdminTeamPage() {
           </div>
         ) : (
           <>
-            <div className="overflow-y-auto overflow-x-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="overflow-y-auto overflow-x-auto flex-1 min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <table className="w-full text-left border-collapse min-w-[850px]">
                 <thead className="sticky top-0 z-10 shadow-2xs bg-slate-50 border-b border-slate-200 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
                   <tr>
@@ -493,20 +493,18 @@ export default function AdminTeamPage() {
                               type="button"
                               onClick={() => openEditModal(member)}
                               title="Edit Clinician"
-                              className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                              className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center justify-center font-bold cursor-pointer"
                             >
                               <Edit3 className="w-4 h-4" />
-                              <span className="text-[11px]">Edit</span>
                             </button>
 
                             <button
                               type="button"
                               onClick={() => confirmSingleDelete(member.id)}
                               title="Delete"
-                              className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                              className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center justify-center font-bold cursor-pointer"
                             >
                               <Trash2 className="w-4 h-4" />
-                              <span className="text-[11px]">Delete</span>
                             </button>
                           </div>
                         </td>
@@ -557,7 +555,7 @@ export default function AdminTeamPage() {
             </div>
 
             {/* Modal Body Form */}
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+            <form onSubmit={handleSubmit} autoComplete="off" className="flex-1 overflow-y-auto p-6 space-y-5">
               {/* Name & Role */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">

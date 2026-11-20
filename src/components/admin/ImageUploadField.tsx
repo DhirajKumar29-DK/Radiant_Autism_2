@@ -38,6 +38,7 @@ export default function ImageUploadField({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleFileUpload = async (file: File) => {
@@ -230,21 +231,26 @@ export default function ImageUploadField({
       {safeValue && (
         <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 border border-slate-200/90 gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 relative shrink-0">
+            {/* Clickable thumbnail to open preview popup */}
+            <div
+              onClick={() => setShowPreviewModal(true)}
+              className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 relative shrink-0 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all group"
+              title="Click to view large preview"
+            >
               <img
                 src={safeValue}
                 alt="Preview"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = "/about_center_photo.jpg";
                 }}
               />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 cursor-pointer" onClick={() => setShowPreviewModal(true)}>
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span className="text-[11px] font-extrabold text-slate-800">
-                  Image Ready
+                <span className="text-[11px] font-extrabold text-slate-800 hover:text-blue-600 transition-colors">
+                  Image Ready (Click to preview)
                 </span>
               </div>
               <p className="text-[10px] font-mono text-slate-500 truncate max-w-xs sm:max-w-md">
@@ -256,11 +262,60 @@ export default function ImageUploadField({
           <button
             type="button"
             onClick={() => onChange("")}
-            className="p-1.5 rounded-xl bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 transition-colors shrink-0"
+            className="p-1.5 rounded-xl bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 transition-colors shrink-0 cursor-pointer"
             title="Remove image"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
+        </div>
+      )}
+
+      {/* Lightbox / Zoom Modal Popup */}
+      {showPreviewModal && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={() => setShowPreviewModal(false)}
+        >
+          <div
+            className="relative bg-white rounded-3xl p-5 max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header with Title and Close Cross Button */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="min-w-0 pr-4">
+                <h4 className="font-extrabold text-sm text-slate-900">{label}</h4>
+                <p className="text-[11px] font-mono text-slate-500 truncate">{safeValue}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPreviewModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-rose-100 text-slate-500 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                title="Close Preview"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Image Preview Container */}
+            <div className="max-h-[65vh] overflow-hidden rounded-2xl bg-slate-900 flex items-center justify-center p-2">
+              <img
+                src={safeValue}
+                alt="Preview full"
+                className="max-h-[60vh] w-auto max-w-full object-contain rounded-xl"
+              />
+            </div>
+
+            {/* Bottom Footer */}
+            <div className="flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setShowPreviewModal(false)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

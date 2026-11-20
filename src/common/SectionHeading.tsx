@@ -30,11 +30,11 @@ export default function SectionHeading({
       {badgeText && (
         <Badge text={badgeText} variant={badgeVariant} icon={badgeIcon} />
       )}
-      <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+      <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-black text-slate-900 tracking-tight leading-[1.12]">
         {title}
       </h2>
       {subtitle && (
-        <p className="text-slate-600 text-base leading-relaxed">
+        <p className="text-slate-600 text-base sm:text-lg font-medium leading-[1.65]">
           {subtitle}
         </p>
       )}

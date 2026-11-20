@@ -92,10 +92,10 @@ export default function AdminBlogsPage() {
     slug: "",
     excerpt: "",
     content: "",
-    author: "Jesenia Duran, RBA",
-    authorRole: "Registered Clinical Supervisor",
+    author: "",
+    authorRole: "",
     category: "ABA Therapy",
-    image: "/hero_child_therapy.jpg",
+    image: "",
     status: "PUBLISHED" as BlogStatusType,
     metaTitle: "",
     metaDescription: "",
@@ -132,10 +132,10 @@ export default function AdminBlogsPage() {
       slug: "",
       excerpt: "",
       content: "",
-      author: "Jesenia Duran, RBA",
-      authorRole: "Registered Clinical Supervisor",
+      author: "",
+      authorRole: "",
       category: "ABA Therapy",
-      image: "/hero_child_therapy.jpg",
+      image: "",
       status: "PUBLISHED",
       metaTitle: "",
       metaDescription: "",
@@ -387,9 +387,9 @@ export default function AdminBlogsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="flex flex-col h-full min-h-0 space-y-4 max-w-7xl mx-auto w-full">
       {/* Top Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
@@ -428,7 +428,7 @@ export default function AdminBlogsPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+      <div className="shrink-0 flex flex-col sm:flex-row gap-3 items-center justify-between">
         {/* Category Pills */}
         <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
           {CATEGORIES.map((cat) => (
@@ -467,7 +467,7 @@ export default function AdminBlogsPage() {
       </div>
 
       {/* Main Table View (FabFit Style) */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col min-h-0 flex-1 overflow-hidden">
         {isLoading ? (
           <div className="py-20 flex flex-col items-center justify-center space-y-3">
             <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
@@ -495,7 +495,7 @@ export default function AdminBlogsPage() {
         ) : (
           <>
             {/* Scrollable Container (Rows scroll cleanly, browser scrollbar hidden) */}
-            <div className="overflow-y-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="overflow-y-auto flex-1 min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <table className="w-full text-left border-collapse min-w-[800px]">
                 {/* 1. STICKY THEAD: Scroll karne par headers upar chipke rahenge */}
                 <thead className="sticky top-0 z-10 shadow-xs bg-slate-50 border-b border-slate-200 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
@@ -557,9 +557,6 @@ export default function AdminBlogsPage() {
                             </div>
                             <div>
                               <p className="font-extrabold text-slate-900 line-clamp-1">{blog.title}</p>
-                              <p className="text-[11px] text-blue-600 font-mono font-medium">
-                                /{blog.slug}
-                              </p>
                             </div>
                           </div>
                         </td>
@@ -590,20 +587,18 @@ export default function AdminBlogsPage() {
                               type="button"
                               onClick={() => openEditModal(blog)}
                               title="Edit Article"
-                              className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                              className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center justify-center font-bold cursor-pointer"
                             >
                               <Edit3 className="w-4 h-4" />
-                              <span className="text-[11px]">Edit</span>
                             </button>
 
                             <button
                               type="button"
                               onClick={() => confirmSingleDelete(blog.id)}
                               title="Delete"
-                              className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                              className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center justify-center font-bold cursor-pointer"
                             >
                               <Trash2 className="w-4 h-4" />
-                              <span className="text-[11px]">Delete</span>
                             </button>
                           </div>
                         </td>
@@ -654,7 +649,7 @@ export default function AdminBlogsPage() {
             </div>
 
             {/* Modal Body Form */}
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+            <form onSubmit={handleSubmit} autoComplete="off" className="flex-1 overflow-y-auto p-6 space-y-5">
               {/* Title & Slug */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">

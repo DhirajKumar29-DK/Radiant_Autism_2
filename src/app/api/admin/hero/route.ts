@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
         primaryButtonLink: primaryButtonLink || null,
         secondaryButtonText: secondaryButtonText || null,
         secondaryButtonLink: secondaryButtonLink || null,
-        backgroundImage: backgroundImage || "/hero_bg_aba.jpg",
+        backgroundImage: backgroundImage || null,
         foregroundImage: foregroundImage || null,
         status: status && Object.values(HeroStatus).includes(status as HeroStatus) ? (status as HeroStatus) : "ACTIVE",
         displayOrder: displayOrder ? parseInt(String(displayOrder), 10) : 0,

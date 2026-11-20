@@ -48,7 +48,7 @@ export async function PUT(
     if (body.primaryButtonLink !== undefined) dataToUpdate.primaryButtonLink = body.primaryButtonLink;
     if (body.secondaryButtonText !== undefined) dataToUpdate.secondaryButtonText = body.secondaryButtonText;
     if (body.secondaryButtonLink !== undefined) dataToUpdate.secondaryButtonLink = body.secondaryButtonLink;
-    if (body.backgroundImage !== undefined) dataToUpdate.backgroundImage = body.backgroundImage;
+    if (body.backgroundImage !== undefined) dataToUpdate.backgroundImage = body.backgroundImage ? body.backgroundImage.trim() : null;
     if (body.foregroundImage !== undefined) dataToUpdate.foregroundImage = body.foregroundImage;
     if (body.status !== undefined && Object.values(HeroStatus).includes(body.status as HeroStatus)) {
       dataToUpdate.status = body.status as HeroStatus;

@@ -57,6 +57,7 @@ export async function PUT(
       "features",
       "whoNeedsThis",
       "keyBenefits",
+      "clinicalProcess",
       "faqs",
       "status",
       "isActive",
@@ -67,7 +68,7 @@ export async function PUT(
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
         if (
-          ["overviewParagraphs", "features", "whoNeedsThis", "keyBenefits", "faqs"].includes(
+          ["overviewParagraphs", "features", "whoNeedsThis", "keyBenefits", "clinicalProcess", "faqs"].includes(
             field
           ) &&
           typeof body[field] !== "string"

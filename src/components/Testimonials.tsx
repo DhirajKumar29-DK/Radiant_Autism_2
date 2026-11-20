@@ -99,18 +99,18 @@ export default function Testimonials() {
             <ScrollReveal direction="right">
               <div className="space-y-6">
                 {/* Badge */}
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/80 text-blue-700 border border-blue-200/80 text-xs font-extrabold uppercase tracking-wider shadow-xs">
-                  <span>PARENT REFLECTIONS</span>
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/80 text-blue-700 border border-blue-200/80 text-xs font-black tracking-wide shadow-xs">
+                  <span>Parent Reflections</span>
                 </div>
 
                 {/* Title */}
-                <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight text-slate-900">
+                <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-black tracking-tight leading-[1.12] text-slate-900">
                   Hear From Families <br />
                   <span className="text-blue-600">Whose Lives Have Been Transformed</span>
                 </h2>
 
                 {/* Subtitle */}
-                <p className="text-slate-600 text-base leading-relaxed max-w-lg">
+                <p className="text-slate-600 text-base sm:text-lg leading-[1.65] max-w-lg font-normal">
                   Read authentic perspectives from families celebrating their child&apos;s developmental milestones, communication breakthroughs, and social progress at Radiant Autism Center.
                 </p>
 

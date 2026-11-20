@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
       features,
       whoNeedsThis,
       keyBenefits,
+      clinicalProcess,
       faqs,
       status,
       isActive,
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
         iconBg: iconBg || "bg-blue-600",
         bulletColor: bulletColor || "text-blue-600",
         iconName: iconName || "Brain",
-        image: image || "/hero_child_therapy.jpg",
+        image: image ? image.trim() : null,
         shortDescription: shortDescription || null,
         overviewParagraphs:
           typeof overviewParagraphs === "string"
@@ -104,6 +105,8 @@ export async function POST(request: NextRequest) {
           typeof whoNeedsThis === "string" ? whoNeedsThis : JSON.stringify(whoNeedsThis || {}),
         keyBenefits:
           typeof keyBenefits === "string" ? keyBenefits : JSON.stringify(keyBenefits || []),
+        clinicalProcess:
+          typeof clinicalProcess === "string" ? clinicalProcess : JSON.stringify(clinicalProcess || []),
         faqs: typeof faqs === "string" ? faqs : JSON.stringify(faqs || []),
         status: finalStatus,
         isActive: finalIsActive,

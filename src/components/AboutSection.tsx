@@ -131,15 +131,15 @@ export default function AboutSection() {
           <div className="lg:col-span-7 space-y-6">
             <ScrollReveal direction="left" delay={200}>
               <div className="space-y-6">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full badge-blue text-xs font-bold uppercase tracking-wider">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full badge-blue text-xs font-black tracking-wide">
                   <span>{about.badgeText}</span>
                 </div>
 
-                <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-snug">
+                <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-black text-slate-900 tracking-tight leading-[1.12]">
                   {about.title}
                 </h2>
 
-                <div className="text-slate-600 text-base leading-relaxed whitespace-pre-line space-y-3">
+                <div className="text-slate-600 text-base sm:text-lg leading-[1.75] whitespace-pre-line space-y-3 font-normal">
                   {about.description1}
                 </div>
 

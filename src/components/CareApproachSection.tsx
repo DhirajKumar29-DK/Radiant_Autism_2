@@ -92,7 +92,7 @@ export default function CareApproachSection() {
         <ScrollReveal direction="up">
           <div className="text-center max-w-3xl mx-auto space-y-4">
             {/* Top Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100/80 text-blue-700 border border-blue-200/80 text-xs font-black uppercase tracking-wider shadow-2xs">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100/80 text-blue-700 border border-blue-200/80 text-xs font-black tracking-wide shadow-2xs">
               <span>Our Care Philosophy</span>
             </div>
 
@@ -100,11 +100,11 @@ export default function CareApproachSection() {
               The RADIANT Approach To Care
             </h3>
 
-            <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 bg-clip-text text-transparent">
+            <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-black text-slate-900 tracking-tight leading-[1.12] bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 bg-clip-text text-transparent">
               Going Above & Beyond For Every Child
             </h2>
 
-            <p className="text-slate-600 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto font-medium">
+            <p className="text-slate-600 text-base sm:text-lg leading-[1.65] max-w-2xl mx-auto font-medium">
               High-quality, individualized, multidisciplinary, and evidence-based clinical support designed to empower your child's developmental journey.
             </p>
           </div>
@@ -154,7 +154,7 @@ export default function CareApproachSection() {
           <div className="text-center mt-16">
             <Link
               href="/contact"
-              className="inline-flex items-center gap-2.5 px-9 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/40 transition-all transform hover:-translate-y-0.5 group"
+              className="inline-flex items-center gap-2.5 px-9 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs sm:text-sm tracking-wider shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/40 transition-all transform hover:-translate-y-0.5 group"
             >
               <span>Get Started With Radiant Today</span>
               <ArrowRight className="w-4.5 h-4.5 group-hover:translate-x-1 transition-transform" />

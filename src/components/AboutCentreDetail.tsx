@@ -136,17 +136,17 @@ export default function AboutCentreDetail() {
           <div className="lg:col-span-6 space-y-6">
             <ScrollReveal direction="left">
               <div className="space-y-4">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/90 text-blue-700 border border-blue-200/80 text-xs font-extrabold uppercase tracking-wider">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/90 text-blue-700 border border-blue-200/80 text-xs font-black tracking-wide">
                   <Building className="w-4 h-4 text-blue-600" />
-                  <span>{detail.badgeText || "ABOUT RADIANT AUTISM & SKILL CENTER"}</span>
+                  <span>{detail.badgeText || "About Radiant Autism & Skill Center"}</span>
                 </div>
 
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+                <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-black text-slate-900 tracking-tight leading-[1.12]">
                   {detail.title}
                 </h2>
 
                 {/* DESCRIPTION WITH EXACT LINE BREAKS AND PARAGRAPH SPACING */}
-                <div className="text-slate-600 text-base leading-relaxed font-medium whitespace-pre-line space-y-3">
+                <div className="text-slate-600 text-base sm:text-lg leading-[1.75] font-normal whitespace-pre-line space-y-3">
                   {detail.description1}
                 </div>
 
@@ -180,16 +180,16 @@ export default function AboutCentreDetail() {
           <div className="lg:col-span-6 space-y-6 order-2 lg:order-1">
             <ScrollReveal direction="right">
               <div className="space-y-4">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/90 text-blue-700 border border-blue-200/80 text-xs font-extrabold uppercase tracking-wider">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/90 text-blue-700 border border-blue-200/80 text-xs font-black tracking-wide">
                   <HeartHandshake className="w-4 h-4 text-blue-600" />
-                  <span>DESIGNED FOR LEARNING & COMFORT</span>
+                  <span>{detail.facilityHeading ? "Facility Highlights" : "Designed for Learning & Comfort"}</span>
                 </div>
 
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+                <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-black text-slate-900 tracking-tight leading-[1.12]">
                   {detail.facilityHeading || "Our Purpose-Built Facility & Spaces"}
                 </h2>
 
-                <div className="text-slate-600 text-base leading-relaxed font-medium whitespace-pre-line">
+                <div className="text-slate-600 text-base sm:text-lg leading-[1.75] font-normal whitespace-pre-line">
                   {detail.facilityDesc}
                 </div>
 

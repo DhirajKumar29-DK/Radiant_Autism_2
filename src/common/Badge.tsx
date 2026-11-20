@@ -26,7 +26,7 @@ export default function Badge({
 
   return (
     <div
-      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${variantClasses[variant]} ${className}`}
+      className={`inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-black tracking-wide ${variantClasses[variant]} ${className}`}
     >
       {Icon && <Icon className="w-3.5 h-3.5" />}
       <span>{text}</span>

@@ -433,9 +433,9 @@ export default function AdminGalleryPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-full min-h-0 space-y-4 max-w-7xl mx-auto w-full">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
@@ -474,7 +474,7 @@ export default function AdminGalleryPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+      <div className="shrink-0 flex flex-col sm:flex-row gap-3 items-center justify-between">
         {/* Category Pills */}
         <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
           {filterCategories.map((cat) => (
@@ -541,7 +541,7 @@ export default function AdminGalleryPage() {
         ) : (
           <>
             {/* Scrollable Container (Rows scroll cleanly, browser scrollbar hidden) */}
-            <div className="overflow-y-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="overflow-y-auto flex-1 min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <table className="w-full text-left border-collapse min-w-[800px]">
                 {/* 1. STICKY THEAD: Scroll karne par headers upar chipke rahenge */}
                 <thead className="sticky top-0 z-10 shadow-xs bg-slate-50 border-b border-slate-200 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
@@ -623,20 +623,18 @@ export default function AdminGalleryPage() {
                               type="button"
                               onClick={() => openEditModal(item)}
                               title="Edit Photo"
-                              className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                              className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center justify-center font-bold cursor-pointer"
                             >
                               <Edit3 className="w-4 h-4" />
-                              <span className="text-[11px]">Edit</span>
                             </button>
 
                             <button
                               type="button"
                               onClick={() => confirmSingleDelete(item.id)}
                               title="Delete"
-                              className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                              className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center justify-center font-bold cursor-pointer"
                             >
                               <Trash2 className="w-4 h-4" />
-                              <span className="text-[11px]">Delete</span>
                             </button>
                           </div>
                         </td>

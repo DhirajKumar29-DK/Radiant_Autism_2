@@ -199,7 +199,7 @@ export default function ServicesGrid({ limit }: { limit?: number }) {
 
                       {/* Category Badge */}
                       <span
-                        className={`absolute top-4 left-4 text-white text-[11px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full shadow-md ${svc.badgeBg}`}
+                        className={`absolute top-4 left-4 text-white text-[11px] font-black tracking-wide px-3.5 py-1.5 rounded-full shadow-md ${svc.badgeBg}`}
                       >
                         {svc.badge}
                       </span>
@@ -217,14 +217,14 @@ export default function ServicesGrid({ limit }: { limit?: number }) {
                           </div>
                         </Link>
                         <Link href={cardUrl} className="group-hover:text-blue-600 transition-colors">
-                          <h3 className="text-xl font-black text-slate-900 group-hover:text-blue-600 transition-colors leading-tight pt-0.5">
+                          <h3 className="text-xl sm:text-2xl font-black text-slate-900 group-hover:text-blue-600 transition-colors leading-tight pt-0.5">
                             {svc.title}
                           </h3>
                         </Link>
                       </div>
 
                       {/* Short Description */}
-                      <p className="text-slate-600 text-sm leading-relaxed font-medium">
+                      <p className="text-slate-600 text-sm leading-[1.65] font-medium">
                         {svc.description}
                       </p>
 
@@ -246,7 +246,7 @@ export default function ServicesGrid({ limit }: { limit?: number }) {
                       /* Homepage Card Button -> Redirects to /services */
                       <Link
                         href="/services"
-                        className="w-full py-3.5 px-5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-md shadow-blue-600/20 hover:shadow-lg hover:shadow-blue-600/30 transform hover:-translate-y-0.5 text-center group/btn"
+                        className="w-full py-3.5 px-5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-md shadow-blue-600/20 hover:shadow-lg hover:shadow-blue-600/30 transform hover:-translate-y-0.5 text-center group/btn"
                       >
                         <span>Explore In Services</span>
                         <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
@@ -256,7 +256,7 @@ export default function ServicesGrid({ limit }: { limit?: number }) {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <Link
                           href={`/contact?service=${encodeURIComponent(svc.title)}`}
-                          className="py-3 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-md shadow-blue-600/20 hover:shadow-lg hover:shadow-blue-600/30 transform hover:-translate-y-0.5 text-center"
+                          className="py-3 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-md shadow-blue-600/20 hover:shadow-lg hover:shadow-blue-600/30 transform hover:-translate-y-0.5 text-center"
                         >
                           <Calendar className="w-4 h-4 shrink-0" />
                           <span>Book Appointment</span>
@@ -264,7 +264,7 @@ export default function ServicesGrid({ limit }: { limit?: number }) {
 
                         <Link
                           href={detailUrl}
-                          className="py-3 px-4 rounded-2xl bg-slate-100 hover:bg-blue-50 text-slate-800 hover:text-blue-700 border border-slate-200 hover:border-blue-300 font-extrabold text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-1.5 text-center group/btn"
+                          className="py-3 px-4 rounded-2xl bg-slate-100 hover:bg-blue-50 text-slate-800 hover:text-blue-700 border border-slate-200 hover:border-blue-300 font-extrabold text-xs tracking-wider transition-all duration-300 flex items-center justify-center gap-1.5 text-center group/btn"
                         >
                           <span>View Details</span>
                           <ArrowRight className="w-3.5 h-3.5 shrink-0 group-hover/btn:translate-x-1 transition-transform" />

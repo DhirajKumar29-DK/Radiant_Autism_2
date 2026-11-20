@@ -8,6 +8,7 @@ import {
   Trash2,
   X,
   ImageIcon,
+  ImageOff,
   Eye,
   Loader2,
   CheckCircle,
@@ -15,7 +16,6 @@ import {
 } from "lucide-react";
 import AdminPagination from "@/components/common/AdminPagination";
 import ConfirmModal from "@/components/common/ConfirmModal";
-import RichTextEditor from "@/components/admin/RichTextEditor";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 
 export const PAGES_CONFIG = [
@@ -72,7 +72,7 @@ export default function HeroAdminPage() {
     primaryButtonLink: "",
     secondaryButtonText: "",
     secondaryButtonLink: "",
-    backgroundImage: "/hero_bg_aba.jpg",
+    backgroundImage: "",
     foregroundImage: "",
     status: "ACTIVE" as "ACTIVE" | "INACTIVE" | "DRAFT",
     displayOrder: 1,
@@ -105,22 +105,15 @@ export default function HeroAdminPage() {
     setSelectedHero(null);
     setFormData({
       pageKey: activeTab,
-      badge: activeTab === "home" ? "OAP COVERED & RBA SUPERVISED" : `${activePageConfig.label.toUpperCase()}`,
+      badge: "",
       title: "",
       subtitle: "",
       description: "",
-      primaryButtonText: activeTab === "home" || activeTab === "contact" ? "Book Free Consultation" : "Learn More",
-      primaryButtonLink: activeTab === "home" || activeTab === "contact" ? "/contact" : activePageConfig.path,
-      secondaryButtonText: activeTab === "home" ? "Explore Our Programs" : "",
-      secondaryButtonLink: activeTab === "home" ? "/services" : "",
-      backgroundImage:
-        activeTab === "about"
-          ? "/about_center_photo.jpg"
-          : activeTab === "gallery"
-          ? "/gallery_sensory_gym.jpg"
-          : activeTab === "contact"
-          ? "/hero_bg_speech.jpg"
-          : "/hero_child_therapy.jpg",
+      primaryButtonText: "",
+      primaryButtonLink: "",
+      secondaryButtonText: "",
+      secondaryButtonLink: "",
+      backgroundImage: "",
       foregroundImage: "",
       status: "ACTIVE",
       displayOrder: heroes.length + 1,
@@ -140,7 +133,7 @@ export default function HeroAdminPage() {
       primaryButtonLink: hero.primaryButtonLink || "",
       secondaryButtonText: hero.secondaryButtonText || "",
       secondaryButtonLink: hero.secondaryButtonLink || "",
-      backgroundImage: hero.backgroundImage || "/hero_bg_aba.jpg",
+      backgroundImage: hero.backgroundImage || "",
       foregroundImage: hero.foregroundImage || "",
       status: hero.status || "ACTIVE",
       displayOrder: hero.displayOrder || 1,
@@ -284,9 +277,9 @@ export default function HeroAdminPage() {
   const paginatedHeroes = sortedHeroes.slice(startIndex, startIndex + itemsPerPage);
 
   return (
-    <div className="flex flex-col h-full gap-5 max-w-7xl mx-auto">
+    <div className="flex flex-col h-full min-h-0 space-y-4 max-w-7xl mx-auto w-full">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="shrink-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">Hero Section</h1>
@@ -326,13 +319,13 @@ export default function HeroAdminPage() {
             className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-black text-xs uppercase tracking-wider shadow-md shadow-blue-600/25 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>+ ADD HERO SLIDE</span>
+            <span>ADD {activePageConfig.label.toUpperCase()} HERO</span>
           </button>
         </div>
       </div>
 
       {/* Page Selector Tabs */}
-      <div className="bg-slate-100/90 p-1.5 rounded-2xl flex flex-wrap items-center gap-1.5 border border-slate-200/80">
+      <div className="shrink-0 bg-slate-100/90 p-1.5 rounded-2xl flex flex-wrap items-center gap-1.5 border border-slate-200/80">
         {PAGES_CONFIG.map((pg) => {
           const isActive = activeTab === pg.key;
           return (
@@ -357,7 +350,7 @@ export default function HeroAdminPage() {
 
       {/* Main Table Container */}
       <div className="bg-white rounded-2xl shadow-xs border border-slate-200/90 flex flex-col min-h-0 flex-1 overflow-hidden">
-        <div className="overflow-y-auto overflow-x-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="overflow-y-auto overflow-x-auto flex-1 min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead className="sticky top-0 z-10 shadow-2xs bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-[11px] font-black tracking-wider">
               <tr>
@@ -415,12 +408,19 @@ export default function HeroAdminPage() {
                       <td className="py-4 px-6 text-slate-400 font-bold">{globalIndex}</td>
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
-                          <div className="relative w-16 h-12 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
-                            <img
-                              src={hero.backgroundImage || "/hero_bg_aba.jpg"}
-                              alt={hero.title}
-                              className="w-full h-full object-cover"
-                            />
+                          <div className="relative w-16 h-12 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200 flex items-center justify-center">
+                            {hero.backgroundImage ? (
+                              <img
+                                src={hero.backgroundImage}
+                                alt={hero.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex flex-col items-center justify-center text-slate-400">
+                                <ImageOff className="w-4 h-4 text-slate-400" />
+                                <span className="text-[9px] font-bold text-slate-400 mt-0.5">No Image</span>
+                              </div>
+                            )}
                           </div>
                           <div>
                             <div className="font-extrabold text-slate-900 line-clamp-1 max-w-[240px]">
@@ -501,41 +501,40 @@ export default function HeroAdminPage() {
             <div className="px-6 sm:px-8 py-4 sm:py-5 border-b border-slate-200 flex justify-between items-center bg-white shrink-0 sticky top-0 z-20">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-wider text-blue-600">
-                  Hero Carousel Slide
+                  {PAGES_CONFIG.find((p) => p.key === formData.pageKey)?.label || "Website"} Hero Slide
                 </span>
                 <h2 className="text-xl font-black text-slate-900 tracking-tight mt-0.5">
-                  {selectedHero ? "Edit Hero" : "Add Hero"}
+                  {selectedHero
+                    ? `Edit Hero Slide (${PAGES_CONFIG.find((p) => p.key === formData.pageKey)?.label || ""})`
+                    : `Add Hero Slide — ${PAGES_CONFIG.find((p) => p.key === formData.pageKey)?.label || ""}`}
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors"
+                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Scrollable Form Body (2-Column Architecture) */}
-            <form id="heroForm" onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 text-xs">
+            <form id="heroForm" onSubmit={handleSave} autoComplete="off" className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 text-xs">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Left Column */}
                 <div className="space-y-4">
                   <div className="space-y-1.5">
                     <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700">
-                      Target Website Page *
+                      Target Website Page
                     </label>
-                    <select
-                      value={formData.pageKey}
-                      onChange={(e) => setFormData({ ...formData, pageKey: e.target.value })}
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    >
-                      {PAGES_CONFIG.map((p) => (
-                        <option key={p.key} value={p.key}>
-                          {p.label} ({p.path})
-                        </option>
-                      ))}
-                    </select>
+                    <div className="w-full p-3 bg-slate-100/80 border border-slate-200/90 rounded-2xl font-bold text-slate-900 text-xs flex items-center justify-between">
+                      <span className="font-extrabold text-slate-800">
+                        {PAGES_CONFIG.find((p) => p.key === formData.pageKey)?.label || activePageConfig.label}
+                      </span>
+                      <span className="font-mono text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
+                        {PAGES_CONFIG.find((p) => p.key === formData.pageKey)?.path || activePageConfig.path}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="space-y-1.5">
@@ -580,13 +579,14 @@ export default function HeroAdminPage() {
 
                   <div className="space-y-1.5">
                     <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700">
-                      Description (Rich Text)
+                      Description / Hero Content
                     </label>
-                    <RichTextEditor
+                    <textarea
+                      rows={4}
                       value={formData.description}
-                      onChange={(val) => setFormData({ ...formData, description: val })}
-                      placeholder="Enter detailed clinical support details..."
-                      minHeight="140px"
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="e.g. Evidence-based Applied Behavior Analysis for autism & developmental goals."
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-normal text-slate-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 leading-relaxed"
                     />
                   </div>
 
@@ -661,7 +661,6 @@ export default function HeroAdminPage() {
                     onChange={(url) => setFormData({ ...formData, backgroundImage: url })}
                     placeholder="/hero_bg_aba.jpg"
                     helpText="Upload a high-resolution hero image from your computer or enter a URL."
-                    required
                   />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">

@@ -10,10 +10,25 @@ export async function getServiceBySlug(slug: string): Promise<ServiceDetail | nu
 
     if (dbSvc) {
       let overviewParagraphs: string[] = [];
+      let overviewBadge = "Clinical Overview";
+      let overviewHeading = "Understanding Our Approach to This Therapy";
+      let overviewHighlightsTitle = "Core Program Highlights";
+
       try {
         if (dbSvc.overviewParagraphs) {
           const parsed = JSON.parse(dbSvc.overviewParagraphs);
-          overviewParagraphs = Array.isArray(parsed) ? parsed : [dbSvc.overviewParagraphs];
+          if (Array.isArray(parsed)) {
+            overviewParagraphs = parsed;
+          } else if (parsed && typeof parsed === "object") {
+            if (Array.isArray(parsed.paragraphs)) {
+              overviewParagraphs = parsed.paragraphs;
+            }
+            if (parsed.badge) overviewBadge = parsed.badge;
+            if (parsed.heading) overviewHeading = parsed.heading;
+            if (parsed.highlightsTitle) overviewHighlightsTitle = parsed.highlightsTitle;
+          } else {
+            overviewParagraphs = [dbSvc.overviewParagraphs];
+          }
         }
       } catch {
         overviewParagraphs = dbSvc.overviewParagraphs ? [dbSvc.overviewParagraphs] : [];
@@ -59,6 +74,13 @@ export async function getServiceBySlug(slug: string): Promise<ServiceDetail | nu
         }
       } catch {}
 
+      let clinicalProcess: { stepNumber: string; title: string; description: string }[] = [];
+      try {
+        if ((dbSvc as any).clinicalProcess) {
+          clinicalProcess = JSON.parse((dbSvc as any).clinicalProcess);
+        }
+      } catch {}
+
       let faqs: { question: string; answer: string }[] = [];
       try {
         if (dbSvc.faqs) {
@@ -80,6 +102,9 @@ export async function getServiceBySlug(slug: string): Promise<ServiceDetail | nu
         image: dbSvc.image || fallback?.image || "/hero_child_therapy.jpg",
         heroImage: dbSvc.image || fallback?.heroImage || "/hero_child_therapy.jpg",
         shortDescription: dbSvc.shortDescription || fallback?.shortDescription || dbSvc.tagline || "",
+        overviewBadge: overviewBadge || fallback?.overviewBadge || "Clinical Overview",
+        overviewHeading: overviewHeading || fallback?.overviewHeading || "Understanding Our Approach to This Therapy",
+        overviewHighlightsTitle: overviewHighlightsTitle || fallback?.overviewHighlightsTitle || "Core Program Highlights",
         overviewParagraphs:
           overviewParagraphs.length > 0
             ? overviewParagraphs
@@ -91,7 +116,10 @@ export async function getServiceBySlug(slug: string): Promise<ServiceDetail | nu
         features: features.length > 0 ? features : (fallback?.features || ["Individualized Care Plan", "Clinical Supervision"]),
         whoNeedsThis: (whoNeedsThis?.signs && whoNeedsThis.signs.length > 0) ? whoNeedsThis : (fallback?.whoNeedsThis || whoNeedsThis),
         keyBenefits: (keyBenefits && keyBenefits.length > 0) ? keyBenefits : (fallback?.keyBenefits || keyBenefits),
-        clinicalProcess: fallback?.clinicalProcess || [
+        clinicalProcess:
+          clinicalProcess && clinicalProcess.length > 0
+            ? clinicalProcess
+            : fallback?.clinicalProcess || [
           {
             stepNumber: "01",
             title: "Intake & Clinical Assessment",

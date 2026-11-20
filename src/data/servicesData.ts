@@ -10,6 +10,9 @@ export interface ServiceDetail {
   image: string;
   heroImage: string;
   shortDescription: string;
+  overviewBadge?: string;
+  overviewHeading?: string;
+  overviewHighlightsTitle?: string;
   overviewParagraphs: string[];
   ageGroup: string;
   sessionFormat: string;

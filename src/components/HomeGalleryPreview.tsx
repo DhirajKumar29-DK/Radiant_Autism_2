@@ -90,16 +90,16 @@ export default function HomeGalleryPreview() {
         {/* Section Header */}
         <ScrollReveal direction="up">
           <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 backdrop-blur-md text-blue-300 border border-blue-500/30 text-xs font-extrabold uppercase tracking-wider shadow-lg">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 backdrop-blur-md text-blue-300 border border-blue-500/30 text-xs font-black tracking-wide shadow-lg">
               <Camera className="w-4 h-4 text-blue-400" />
-              <span>FACILITY SHOWCASE</span>
+              <span>Facility Showcase</span>
             </div>
             
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight text-white">
+            <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-black tracking-tight leading-[1.12] text-white">
               Explore Our Modern Therapy Center
             </h2>
             
-            <p className="text-slate-300 text-base sm:text-lg leading-relaxed font-medium">
+            <p className="text-slate-300 text-base sm:text-lg leading-[1.65] font-medium">
               Take a visual glimpse into our sensory gyms, 1:1 learning rooms, group activity areas, and cheerful child development environment.
             </p>
           </div>

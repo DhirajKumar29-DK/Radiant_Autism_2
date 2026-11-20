@@ -29,18 +29,28 @@ export default async function GalleryPage() {
   }
 
   let galleryItems = [];
+  let hero = null;
   try {
-    const rawItems = await prisma.galleryItem.findMany({
-      where: {
-        isActive: true,
-        isDeleted: false,
-      },
-      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-    });
+    const [rawItems, rawHero] = await Promise.all([
+      prisma.galleryItem.findMany({
+        where: {
+          isActive: true,
+          isDeleted: false,
+        },
+        orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+      }),
+      prisma.hero.findFirst({
+        where: { pageKey: "gallery", status: "ACTIVE" },
+        orderBy: { displayOrder: "asc" },
+      }),
+    ]);
     galleryItems = JSON.parse(JSON.stringify(rawItems));
+    if (rawHero) {
+      hero = JSON.parse(JSON.stringify(rawHero));
+    }
   } catch (error) {
-    console.error("Error fetching gallery items:", error);
+    console.error("Error fetching gallery items/hero:", error);
   }
 
-  return <GalleryClient initialItems={galleryItems} />;
+  return <GalleryClient initialItems={galleryItems} initialHero={hero} />;
 }

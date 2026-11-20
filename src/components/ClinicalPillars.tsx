@@ -103,15 +103,15 @@ export default function ClinicalPillars() {
         {/* Section Header */}
         <ScrollReveal direction="up">
           <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100/90 text-blue-700 border border-blue-200/80 text-xs font-extrabold uppercase tracking-wider shadow-xs">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100/90 text-blue-700 border border-blue-200/80 text-xs font-black tracking-wide shadow-xs">
               <span>CLINICAL EXCELLENCE</span>
             </div>
 
-            <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-black text-slate-900 tracking-tight leading-[1.12]">
               Our 4 Pillars of Clinical Excellence
             </h2>
 
-            <p className="text-slate-600 text-base sm:text-lg leading-relaxed font-medium">
+            <p className="text-slate-600 text-base sm:text-lg leading-[1.65] font-medium">
               We hold ourselves to the highest global healthcare standards to ensure your child receives gentle, evidence-based, and compassionate therapy.
             </p>
           </div>

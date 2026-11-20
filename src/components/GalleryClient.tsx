@@ -75,21 +75,16 @@ const DEFAULT_GALLERY_ITEMS: GalleryPhoto[] = [
 
 interface GalleryClientProps {
   initialItems?: GalleryPhoto[];
+  initialHero?: any;
 }
 
-export default function GalleryClient({ initialItems = [] }: GalleryClientProps) {
+export default function GalleryClient({ initialItems = [], initialHero = null }: GalleryClientProps) {
   const [items, setItems] = useState<GalleryPhoto[]>(
     initialItems.length > 0 ? initialItems : DEFAULT_GALLERY_ITEMS
   );
   const [activeTab, setActiveTab] = useState("All");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [heroData, setHeroData] = useState({
-    badge: "Radiant Center Gallery",
-    title: "Explore Our Center & Therapy Facilities",
-    subtitle:
-      "Take a visual tour of our sensory gym, 1:1 learning rooms, group activity areas, and cheerful child development environment.",
-    bgImage: "/gallery_sensory_gym.jpg",
-  });
+  const [heroData, setHeroData] = useState<any>(initialHero);
 
   // Fetch Hero Banner & Live Gallery Items
   useEffect(() => {
@@ -101,14 +96,9 @@ export default function GalleryClient({ initialItems = [] }: GalleryClientProps)
           const data = await heroRes.json();
           const heroItems = data.heroes || data.data;
           if (Array.isArray(heroItems) && heroItems.length > 0) {
-            setHeroData({
-              badge: heroItems[0].badge || "Radiant Center Gallery",
-              title: heroItems[0].title || "Explore Our Center & Therapy Facilities",
-              subtitle:
-                heroItems[0].subtitle ||
-                "Take a visual tour of our sensory gym, 1:1 learning rooms, group activity areas, and cheerful child development environment.",
-              bgImage: heroItems[0].backgroundImage || "/gallery_sensory_gym.jpg",
-            });
+            setHeroData(heroItems[0]);
+          } else {
+            setHeroData(null);
           }
         }
       } catch {
@@ -181,32 +171,40 @@ export default function GalleryClient({ initialItems = [] }: GalleryClientProps)
 
   return (
     <div className="space-y-0 pb-16">
-      {/* Premium Photo Hero Banner */}
-      <section className="relative py-20 md:py-28 bg-slate-950 text-white overflow-hidden select-none">
-        {/* Background Image with Dark Gradient Overlay */}
-        <div className="absolute inset-0 z-0">
-          <img
-            src={heroData.bgImage}
-            alt={heroData.title}
-            className="w-full h-full object-cover object-center transform animate-kenburns"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/75 via-slate-950/50 to-slate-950/30" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-slate-950/20" />
-        </div>
+      {/* Premium Photo Hero Banner (Rendered only if configured in Admin) */}
+      {heroData && (
+        <section className="relative py-20 md:py-28 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white overflow-hidden select-none">
+          {/* Background Image with Dark Gradient Overlay (Shown only if configured by Admin) */}
+          {heroData.backgroundImage?.trim() && (
+            <div className="absolute inset-0 z-0">
+              <img
+                src={heroData.backgroundImage.trim()}
+                alt={heroData.title}
+                className="w-full h-full object-cover object-center transform animate-kenburns"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/75 via-slate-950/50 to-slate-950/30" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-slate-950/20" />
+            </div>
+          )}
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 backdrop-blur-md text-blue-300 border border-blue-500/30 text-xs font-extrabold uppercase tracking-wider shadow-lg">
-            <Camera className="w-4 h-4 text-blue-400" />
-            <span>{heroData.badge}</span>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 space-y-4">
+            {heroData.badge && (
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 backdrop-blur-md text-blue-300 border border-blue-500/30 text-xs font-extrabold uppercase tracking-wider shadow-lg">
+                <Camera className="w-4 h-4 text-blue-400" />
+                <span>{heroData.badge}</span>
+              </div>
+            )}
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight text-white">
+              {heroData.title}
+            </h1>
+            {heroData.subtitle && (
+              <p className="text-slate-200 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed">
+                {heroData.subtitle}
+              </p>
+            )}
           </div>
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight text-white">
-            {heroData.title}
-          </h1>
-          <p className="text-slate-200 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed">
-            {heroData.subtitle}
-          </p>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Filter Tabs & Clean Image Gallery Grid */}
       <section className="py-16 bg-slate-50 relative overflow-hidden">

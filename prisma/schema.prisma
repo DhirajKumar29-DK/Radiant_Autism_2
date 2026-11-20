@@ -67,6 +67,7 @@ model Service {
   features           String?  @db.LongText
   whoNeedsThis       String?  @db.LongText
   keyBenefits        String?  @db.LongText
+  clinicalProcess    String?  @db.LongText
   faqs               String?  @db.LongText
   status             String   @default("ACTIVE")
   isActive           Boolean  @default(true)

@@ -24,6 +24,7 @@ import { SERVICES_DATA, ServiceDetail } from "@/data/servicesData";
 import { getServiceBySlug } from "@/lib/services";
 import ScrollReveal from "@/common/ScrollReveal";
 import SectionHeading from "@/common/SectionHeading";
+import ServiceFaqAccordion from "@/components/ServiceFaqAccordion";
 
 interface ServicePageProps {
   params: Promise<{ id: string }> | { id: string } | any;
@@ -90,9 +91,9 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
   const otherServices = Object.values(SERVICES_DATA).filter((s) => s.id !== service.id).slice(0, 3);
 
   return (
-    <main className="min-h-screen bg-slate-50 pt-24 pb-20">
+    <main className="min-h-screen bg-slate-50 pb-16">
       {/* 1. Breadcrumb Bar */}
-      <div className="bg-white border-b border-slate-200/80 py-3.5 px-4 sm:px-6 lg:px-8">
+      <div className="bg-white border-b border-slate-200/80 py-3 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between text-xs sm:text-sm text-slate-600 font-medium">
           <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
             <Link href="/" className="hover:text-blue-600 transition-colors">Home</Link>
@@ -113,26 +114,33 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
       </div>
 
       {/* 2. Hero Header Section */}
-      <section className="bg-gradient-to-b from-white via-slate-50 to-slate-100/70 border-b border-slate-200/80 py-12 md:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative bg-gradient-to-b from-blue-50/70 via-sky-50/20 to-white border-b border-slate-200/80 py-10 md:py-14 overflow-hidden">
+        {/* Soft Ambient Glows & Dot Texture */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-teal-200/20 rounded-full blur-3xl" />
+          <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-25" />
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             {/* Left Content */}
             <div className="lg:col-span-7 space-y-6">
               <ScrollReveal direction="up">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-extrabold uppercase tracking-wider">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 backdrop-blur-xs border border-blue-200 text-blue-700 text-xs font-black tracking-wide shadow-xs">
                   <IconComponent className="w-4 h-4" />
                   <span>{service.badge}</span>
                 </div>
               </ScrollReveal>
 
               <ScrollReveal direction="up" delay={100}>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.08]">
                   {service.title}
                 </h1>
               </ScrollReveal>
 
               <ScrollReveal direction="up" delay={150}>
-                <p className="text-base sm:text-lg text-slate-700 font-medium leading-relaxed">
+                <p className="text-base sm:text-lg lg:text-xl text-slate-700 font-medium leading-[1.65]">
                   {service.tagline}
                 </p>
               </ScrollReveal>
@@ -140,42 +148,42 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
               {/* Quick Info Grid */}
               <ScrollReveal direction="up" delay={200}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs flex items-start gap-3.5">
-                    <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 shrink-0">
+                  <div className="bg-white/95 backdrop-blur-xs p-4 rounded-2xl border border-blue-100/90 shadow-xs hover:border-blue-300 hover:shadow-md transition-all flex items-start gap-3.5 group">
+                    <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 shrink-0 group-hover:scale-105 transition-transform">
                       <Users className="w-5 h-5" />
                     </div>
                     <div>
-                      <span className="text-[11px] font-extrabold uppercase text-slate-600 tracking-wider block">Target Age Group</span>
+                      <span className="text-[11px] font-extrabold uppercase text-slate-500 tracking-wider block">Target Age Group</span>
                       <span className="text-sm font-black text-slate-900">{service.ageGroup}</span>
                     </div>
                   </div>
 
-                  <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs flex items-start gap-3.5">
-                    <div className="p-2.5 rounded-xl bg-teal-50 text-teal-600 shrink-0">
+                  <div className="bg-white/95 backdrop-blur-xs p-4 rounded-2xl border border-teal-100/90 shadow-xs hover:border-teal-300 hover:shadow-md transition-all flex items-start gap-3.5 group">
+                    <div className="p-2.5 rounded-xl bg-teal-50 text-teal-600 shrink-0 group-hover:scale-105 transition-transform">
                       <Clock className="w-5 h-5" />
                     </div>
                     <div>
-                      <span className="text-[11px] font-extrabold uppercase text-slate-600 tracking-wider block">Session Format</span>
+                      <span className="text-[11px] font-extrabold uppercase text-slate-500 tracking-wider block">Session Format</span>
                       <span className="text-sm font-black text-slate-900">{service.sessionFormat}</span>
                     </div>
                   </div>
 
-                  <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs flex items-start gap-3.5">
-                    <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-600 shrink-0">
+                  <div className="bg-white/95 backdrop-blur-xs p-4 rounded-2xl border border-indigo-100/90 shadow-xs hover:border-indigo-300 hover:shadow-md transition-all flex items-start gap-3.5 group">
+                    <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-600 shrink-0 group-hover:scale-105 transition-transform">
                       <Award className="w-5 h-5" />
                     </div>
                     <div>
-                      <span className="text-[11px] font-extrabold uppercase text-slate-600 tracking-wider block">Clinical Supervision</span>
+                      <span className="text-[11px] font-extrabold uppercase text-slate-500 tracking-wider block">Clinical Supervision</span>
                       <span className="text-sm font-black text-slate-900">{service.clinicalLead}</span>
                     </div>
                   </div>
 
-                  <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs flex items-start gap-3.5">
-                    <div className="p-2.5 rounded-xl bg-purple-50 text-purple-600 shrink-0">
+                  <div className="bg-white/95 backdrop-blur-xs p-4 rounded-2xl border border-purple-100/90 shadow-xs hover:border-purple-300 hover:shadow-md transition-all flex items-start gap-3.5 group">
+                    <div className="p-2.5 rounded-xl bg-purple-50 text-purple-600 shrink-0 group-hover:scale-105 transition-transform">
                       <Calendar className="w-5 h-5" />
                     </div>
                     <div>
-                      <span className="text-[11px] font-extrabold uppercase text-slate-600 tracking-wider block">Recommended Frequency</span>
+                      <span className="text-[11px] font-extrabold uppercase text-slate-500 tracking-wider block">Recommended Frequency</span>
                       <span className="text-sm font-black text-slate-900">{service.duration}</span>
                     </div>
                   </div>
@@ -229,16 +237,19 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
       </section>
 
       {/* 3. Detailed Overview & Who Needs This */}
-      <section className="py-16 md:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-12 md:py-16 bg-white relative overflow-hidden">
+        {/* Subtle decorative dot pattern */}
+        <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:24px_24px] opacity-40 pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
             {/* Left: Multi-paragraph clinical overview */}
             <div className="lg:col-span-7 space-y-6">
               <ScrollReveal direction="up">
                 <SectionHeading
-                  badgeText="Clinical Overview"
+                  badgeText={service.overviewBadge || "Clinical Overview"}
                   badgeVariant="blue"
-                  title="Understanding Our Approach to This Therapy"
+                  title={service.overviewHeading || "Understanding Our Approach to This Therapy"}
                   align="left"
                 />
               </ScrollReveal>
@@ -246,7 +257,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
               <ScrollReveal direction="up" delay={100}>
                 <div className="space-y-5 text-slate-700 text-base leading-relaxed">
                   {service.overviewParagraphs.map((para, idx) => (
-                    <p key={idx} className="first-of-type:text-lg first-of-type:font-semibold first-of-type:text-slate-900">
+                    <p key={idx} className="first-of-type:text-lg first-of-type:font-semibold first-of-type:text-slate-900 leading-relaxed">
                       {para}
                     </p>
                   ))}
@@ -254,27 +265,41 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
               </ScrollReveal>
 
               {/* Core Features Bullets */}
-              <ScrollReveal direction="up" delay={200}>
-                <div className="pt-4 border-t border-slate-100">
-                  <h3 className="text-sm font-extrabold uppercase text-slate-600 tracking-wider mb-4">Core Program Highlights</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {service.features.map((feat, fIdx) => (
-                      <div key={fIdx} className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-center">
-                        <CheckCircle2 className="w-5 h-5 text-blue-600 mx-auto mb-2" />
-                        <span className="text-xs font-black text-slate-900 block">{feat}</span>
-                      </div>
-                    ))}
+              {service.features && service.features.length > 0 && (
+                <ScrollReveal direction="up" delay={200}>
+                  <div className="pt-6 border-t border-slate-100">
+                    <h3 className="text-sm font-black text-slate-600 tracking-wide mb-4">
+                      {service.overviewHighlightsTitle || "Core Program Highlights"}
+                    </h3>
+                    <div
+                      className={`grid grid-cols-1 ${
+                        service.features.length === 1
+                          ? "sm:grid-cols-1 max-w-sm"
+                          : service.features.length === 2
+                          ? "sm:grid-cols-2"
+                          : service.features.length >= 4
+                          ? "sm:grid-cols-2 lg:grid-cols-4"
+                          : "sm:grid-cols-3"
+                      } gap-3`}
+                    >
+                      {service.features.map((feat, fIdx) => (
+                        <div key={fIdx} className="bg-gradient-to-br from-blue-50/60 via-slate-50 to-indigo-50/30 border border-blue-100/80 rounded-2xl p-4 text-center shadow-2xs hover:border-blue-300 hover:shadow-xs transition-all">
+                          <CheckCircle2 className="w-5 h-5 text-blue-600 mx-auto mb-2" />
+                          <span className="text-xs font-black text-slate-900 block">{feat}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </ScrollReveal>
+                </ScrollReveal>
+              )}
             </div>
 
             {/* Right: Who Needs This Checklist Box */}
             <div className="lg:col-span-5">
               <ScrollReveal direction="up" delay={150}>
-                <div className="bg-[#faf8f2] rounded-3xl p-7 sm:p-8 border-2 border-amber-200/80 shadow-md space-y-6 sticky top-28">
+                <div className="bg-gradient-to-b from-[#faf6ee] to-[#fffbf2] rounded-3xl p-7 sm:p-8 border-2 border-amber-300/70 shadow-lg shadow-amber-900/5 space-y-6 sticky top-28">
                   <div className="space-y-2">
-                    <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-amber-200/80 text-amber-900 uppercase tracking-wider">
+                    <span className="px-3.5 py-1 rounded-full text-xs font-extrabold bg-amber-200 text-amber-950 uppercase tracking-wider shadow-2xs">
                       Parent Checklist
                     </span>
                     <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-snug">
@@ -287,7 +312,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
 
                   <div className="space-y-3.5">
                     {service.whoNeedsThis.signs.map((sign, sIdx) => (
-                      <div key={sIdx} className="flex items-start gap-3 bg-white p-3.5 rounded-2xl border border-amber-200/60 shadow-2xs">
+                      <div key={sIdx} className="flex items-start gap-3 bg-white/95 p-3.5 rounded-2xl border border-amber-200/80 shadow-2xs hover:border-amber-300 transition-colors">
                         <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                         <span className="text-xs sm:text-sm font-bold text-slate-800 leading-snug">{sign}</span>
                       </div>
@@ -297,10 +322,10 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                   <div className="pt-2">
                     <Link
                       href="/contact"
-                      className="w-full py-3.5 px-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs text-center shadow-lg transition-all flex items-center justify-center gap-2"
+                      className="w-full py-3.5 px-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs text-center shadow-lg transition-all flex items-center justify-center gap-2 group"
                     >
                       <span>Schedule Free Screening Call</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </div>
                 </div>
@@ -311,8 +336,10 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
       </section>
 
       {/* 4. Key Clinical Outcomes & Benefits Grid */}
-      <section className="py-16 md:py-24 bg-slate-50 border-t border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-12 md:py-16 bg-gradient-to-b from-slate-50 via-sky-50/30 to-slate-50 border-t border-slate-200/80 relative overflow-hidden">
+        {/* Subtle decorative orb */}
+        <div className="absolute top-0 right-1/4 w-80 h-80 bg-sky-200/25 rounded-full blur-3xl pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <ScrollReveal direction="up">
             <SectionHeading
               badgeText="Target Outcomes"
@@ -325,8 +352,8 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
             {service.keyBenefits.map((item, idx) => (
               <ScrollReveal key={idx} delay={idx * 100} direction="up">
-                <div className="bg-white rounded-3xl p-7 border-2 border-slate-200/90 shadow-sm hover:shadow-xl hover:border-blue-500 transition-all duration-300 flex items-start gap-5 group">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white font-black text-lg flex items-center justify-center shrink-0 shadow-md shadow-blue-600/20 group-hover:scale-110 transition-transform">
+                <div className="bg-white/95 backdrop-blur-xs rounded-3xl p-7 sm:p-8 border-2 border-slate-200/90 shadow-sm hover:shadow-xl hover:shadow-blue-600/10 hover:border-blue-500 transition-all duration-300 flex items-start gap-5 group">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black text-lg flex items-center justify-center shrink-0 shadow-md shadow-blue-600/25 group-hover:scale-110 transition-transform">
                     0{idx + 1}
                   </div>
                   <div className="space-y-2">
@@ -345,8 +372,8 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
       </section>
 
       {/* 5. 4-Step Clinical Process */}
-      <section className="py-16 md:py-24 bg-white border-t border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-12 md:py-16 bg-gradient-to-b from-white via-blue-50/25 to-white border-t border-slate-200/80 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <ScrollReveal direction="up">
             <SectionHeading
               badgeText="Our Process"
@@ -356,15 +383,20 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
             />
           </ScrollReveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
             {service.clinicalProcess.map((proc, idx) => (
               <ScrollReveal key={idx} delay={idx * 120} direction="up">
-                <div className="bg-slate-50 rounded-3xl p-7 border-2 border-slate-200/80 shadow-xs flex flex-col justify-between h-full relative group hover:border-blue-500 transition-all">
+                <div className="bg-white rounded-3xl p-7 border-2 border-blue-100/90 shadow-xs hover:shadow-xl hover:shadow-blue-500/10 hover:border-blue-500 transition-all duration-300 flex flex-col justify-between h-full relative group">
                   <div className="space-y-4">
-                    <span className="text-3xl font-black text-blue-600/40 group-hover:text-blue-600 transition-colors block">
-                      {proc.stepNumber}
-                    </span>
-                    <h3 className="text-base font-black text-slate-900 leading-snug">
+                    <div className="flex items-center justify-between">
+                      <span className="text-3xl font-black bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent group-hover:scale-105 transition-transform">
+                        {proc.stepNumber}
+                      </span>
+                      <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                        Step {idx + 1}
+                      </span>
+                    </div>
+                    <h3 className="text-base font-black text-slate-900 leading-snug group-hover:text-blue-600 transition-colors">
                       {proc.title}
                     </h3>
                     <p className="text-slate-600 text-xs leading-relaxed">
@@ -379,43 +411,35 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
       </section>
 
       {/* 6. Frequently Asked Questions (FAQs) */}
-      <section className="py-16 md:py-24 bg-slate-50 border-t border-slate-200/80">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <ScrollReveal direction="up">
-            <SectionHeading
-              badgeText="Parents FAQ"
-              badgeVariant="purple"
-              title="Frequently Asked Questions About This Therapy"
-              subtitle="Clear answers to common questions asked by parents before starting therapy."
-            />
-          </ScrollReveal>
+      {service.faqs && service.faqs.length > 0 && (
+        <section className="py-12 md:py-16 bg-gradient-to-b from-slate-50 via-purple-50/20 to-indigo-50/30 border-t border-slate-200/80 relative overflow-hidden">
+          <div className="absolute bottom-0 right-10 w-96 h-96 bg-purple-200/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <ScrollReveal direction="up">
+              <SectionHeading
+                badgeText="Parents FAQ"
+                badgeVariant="purple"
+                title="Frequently Asked Questions About This Therapy"
+                subtitle="Clear answers to common questions asked by parents before starting therapy."
+              />
+            </ScrollReveal>
 
-          <div className="space-y-4 mt-12">
-            {service.faqs.map((faq, idx) => (
-              <ScrollReveal key={idx} delay={idx * 100} direction="up">
-                <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-xs space-y-2">
-                  <div className="flex items-center gap-3">
-                    <HelpCircle className="w-5 h-5 text-blue-600 shrink-0" />
-                    <h3 className="text-base font-black text-slate-900">{faq.question}</h3>
-                  </div>
-                  <p className="text-slate-600 text-xs sm:text-sm leading-relaxed pl-8">
-                    {faq.answer}
-                  </p>
-                </div>
-              </ScrollReveal>
-            ))}
+            <ScrollReveal direction="up" delay={100}>
+              <ServiceFaqAccordion faqs={service.faqs} />
+            </ScrollReveal>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 7. Bottom Call-To-Action Banner */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-12">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-14">
         <ScrollReveal direction="up">
-          <div className="bg-slate-900 rounded-3xl p-8 sm:p-12 text-white relative overflow-hidden shadow-2xl">
-            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 rounded-3xl p-8 sm:p-12 text-white relative overflow-hidden shadow-2xl border border-blue-900/40">
+            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-80 h-80 bg-teal-500/15 rounded-full blur-3xl pointer-events-none" />
             
             <div className="relative z-10 max-w-3xl space-y-6">
-              <span className="px-3.5 py-1 rounded-full text-xs font-extrabold bg-blue-600 text-white uppercase tracking-wider">
+              <span className="px-3.5 py-1 rounded-full text-xs font-extrabold bg-blue-600 text-white uppercase tracking-wider shadow-sm">
                 Start Your Child's Journey
               </span>
               <h2 className="text-3xl sm:text-4xl font-black leading-tight">
@@ -427,11 +451,11 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
               <div className="flex flex-wrap gap-4 pt-2">
                 <Link
                   href={`/contact?service=${encodeURIComponent(service.title)}`}
-                  className="px-7 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-sm shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2"
+                  className="px-7 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-sm shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2 group"
                 >
                   <Calendar className="w-4 h-4" />
                   <span>Book an Appointment</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <a
                   href={whatsappUrl}
@@ -449,13 +473,16 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
       </section>
 
       {/* 8. Other Related Services */}
-      <section className="py-12 bg-white border-t border-slate-200/80">
+      <section className="py-12 md:py-16 bg-gradient-to-b from-slate-50/80 to-slate-100/50 border-t border-slate-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="text-xl font-black text-slate-900">Explore Other Therapy Services</h3>
-            <Link href="/services" className="text-xs font-extrabold text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
+            <div>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900">Explore Other Therapy Services</h3>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">Comprehensive clinical programs personalized for developmental milestones.</p>
+            </div>
+            <Link href="/services" className="text-xs font-extrabold text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1 group">
               <span>View All Services</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 
@@ -464,10 +491,10 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
               <Link
                 key={other.id}
                 href={`/services/${other.id}`}
-                className="bg-slate-50 rounded-2xl p-5 border border-slate-200 hover:border-blue-500 hover:bg-white transition-all group shadow-xs flex flex-col justify-between"
+                className="bg-white rounded-2xl p-6 border-2 border-slate-200/90 hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300 group shadow-xs flex flex-col justify-between"
               >
-                <div className="space-y-2">
-                  <span className="text-[10px] font-extrabold uppercase bg-blue-100 text-blue-800 px-2.5 py-1 rounded-full">
+                <div className="space-y-2.5">
+                  <span className="text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200/80 px-2.5 py-1 rounded-full">
                     {other.badge}
                   </span>
                   <h4 className="text-base font-black text-slate-900 group-hover:text-blue-600 transition-colors pt-1">
@@ -477,7 +504,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                     {other.shortDescription}
                   </p>
                 </div>
-                <div className="pt-4 flex items-center gap-1 text-xs font-bold text-blue-600">
+                <div className="pt-4 flex items-center gap-1 text-xs font-bold text-blue-600 group-hover:text-blue-700">
                   <span>Explore Detail</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                 </div>

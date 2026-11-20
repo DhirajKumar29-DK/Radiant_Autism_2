@@ -57,19 +57,23 @@ export default function Hero() {
         if (res.ok) {
           const data = await res.json();
           const items = data.heroes || data.data;
-          if (Array.isArray(items) && items.length > 0) {
-            const mapped = items.map((h: any, idx: number) => ({
-              id: h.id || idx + 1,
-              badge: h.badge || "OAP COVERED & RBA SUPERVISED",
-              title: h.title,
-              subtitle: h.subtitle || "",
-              ctaPrimary: h.primaryButtonText || "BOOK APPOINTMENT",
-              ctaPrimaryLink: h.primaryButtonLink || "/contact",
-              ctaSecondary: h.secondaryButtonText || "OUR SERVICES",
-              ctaSecondaryLink: h.secondaryButtonLink || "/services",
-              bgImage: h.backgroundImage || "/hero_bg_aba.jpg",
-            }));
-            setSlides(mapped);
+          if (Array.isArray(items)) {
+            if (items.length > 0) {
+              const mapped = items.map((h: any, idx: number) => ({
+                id: h.id || idx + 1,
+                badge: h.badge || "OAP COVERED & RBA SUPERVISED",
+                title: h.title,
+                subtitle: h.subtitle || "",
+                ctaPrimary: h.primaryButtonText || "BOOK APPOINTMENT",
+                ctaPrimaryLink: h.primaryButtonLink || "/contact",
+                ctaSecondary: h.secondaryButtonText || "OUR SERVICES",
+                ctaSecondaryLink: h.secondaryButtonLink || "/services",
+                bgImage: h.backgroundImage?.trim() || "",
+              }));
+              setSlides(mapped);
+            } else {
+              setSlides([]);
+            }
           }
         }
       } catch (err) {
@@ -91,8 +95,11 @@ export default function Hero() {
   };
 
   const handlePrev = () => {
+    if (slides.length === 0) return;
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
+
+  if (slides.length === 0) return null;
 
   return (
     <section className="relative w-full h-[calc(100vh-5rem)] min-h-[550px] bg-slate-950 overflow-hidden select-none">
@@ -103,15 +110,19 @@ export default function Hero() {
           className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${currentSlide === idx ? "opacity-100 z-10" : "opacity-0 z-0"
             }`}
         >
-          <img
-            src={slide.bgImage}
-            alt={slide.title}
-            className={`w-full h-full object-cover object-center transform transition-transform duration-1000 ${currentSlide === idx ? "opacity-100 animate-kenburns" : "opacity-90"
-              }`}
-          />
-          {/* Gradient Overlay for high readability & vibrant image visibility */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/75 via-slate-950/45 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-slate-950/20" />
+          {slide.bgImage && (
+            <>
+              <img
+                src={slide.bgImage}
+                alt={slide.title}
+                className={`w-full h-full object-cover object-center transform transition-transform duration-1000 ${currentSlide === idx ? "opacity-100 animate-kenburns" : "opacity-90"
+                  }`}
+              />
+              {/* Gradient Overlay for high readability & vibrant image visibility */}
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/75 via-slate-950/45 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-slate-950/20" />
+            </>
+          )}
         </div>
       ))}
 
@@ -120,17 +131,17 @@ export default function Hero() {
         {/* Left Aligned Main Text & Action Buttons */}
         <div className="max-w-3xl space-y-5 my-auto text-left lg:ml-4 xl:ml-8">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-amber-300 text-xs font-extrabold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-amber-300 text-xs font-black tracking-wide">
             <span>{slides[currentSlide].badge}</span>
           </div>
 
           {/* Large Bold Title */}
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight sm:leading-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-[68px] font-black text-white tracking-tight leading-[1.08]">
             {slides[currentSlide].title}
           </h1>
 
           {/* Subtitle */}
-          <p className="text-slate-200 text-base sm:text-xl font-medium leading-relaxed max-w-2xl">
+          <p className="text-slate-200 text-base sm:text-lg lg:text-xl font-medium leading-[1.65] max-w-2xl">
             {slides[currentSlide].subtitle}
           </p>
 
@@ -138,7 +149,7 @@ export default function Hero() {
           <div className="flex flex-wrap items-center gap-4 pt-2 sm:pt-4">
             <Link
               href={slides[currentSlide].ctaPrimaryLink}
-              className="px-7 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-blue-600/40 hover:shadow-blue-600/60 transition-all flex items-center gap-2 group transform hover:-translate-y-0.5"
+              className="px-7 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs sm:text-sm tracking-wider shadow-lg shadow-blue-600/40 hover:shadow-blue-600/60 transition-all flex items-center gap-2 group transform hover:-translate-y-0.5"
             >
               <Calendar className="w-4 h-4" />
               <span>{slides[currentSlide].ctaPrimary}</span>
@@ -146,7 +157,7 @@ export default function Hero() {
 
             <Link
               href={slides[currentSlide].ctaSecondaryLink}
-              className="px-7 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/30 backdrop-blur-md font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-md transition-all flex items-center gap-2 transform hover:-translate-y-0.5"
+              className="px-7 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/30 backdrop-blur-md font-extrabold text-xs sm:text-sm tracking-wider shadow-md transition-all flex items-center gap-2 transform hover:-translate-y-0.5"
             >
               <span>{slides[currentSlide].ctaSecondary}</span>
               <ChevronRight className="w-4 h-4" />

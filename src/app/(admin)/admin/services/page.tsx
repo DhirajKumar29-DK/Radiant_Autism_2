@@ -25,6 +25,9 @@ import {
   Users,
   Info,
   Calendar,
+  Compass,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import AdminPagination from "@/components/common/AdminPagination";
 import ConfirmModal from "@/components/common/ConfirmModal";
@@ -53,6 +56,7 @@ interface ServiceItem {
   features?: string | null;
   whoNeedsThis?: string | null;
   keyBenefits?: string | null;
+  clinicalProcess?: string | null;
   faqs?: string | null;
   status: StatusType;
   isActive: boolean;
@@ -66,12 +70,45 @@ interface BenefitCard {
   description: string;
 }
 
+interface ProcessStep {
+  stepNumber: string;
+  title: string;
+  description: string;
+}
+
 interface FaqPair {
   question: string;
   answer: string;
 }
 
-type TabType = "general" | "overview" | "checklist" | "benefits" | "faqs";
+type TabType = "general" | "overview" | "checklist" | "benefits" | "process" | "faqs";
+
+const emptyForm = {
+  title: "",
+  slug: "",
+  tagline: "",
+  badge: "",
+  badgeBg: "bg-blue-600",
+  iconName: "Brain",
+  image: "",
+  shortDescription: "",
+  overviewBadge: "Clinical Overview",
+  overviewHeading: "Understanding Our Approach to This Therapy",
+  overviewHighlightsTitle: "Core Program Highlights",
+  overviewText: "",
+  features: ["Ages 2 to 20 Years", "Registered Behaviour Analyst", "Target Verbal & Life Skills"] as string[],
+  ageGroup: "",
+  sessionFormat: "",
+  duration: "",
+  clinicalLead: "",
+  checklistSubtitle: "",
+  checklistSigns: [] as string[],
+  keyBenefits: [] as BenefitCard[],
+  clinicalProcess: [] as ProcessStep[],
+  faqs: [] as FaqPair[],
+  status: "ACTIVE" as StatusType,
+  order: 0,
+};
 
 export default function AdminServicesPage() {
   const [services, setServices] = useState<ServiceItem[]>([]);
@@ -81,6 +118,21 @@ export default function AdminServicesPage() {
   const [activeTab, setActiveTab] = useState<TabType>("general");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const tabOrder: TabType[] = ["general", "overview", "checklist", "benefits", "process", "faqs"];
+  const currentTabIndex = tabOrder.indexOf(activeTab);
+
+  const goToNextTab = () => {
+    if (currentTabIndex < tabOrder.length - 1) {
+      setActiveTab(tabOrder[currentTabIndex + 1]);
+    }
+  };
+
+  const goToPrevTab = () => {
+    if (currentTabIndex > 0) {
+      setActiveTab(tabOrder[currentTabIndex - 1]);
+    }
+  };
 
   // Search
   const [searchQuery, setSearchQuery] = useState("");
@@ -95,60 +147,8 @@ export default function AdminServicesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // Form State
-  const [formData, setFormData] = useState({
-    title: "",
-    slug: "",
-    tagline: "",
-    badge: "Communication Care",
-    badgeBg: "bg-blue-600",
-    iconName: "Brain",
-    image: "/hero_speech_therapy.jpg",
-    shortDescription: "",
-    overviewText: "",
-    features: ["", "", ""],
-    ageGroup: "Toddler to Youth",
-    sessionFormat: "1:1 Clinical Sessions",
-    duration: "45 to 60 Min Sessions",
-    clinicalLead: "Registered Clinical Specialist",
-    checklistSubtitle: "This therapy is recommended if your child demonstrates:",
-    checklistSigns: [
-      "Needs support with communication and developmental milestones",
-      "Struggles to express wants, needs, or thoughts comfortably",
-      "Noticeable difficulty in daily routines or emotional regulation",
-      "Benefits from individualized, data-backed 1:1 clinical guidance",
-    ],
-    keyBenefits: [
-      {
-        title: "Targeted Developmental Growth",
-        description: "Evidence-based therapy tailored specifically to socially significant goals.",
-      },
-      {
-        title: "1:1 Registered Clinical Supervision",
-        description: "Direct program design and continuous data analysis by licensed clinicians.",
-      },
-      {
-        title: "Family-Centered Coaching",
-        description: "Practical carryover strategies empowering parents to support progress at home.",
-      },
-      {
-        title: "OAP Funding Eligible",
-        description: "100% covered under Core Clinical Services of the Ontario Autism Program.",
-      },
-    ] as BenefitCard[],
-    faqs: [
-      {
-        question: "What age group is eligible for this therapy?",
-        answer: "We support children from toddlers (as young as 18 months) through school-age youth and teens.",
-      },
-      {
-        question: "Is this service covered by the Ontario Autism Program (OAP)?",
-        answer: "Yes, our clinical therapies are fully eligible under OAP Core Clinical Services funding.",
-      },
-    ] as FaqPair[],
-    status: "ACTIVE" as StatusType,
-    order: 0,
-  });
+  // Form State (100% clean, NO autofill/dummy data on Add)
+  const [formData, setFormData] = useState({ ...emptyForm });
 
   const fetchServices = async () => {
     setIsLoading(true);
@@ -175,61 +175,7 @@ export default function AdminServicesPage() {
 
   const openAddModal = () => {
     setFormData({
-      title: "",
-      slug: "",
-      tagline: "",
-      badge: "Clinical Care",
-      badgeBg: "bg-blue-600",
-      iconName: "Brain",
-      image: "/hero_child_therapy.jpg",
-      shortDescription: "",
-      overviewText:
-        "Our clinical therapy program utilizes research-backed methodologies to help children achieve critical developmental milestones in communication, daily life, and social confidence.\n\nAll programs are custom-tailored to each child's individual strengths and supervised by certified specialists.",
-      features: [
-        "Certified Clinical Lead",
-        "Individualized Care Plan",
-        "Play-Based Developmental Scaffolding",
-      ],
-      ageGroup: "2 to 20 Years",
-      sessionFormat: "1:1 Individualized Sessions",
-      duration: "45 to 60 Min Sessions",
-      clinicalLead: "Registered Behaviour Analyst (RBA)",
-      checklistSubtitle: "This program is recommended if your child demonstrates:",
-      checklistSigns: [
-        "Delays in functional communication or verbal expression",
-        "Difficulty with self-regulation, transitions, or sensory processing",
-        "Challenges with interactive peer play or daily living routines",
-        "Benefits from evidence-based 1:1 clinical support",
-      ],
-      keyBenefits: [
-        {
-          title: "Milestone-Driven Progress",
-          description: "Systematic data collection tracking communication, motor, and social skills.",
-        },
-        {
-          title: "Licensed Clinical Leadership",
-          description: "Direct program oversight ensuring child-centered, ethical care.",
-        },
-        {
-          title: "Parent Collaborative Coaching",
-          description: "Empowering families with carryover routines for home and classroom success.",
-        },
-        {
-          title: "OAP Covered",
-          description: "100% eligible for Ontario Autism Program (OAP) funding support.",
-        },
-      ],
-      faqs: [
-        {
-          question: "How do we get started with this program?",
-          answer: "Contact our intake team to schedule an initial clinical screening and developmental consultation.",
-        },
-        {
-          question: "Is this program covered by OAP funding?",
-          answer: "Yes, all our clinical programs are eligible under the Ontario Autism Program (OAP).",
-        },
-      ],
-      status: "ACTIVE",
+      ...emptyForm,
       order: services.length + 1,
     });
     setEditingService(null);
@@ -244,10 +190,25 @@ export default function AdminServicesPage() {
 
     // Overview paragraphs
     let parsedOverview = "";
+    let parsedOverviewBadge = "Clinical Overview";
+    let parsedOverviewHeading = "Understanding Our Approach to This Therapy";
+    let parsedHighlightsTitle = "Core Program Highlights";
+
     try {
       if (svc.overviewParagraphs) {
-        const arr = JSON.parse(svc.overviewParagraphs);
-        parsedOverview = Array.isArray(arr) ? arr.join("\n\n") : svc.overviewParagraphs;
+        const parsed = JSON.parse(svc.overviewParagraphs);
+        if (Array.isArray(parsed)) {
+          parsedOverview = parsed.join("\n\n");
+        } else if (parsed && typeof parsed === "object") {
+          if (Array.isArray(parsed.paragraphs)) {
+            parsedOverview = parsed.paragraphs.join("\n\n");
+          }
+          if (parsed.badge) parsedOverviewBadge = parsed.badge;
+          if (parsed.heading) parsedOverviewHeading = parsed.heading;
+          if (parsed.highlightsTitle) parsedHighlightsTitle = parsed.highlightsTitle;
+        } else {
+          parsedOverview = svc.overviewParagraphs;
+        }
       }
     } catch {
       parsedOverview = svc.overviewParagraphs || "";
@@ -255,23 +216,31 @@ export default function AdminServicesPage() {
     if (!parsedOverview && staticFallback?.overviewParagraphs) {
       parsedOverview = staticFallback.overviewParagraphs.join("\n\n");
     }
+    if (staticFallback?.overviewBadge && parsedOverviewBadge === "Clinical Overview") {
+      parsedOverviewBadge = staticFallback.overviewBadge;
+    }
+    if (staticFallback?.overviewHeading && parsedOverviewHeading === "Understanding Our Approach to This Therapy") {
+      parsedOverviewHeading = staticFallback.overviewHeading;
+    }
+    if (staticFallback?.overviewHighlightsTitle && parsedHighlightsTitle === "Core Program Highlights") {
+      parsedHighlightsTitle = staticFallback.overviewHighlightsTitle;
+    }
 
     // Features / Highlights
-    let parsedFeatures: string[] = ["", "", ""];
+    let parsedFeatures: string[] = [];
     try {
       if (svc.features) {
         const arr = JSON.parse(svc.features);
         if (Array.isArray(arr)) {
-          parsedFeatures = [arr[0] || "", arr[1] || "", arr[2] || ""];
+          parsedFeatures = arr;
         }
       }
     } catch {}
-    if (parsedFeatures.every((f) => !f) && staticFallback?.features) {
-      parsedFeatures = [
-        staticFallback.features[0] || "",
-        staticFallback.features[1] || "",
-        staticFallback.features[2] || "",
-      ];
+    if (parsedFeatures.length === 0 && staticFallback?.features) {
+      parsedFeatures = [...staticFallback.features];
+    }
+    if (parsedFeatures.length === 0) {
+      parsedFeatures = ["", "", ""];
     }
 
     // Who needs this (Checklist)
@@ -288,9 +257,6 @@ export default function AdminServicesPage() {
       parsedSubtitle = staticFallback.whoNeedsThis.subtitle;
       parsedSigns = staticFallback.whoNeedsThis.signs;
     }
-    if (parsedSigns.length === 0) {
-      parsedSigns = ["Needs individualized developmental support"];
-    }
 
     // Key Benefits
     let parsedBenefits: BenefitCard[] = [];
@@ -302,6 +268,18 @@ export default function AdminServicesPage() {
     } catch {}
     if (parsedBenefits.length === 0 && staticFallback?.keyBenefits) {
       parsedBenefits = staticFallback.keyBenefits;
+    }
+
+    // Process Steps
+    let parsedProcess: ProcessStep[] = [];
+    try {
+      if ((svc as any).clinicalProcess) {
+        const arr = JSON.parse((svc as any).clinicalProcess);
+        if (Array.isArray(arr)) parsedProcess = arr;
+      }
+    } catch {}
+    if (parsedProcess.length === 0 && staticFallback?.clinicalProcess) {
+      parsedProcess = staticFallback.clinicalProcess;
     }
 
     // FAQs
@@ -320,21 +298,25 @@ export default function AdminServicesPage() {
       title: svc.title,
       slug: svc.slug,
       tagline: svc.tagline || staticFallback?.tagline || "",
-      badge: svc.badge || staticFallback?.badge || "Clinical Care",
+      badge: svc.badge || staticFallback?.badge || "",
       badgeBg: svc.badgeBg || staticFallback?.badgeBg || "bg-blue-600",
       iconName: svc.iconName || staticFallback?.iconName || "Brain",
-      image: svc.image || staticFallback?.image || "/hero_child_therapy.jpg",
+      image: svc.image || staticFallback?.image || "",
       shortDescription: svc.shortDescription || staticFallback?.shortDescription || "",
+      overviewBadge: parsedOverviewBadge,
+      overviewHeading: parsedOverviewHeading,
+      overviewHighlightsTitle: parsedHighlightsTitle,
       overviewText: parsedOverview,
       features: parsedFeatures,
-      ageGroup: svc.ageGroup || staticFallback?.ageGroup || "All Ages",
-      sessionFormat: svc.sessionFormat || staticFallback?.sessionFormat || "1:1 Focused Sessions",
-      duration: svc.duration || staticFallback?.duration || "45–60 Minutes per session",
+      ageGroup: svc.ageGroup || staticFallback?.ageGroup || "",
+      sessionFormat: svc.sessionFormat || staticFallback?.sessionFormat || "",
+      duration: svc.duration || staticFallback?.duration || "",
       clinicalLead: svc.clinicalLead || staticFallback?.clinicalLead || "",
       checklistSubtitle: parsedSubtitle,
       checklistSigns: parsedSigns,
-      keyBenefits: parsedBenefits.length > 0 ? parsedBenefits : [{ title: "", description: "" }],
-      faqs: parsedFaqs.length > 0 ? parsedFaqs : [{ question: "", answer: "" }],
+      keyBenefits: parsedBenefits,
+      clinicalProcess: parsedProcess,
+      faqs: parsedFaqs,
       status: svc.status || (svc.isActive ? "ACTIVE" : "INACTIVE"),
       order: svc.order || 0,
     });
@@ -342,6 +324,27 @@ export default function AdminServicesPage() {
     setActiveTab("general");
     setSaveSuccess(false);
     setModalMode("EDIT");
+  };
+
+  // Highlights Helpers
+  const addFeature = () => {
+    setFormData((prev) => ({
+      ...prev,
+      features: [...prev.features, ""],
+    }));
+  };
+  const removeFeature = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      features: prev.features.filter((_, i) => i !== index),
+    }));
+  };
+  const updateFeature = (index: number, val: string) => {
+    setFormData((prev) => {
+      const copy = [...prev.features];
+      copy[index] = val;
+      return { ...prev, features: copy };
+    });
   };
 
   // Checklist Helpers
@@ -404,6 +407,37 @@ export default function AdminServicesPage() {
       const copy = [...prev.faqs];
       copy[index] = { ...copy[index], [field]: val };
       return { ...prev, faqs: copy };
+    });
+  };
+
+  // Process Helpers (Step-By-Step Roadmap)
+  const addProcessStep = () => {
+    setFormData((prev) => {
+      const nextNum = String(prev.clinicalProcess.length + 1).padStart(2, "0");
+      return {
+        ...prev,
+        clinicalProcess: [
+          ...prev.clinicalProcess,
+          { stepNumber: nextNum, title: "", description: "" },
+        ],
+      };
+    });
+  };
+  const removeProcessStep = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      clinicalProcess: prev.clinicalProcess.filter((_, i) => i !== index),
+    }));
+  };
+  const updateProcessStep = (
+    index: number,
+    field: "stepNumber" | "title" | "description",
+    val: string
+  ) => {
+    setFormData((prev) => {
+      const copy = [...prev.clinicalProcess];
+      copy[index] = { ...copy[index], [field]: val };
+      return { ...prev, clinicalProcess: copy };
     });
   };
 
@@ -534,16 +568,22 @@ export default function AdminServicesPage() {
         duration: formData.duration,
         image: formData.image,
         shortDescription: formData.shortDescription || formData.tagline,
-        overviewParagraphs: formData.overviewText
-          .split("\n\n")
-          .map((p) => p.trim())
-          .filter(Boolean),
+        overviewParagraphs: {
+          badge: formData.overviewBadge || "Clinical Overview",
+          heading: formData.overviewHeading || "Understanding Our Approach to This Therapy",
+          highlightsTitle: formData.overviewHighlightsTitle || "Core Program Highlights",
+          paragraphs: formData.overviewText
+            .split("\n\n")
+            .map((p) => p.trim())
+            .filter(Boolean),
+        },
         features: formData.features.map((f) => f.trim()).filter(Boolean),
         whoNeedsThis: {
           subtitle: formData.checklistSubtitle,
           signs: formData.checklistSigns.map((s) => s.trim()).filter(Boolean),
         },
         keyBenefits: formData.keyBenefits.filter((b) => b.title.trim()),
+        clinicalProcess: formData.clinicalProcess.filter((p) => p.title.trim()),
         faqs: formData.faqs.filter((f) => f.question.trim()),
         status: formData.status,
         order: Number(formData.order) || 0,
@@ -636,9 +676,9 @@ export default function AdminServicesPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="flex flex-col h-full min-h-0 space-y-4 max-w-7xl mx-auto w-full">
       {/* Top Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
@@ -704,7 +744,7 @@ export default function AdminServicesPage() {
           </div>
         ) : (
           <>
-            <div className="overflow-y-auto overflow-x-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="overflow-y-auto overflow-x-auto flex-1 min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <table className="w-full text-left border-collapse min-w-[850px]">
                 <thead className="sticky top-0 z-10 shadow-2xs bg-slate-50 border-b border-slate-200 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
                   <tr>
@@ -721,7 +761,6 @@ export default function AdminServicesPage() {
                     </th>
                     <th className="py-4 px-3 w-12 text-center bg-slate-50">#</th>
                     <th className="py-4 px-6 bg-slate-50">Program / Service</th>
-                    <th className="py-4 px-6 bg-slate-50">Badge</th>
                     <th className="py-4 px-6 bg-slate-50">Target Age</th>
                     <th className="py-4 px-6 bg-slate-50">Supervising Lead</th>
                     <th className="py-4 px-6 bg-slate-50">Status</th>
@@ -765,22 +804,8 @@ export default function AdminServicesPage() {
                             </div>
                             <div>
                               <p className="font-extrabold text-slate-900">{svc.title}</p>
-                              <Link
-                                href={`/services/${svc.slug}`}
-                                target="_blank"
-                                className="text-[11px] text-blue-600 font-mono font-medium hover:underline inline-flex items-center gap-1"
-                              >
-                                <span>/services/{svc.slug}</span>
-                                <ExternalLink className="w-2.5 h-2.5" />
-                              </Link>
                             </div>
                           </div>
-                        </td>
-
-                        <td className="py-4 px-6">
-                          <span className="inline-block px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px] font-extrabold border border-blue-100">
-                            {svc.badge || "Clinical Care"}
-                          </span>
                         </td>
 
                         <td className="py-4 px-6 font-bold text-slate-700">
@@ -801,20 +826,18 @@ export default function AdminServicesPage() {
                               type="button"
                               onClick={() => openEditModal(svc)}
                               title="Edit & View All Sections"
-                              className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                              className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center justify-center font-bold cursor-pointer"
                             >
                               <Edit3 className="w-4 h-4" />
-                              <span className="text-[11px]">Edit</span>
                             </button>
 
                             <button
                               type="button"
                               onClick={() => confirmSingleDelete(svc.id)}
                               title="Delete"
-                              className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                              className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center justify-center font-bold cursor-pointer"
                             >
                               <Trash2 className="w-4 h-4" />
-                              <span className="text-[11px]">Delete</span>
                             </button>
                           </div>
                         </td>
@@ -859,6 +882,16 @@ export default function AdminServicesPage() {
                 <p className="text-xs text-slate-500 font-medium">
                   Manage hero info, clinical methodology, parent checklist, outcome cards, and FAQs.
                 </p>
+                {modalMode === "EDIT" && formData.slug && (
+                  <Link
+                    href={`/services/${formData.slug}`}
+                    target="_blank"
+                    className="inline-flex items-center gap-1 text-[11px] font-mono text-blue-600 hover:underline mt-1 font-semibold"
+                  >
+                    <span>View Live Page: /services/{formData.slug}</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </Link>
+                )}
               </div>
               <button
                 type="button"
@@ -869,76 +902,89 @@ export default function AdminServicesPage() {
               </button>
             </div>
 
-            {/* Tab Navigation Bar */}
-            <div className="flex items-center gap-1 px-6 border-b border-slate-200 bg-slate-50 overflow-x-auto whitespace-nowrap text-xs font-extrabold">
+            {/* Tab Navigation Bar (Fixed Horizontal Scrolling Pills - Never Squished or Overlapping) */}
+            <div className="flex items-center gap-2 px-6 py-2.5 border-b border-slate-200 bg-slate-50/90 overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden shrink-0">
               <button
                 type="button"
                 onClick={() => setActiveTab("general")}
-                className={`py-3 px-3.5 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`shrink-0 py-2 px-3.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-extrabold ${
                   activeTab === "general"
-                    ? "border-blue-600 text-blue-600 bg-white"
-                    : "border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/60"
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/25"
+                    : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
                 }`}
               >
-                <Layers className="w-4 h-4" />
+                <Layers className="w-4 h-4 shrink-0" />
                 <span>1. Basic & Hero</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTab("overview")}
-                className={`py-3 px-3.5 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`shrink-0 py-2 px-3.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-extrabold ${
                   activeTab === "overview"
-                    ? "border-blue-600 text-blue-600 bg-white"
-                    : "border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/60"
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/25"
+                    : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
                 }`}
               >
-                <Info className="w-4 h-4" />
-                <span>2. Overview & Highlights</span>
+                <Info className="w-4 h-4 shrink-0" />
+                <span>2. Overview & Highlights ({formData.features.filter(Boolean).length})</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTab("checklist")}
-                className={`py-3 px-3.5 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`shrink-0 py-2 px-3.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-extrabold ${
                   activeTab === "checklist"
-                    ? "border-blue-600 text-blue-600 bg-white"
-                    : "border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/60"
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/25"
+                    : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
                 }`}
               >
-                <ListCheck className="w-4 h-4" />
+                <ListCheck className="w-4 h-4 shrink-0" />
                 <span>3. Parent Checklist</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTab("benefits")}
-                className={`py-3 px-3.5 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`shrink-0 py-2 px-3.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-extrabold ${
                   activeTab === "benefits"
-                    ? "border-blue-600 text-blue-600 bg-white"
-                    : "border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/60"
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/25"
+                    : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
                 }`}
               >
-                <Award className="w-4 h-4" />
+                <Award className="w-4 h-4 shrink-0" />
                 <span>4. Outcome Cards ({formData.keyBenefits.length})</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => setActiveTab("faqs")}
-                className={`py-3 px-3.5 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
-                  activeTab === "faqs"
-                    ? "border-blue-600 text-blue-600 bg-white"
-                    : "border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/60"
+                onClick={() => setActiveTab("process")}
+                className={`shrink-0 py-2 px-3.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-extrabold ${
+                  activeTab === "process"
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/25"
+                    : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
                 }`}
               >
-                <HelpCircle className="w-4 h-4" />
-                <span>5. FAQs ({formData.faqs.length})</span>
+                <Compass className="w-4 h-4 shrink-0" />
+                <span>5. Step-By-Step Process ({formData.clinicalProcess.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("faqs")}
+                className={`shrink-0 py-2 px-3.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-extrabold ${
+                  activeTab === "faqs"
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/25"
+                    : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
+                }`}
+              >
+                <HelpCircle className="w-4 h-4 shrink-0" />
+                <span>6. FAQs & Settings ({formData.faqs.length})</span>
               </button>
             </div>
 
             {/* Modal Body Form */}
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+            <form onSubmit={handleSubmit} autoComplete="off" className="flex-1 overflow-y-auto p-6 space-y-6">
               {/* TAB 1: BASIC & HERO INFO */}
               {activeTab === "general" && (
                 <div className="space-y-4 animate-in fade-in duration-150">
@@ -999,33 +1045,18 @@ export default function AdminServicesPage() {
 
                     <div className="space-y-1.5">
                       <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                        Supervising Clinical Lead
+                        1-Line Hero Tagline (Under Title)
                       </label>
                       <input
                         type="text"
-                        value={formData.clinicalLead}
+                        value={formData.tagline}
                         onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, clinicalLead: e.target.value }))
+                          setFormData((prev) => ({ ...prev, tagline: e.target.value }))
                         }
-                        placeholder="e.g. April Adebayo (Registered SLP)"
-                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                        placeholder="e.g. Evidence-based Applied Behavior Analysis for autism & developmental goals."
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                       />
                     </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                      1-Line Hero Tagline (Under Title)
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.tagline}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, tagline: e.target.value }))
-                      }
-                      placeholder="e.g. Fun, effective speech & language therapy combining SLP expertise with ABA practices."
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    />
                   </div>
 
                   {/* 4 Clinical Metric Boxes */}
@@ -1034,22 +1065,22 @@ export default function AdminServicesPage() {
                       Hero Section: 4 Quick Metric Cards
                     </span>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                       <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-600">Target Age</label>
+                        <label className="text-xs font-bold text-slate-600">1. Target Age Group</label>
                         <input
                           type="text"
                           value={formData.ageGroup}
                           onChange={(e) =>
                             setFormData((prev) => ({ ...prev, ageGroup: e.target.value }))
                           }
-                          placeholder="e.g. Toddler to Youth"
+                          placeholder="e.g. 2 to 20 Years"
                           className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-medium text-xs text-slate-800 focus:outline-none focus:border-blue-500"
                         />
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-600">Session Format</label>
+                        <label className="text-xs font-bold text-slate-600">2. Session Format</label>
                         <input
                           type="text"
                           value={formData.sessionFormat}
@@ -1062,14 +1093,27 @@ export default function AdminServicesPage() {
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-600">Session Duration</label>
+                        <label className="text-xs font-bold text-slate-600">3. Clinical Supervision</label>
+                        <input
+                          type="text"
+                          value={formData.clinicalLead}
+                          onChange={(e) =>
+                            setFormData((prev) => ({ ...prev, clinicalLead: e.target.value }))
+                          }
+                          placeholder="e.g. Jesenia Duran, RBA (Registered Behaviour Analyst)"
+                          className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-medium text-xs text-slate-800 focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-600">4. Recommended Frequency</label>
                         <input
                           type="text"
                           value={formData.duration}
                           onChange={(e) =>
                             setFormData((prev) => ({ ...prev, duration: e.target.value }))
                           }
-                          placeholder="e.g. 45 to 60 Min Sessions"
+                          placeholder="e.g. Customized per Individualized Care Plan"
                           className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-medium text-xs text-slate-800 focus:outline-none focus:border-blue-500"
                         />
                       </div>
@@ -1083,52 +1127,50 @@ export default function AdminServicesPage() {
                     onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))}
                     recommendedSize="1200 x 800px"
                   />
-
-                  {/* Order & Status */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                    <div className="space-y-1.5">
-                      <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                        Display Order
-                      </label>
-                      <input
-                        type="number"
-                        value={formData.order}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            order: parseInt(e.target.value) || 0,
-                          }))
-                        }
-                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:border-blue-500"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                        Status
-                      </label>
-                      <select
-                        value={formData.status}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            status: e.target.value as StatusType,
-                          }))
-                        }
-                        className="w-full p-3 bg-white border border-slate-300 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:border-blue-500 cursor-pointer"
-                      >
-                        <option value="ACTIVE">ACTIVE</option>
-                        <option value="INACTIVE">INACTIVE</option>
-                        <option value="DRAFT">DRAFT</option>
-                      </select>
-                    </div>
-                  </div>
                 </div>
               )}
 
               {/* TAB 2: OVERVIEW & HIGHLIGHTS */}
               {activeTab === "overview" && (
-                <div className="space-y-5 animate-in fade-in duration-150">
+                <div className="space-y-6 animate-in fade-in duration-150">
+                  {/* Section Badge & Main Heading */}
+                  <div className="bg-blue-50/60 border border-blue-100 rounded-2xl p-4 sm:p-5 space-y-4">
+                    <span className="font-black text-xs uppercase tracking-wider text-blue-900 block">
+                      Overview Section: Header & Badge Pill
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                          Section Badge / Pill Tag
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.overviewBadge}
+                          onChange={(e) =>
+                            setFormData((prev) => ({ ...prev, overviewBadge: e.target.value }))
+                          }
+                          placeholder="e.g. CLINICAL OVERVIEW"
+                          className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 text-sm focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                          Section Main Heading / Title
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.overviewHeading}
+                          onChange={(e) =>
+                            setFormData((prev) => ({ ...prev, overviewHeading: e.target.value }))
+                          }
+                          placeholder="e.g. Understanding Our Approach to This Therapy"
+                          className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 text-sm focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="space-y-1.5">
                     <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
                       Brief Card Summary (Displayed on /services directory page)
@@ -1139,7 +1181,7 @@ export default function AdminServicesPage() {
                       onChange={(e) =>
                         setFormData((prev) => ({ ...prev, shortDescription: e.target.value }))
                       }
-                      placeholder="2-sentence engaging preview summary..."
+                      placeholder="2-sentence engaging preview summary for directory cards..."
                       className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-800 text-sm focus:outline-none focus:border-blue-500"
                     />
                   </div>
@@ -1150,7 +1192,7 @@ export default function AdminServicesPage() {
                         Detailed Clinical Overview (Separate paragraphs with an empty line)
                       </label>
                       <span className="text-[10px] text-slate-400 font-medium">
-                        Renders as multi-paragraph clinical philosophy
+                        First paragraph appears with highlighted lead styling
                       </span>
                     </div>
                     <textarea
@@ -1159,37 +1201,82 @@ export default function AdminServicesPage() {
                       onChange={(e) =>
                         setFormData((prev) => ({ ...prev, overviewText: e.target.value }))
                       }
-                      placeholder="Write the clinical methodology, therapy principles, scientific approach, and parent expectations here..."
+                      placeholder="Write the clinical methodology, therapy principles, scientific approach, and parent expectations here. Separate each paragraph with a blank line..."
                       className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-normal text-slate-800 text-sm leading-relaxed focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
-                  {/* 3 Core Highlights */}
-                  <div className="border border-slate-200 rounded-2xl p-5 bg-slate-50/50 space-y-3">
-                    <span className="font-black text-xs uppercase tracking-wider text-slate-800 block">
-                      Core Program Highlights (3 Key Badges on Landing Page)
-                    </span>
+                  {/* Dynamic Core Program Highlights */}
+                  <div className="border border-slate-200 rounded-2xl p-5 bg-slate-50/50 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="font-black text-xs uppercase tracking-wider text-slate-800 block">
+                          Core Program Highlights
+                        </span>
+                        <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                          Key takeaways displayed as checkmark cards below the overview text.
+                        </p>
+                      </div>
 
-                    <div className="space-y-2.5">
-                      {[0, 1, 2].map((idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0" />
-                          <input
-                            type="text"
-                            value={formData.features[idx] || ""}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setFormData((prev) => {
-                                const copy = [...prev.features];
-                                copy[idx] = val;
-                                return { ...prev, features: copy };
-                              });
-                            }}
-                            placeholder={`Highlight #${idx + 1} (e.g. Registered SLP Lead)`}
-                            className="flex-1 p-2.5 bg-white border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:outline-none focus:border-blue-500"
-                          />
+                      <button
+                        type="button"
+                        onClick={addFeature}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Highlight</span>
+                      </button>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                        Highlights Section Heading
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.overviewHighlightsTitle}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, overviewHighlightsTitle: e.target.value }))
+                        }
+                        placeholder="e.g. CORE PROGRAM HIGHLIGHTS"
+                        className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div className="space-y-2.5 pt-1">
+                      {formData.features.length === 0 ? (
+                        <div className="text-center py-6 border border-dashed border-slate-200 rounded-xl bg-white">
+                          <p className="text-xs text-slate-400 font-medium">No highlights added yet.</p>
+                          <button
+                            type="button"
+                            onClick={addFeature}
+                            className="text-xs text-blue-600 font-bold mt-1 inline-flex items-center gap-1 cursor-pointer hover:underline"
+                          >
+                            <Plus className="w-3 h-3" /> Add first highlight
+                          </button>
                         </div>
-                      ))}
+                      ) : (
+                        formData.features.map((feat, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0" />
+                            <input
+                              type="text"
+                              value={feat}
+                              onChange={(e) => updateFeature(idx, e.target.value)}
+                              placeholder={`Highlight #${idx + 1} (e.g. Registered Behaviour Analyst)`}
+                              className="flex-1 p-2.5 bg-white border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:outline-none focus:border-blue-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeFeature(idx)}
+                              title="Delete highlight"
+                              className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl border border-rose-200/60 transition-colors cursor-pointer shrink-0"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1212,7 +1299,7 @@ export default function AdminServicesPage() {
 
                   <div className="space-y-1.5">
                     <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                      Checklist Card Subtitle
+                      Checklist Card Subtitle / Prompt
                     </label>
                     <input
                       type="text"
@@ -1220,7 +1307,7 @@ export default function AdminServicesPage() {
                       onChange={(e) =>
                         setFormData((prev) => ({ ...prev, checklistSubtitle: e.target.value }))
                       }
-                      placeholder="e.g. Speech Therapy is recommended if your child demonstrates:"
+                      placeholder="e.g. This therapy is recommended if your child demonstrates:"
                       className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 text-sm focus:outline-none focus:border-blue-500"
                     />
                   </div>
@@ -1229,7 +1316,7 @@ export default function AdminServicesPage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
-                        Checklist Signs / Red Flag Points
+                        Checklist Signs / Red Flag Points ({formData.checklistSigns.length})
                       </label>
                       <button
                         type="button"
@@ -1241,20 +1328,36 @@ export default function AdminServicesPage() {
                       </button>
                     </div>
 
-                    <div className="space-y-2">
-                      {formData.checklistSigns.map((sign, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-lg bg-slate-200 text-slate-700 text-xs font-black flex items-center justify-center shrink-0">
-                            {idx + 1}
-                          </span>
-                          <input
-                            type="text"
-                            value={sign}
-                            onChange={(e) => updateChecklistSign(idx, e.target.value)}
-                            placeholder="e.g. Limited vocabulary or delay in first words"
-                            className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-xs text-slate-800 focus:outline-none focus:border-blue-500"
-                          />
-                          {formData.checklistSigns.length > 1 && (
+                    {formData.checklistSigns.length === 0 ? (
+                      <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl text-center space-y-2 bg-slate-50/50">
+                        <ListCheck className="w-8 h-8 text-slate-400 mx-auto" />
+                        <p className="text-xs font-bold text-slate-700">No checklist points added yet</p>
+                        <p className="text-[11px] text-slate-500">
+                          Click &quot;Add Sign&quot; to add checklist indicators for parents.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={addChecklistSign}
+                          className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 cursor-pointer shadow-xs"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add First Sign</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {formData.checklistSigns.map((sign, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-lg bg-amber-100 text-amber-800 text-xs font-black flex items-center justify-center shrink-0">
+                              {idx + 1}
+                            </span>
+                            <input
+                              type="text"
+                              value={sign}
+                              onChange={(e) => updateChecklistSign(idx, e.target.value)}
+                              placeholder="e.g. Delays in speech, verbal communication, or expressing wants/needs"
+                              className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-xs text-slate-800 focus:outline-none focus:border-blue-500"
+                            />
                             <button
                               type="button"
                               onClick={() => removeChecklistSign(idx)}
@@ -1263,10 +1366,10 @@ export default function AdminServicesPage() {
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1277,10 +1380,10 @@ export default function AdminServicesPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="font-black text-slate-900 text-sm">
-                        Key Clinical Outcomes & Benefits Cards
+                        Key Clinical Benefits & Developmental Outcomes
                       </h4>
                       <p className="text-xs text-slate-500 font-medium">
-                        Displayed as numbered cards (01, 02, 03, 04) under the Target Outcomes section.
+                        Numbered cards (01, 02, 03, 04) showing measurable child progress and developmental gains.
                       </p>
                     </div>
                     <button
@@ -1293,17 +1396,36 @@ export default function AdminServicesPage() {
                     </button>
                   </div>
 
-                  <div className="space-y-3.5">
-                    {formData.keyBenefits.map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 space-y-2.5 relative"
+                  {formData.keyBenefits.length === 0 ? (
+                    <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl text-center space-y-2 bg-slate-50/50">
+                      <Award className="w-8 h-8 text-slate-400 mx-auto" />
+                      <p className="text-xs font-bold text-slate-700">No outcome cards added yet</p>
+                      <p className="text-[11px] text-slate-500">
+                        Click &quot;Add Outcome Card&quot; to add key clinical outcome cards (01, 02, etc.).
+                      </p>
+                      <button
+                        type="button"
+                        onClick={addBenefitCard}
+                        className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 cursor-pointer shadow-xs"
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-black text-blue-600 uppercase tracking-wider">
-                            Outcome Card #{idx + 1}
-                          </span>
-                          {formData.keyBenefits.length > 1 && (
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add First Outcome Card</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3.5">
+                      {formData.keyBenefits.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 space-y-2.5 relative"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-black text-blue-600 uppercase tracking-wider flex items-center gap-1.5">
+                              <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-black text-xs">
+                                0{idx + 1}
+                              </span>
+                              <span>Outcome Card #{idx + 1}</span>
+                            </span>
                             <button
                               type="button"
                               onClick={() => removeBenefitCard(idx)}
@@ -1312,39 +1434,143 @@ export default function AdminServicesPage() {
                               <Trash2 className="w-3.5 h-3.5" />
                               <span>Remove</span>
                             </button>
-                          )}
-                        </div>
+                          </div>
 
-                        <div className="space-y-1">
-                          <label className="text-[11px] font-bold text-slate-600">Card Title</label>
-                          <input
-                            type="text"
-                            value={item.title}
-                            onChange={(e) => updateBenefitCard(idx, "title", e.target.value)}
-                            placeholder="e.g. Clear Articulation & Speech"
-                            className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:outline-none focus:border-blue-500"
-                          />
-                        </div>
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-600">Card Title</label>
+                            <input
+                              type="text"
+                              value={item.title}
+                              onChange={(e) => updateBenefitCard(idx, "title", e.target.value)}
+                              placeholder="e.g. Verbal & Communication Growth"
+                              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:outline-none focus:border-blue-500"
+                            />
+                          </div>
 
-                        <div className="space-y-1">
-                          <label className="text-[11px] font-bold text-slate-600">
-                            Description
-                          </label>
-                          <textarea
-                            rows={2}
-                            value={item.description}
-                            onChange={(e) => updateBenefitCard(idx, "description", e.target.value)}
-                            placeholder="e.g. Enhancing sound clarity, word pronunciation, and conversational confidence."
-                            className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-normal text-xs text-slate-800 focus:outline-none focus:border-blue-500 leading-relaxed"
-                          />
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-600">
+                              Description
+                            </label>
+                            <textarea
+                              rows={2}
+                              value={item.description}
+                              onChange={(e) => updateBenefitCard(idx, "description", e.target.value)}
+                              placeholder="e.g. Building functional language, speech, and alternative communication tools."
+                              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-normal text-xs text-slate-800 focus:outline-none focus:border-blue-500 leading-relaxed"
+                            />
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* TAB 5: FAQS (SAWAAL - JAWAAB) */}
+              {/* TAB 5: STEP-BY-STEP PROCESS */}
+              {activeTab === "process" && (
+                <div className="space-y-5 animate-in fade-in duration-150">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-black text-slate-900 text-sm">
+                        How We Deliver This Therapy Step-By-Step
+                      </h4>
+                      <p className="text-xs text-slate-500 font-medium">
+                        Structured clinical roadmap steps (01, 02, 03, 04) explaining the child&apos;s therapy journey.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={addProcessStep}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 text-white rounded-xl text-xs font-extrabold hover:bg-blue-700 transition-all shadow-sm cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Process Step</span>
+                    </button>
+                  </div>
+
+                  {formData.clinicalProcess.length === 0 ? (
+                    <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl text-center space-y-2 bg-slate-50/50">
+                      <Compass className="w-8 h-8 text-slate-400 mx-auto" />
+                      <p className="text-xs font-bold text-slate-700">No process steps added yet</p>
+                      <p className="text-[11px] text-slate-500">
+                        Click &quot;Add Process Step&quot; to add step-by-step therapy roadmap cards (01, 02, 03, etc.).
+                      </p>
+                      <button
+                        type="button"
+                        onClick={addProcessStep}
+                        className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 cursor-pointer shadow-xs"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add First Process Step</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3.5">
+                      {formData.clinicalProcess.map((proc, idx) => (
+                        <div
+                          key={idx}
+                          className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 space-y-2.5 relative"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-black text-blue-600 uppercase tracking-wider flex items-center gap-1.5">
+                              <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-black text-xs">
+                                {proc.stepNumber || String(idx + 1).padStart(2, "0")}
+                              </span>
+                              <span>Process Step #{idx + 1}</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeProcessStep(idx)}
+                              className="text-rose-500 hover:bg-rose-50 p-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1 cursor-pointer transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Remove</span>
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                            <div className="sm:col-span-1 space-y-1">
+                              <label className="text-[11px] font-bold text-slate-600">Step #</label>
+                              <input
+                                type="text"
+                                value={proc.stepNumber}
+                                onChange={(e) => updateProcessStep(idx, "stepNumber", e.target.value)}
+                                placeholder="01"
+                                className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:outline-none focus:border-blue-500 text-center"
+                              />
+                            </div>
+                            <div className="sm:col-span-3 space-y-1">
+                              <label className="text-[11px] font-bold text-slate-600">Step Title</label>
+                              <input
+                                type="text"
+                                value={proc.title}
+                                onChange={(e) => updateProcessStep(idx, "title", e.target.value)}
+                                placeholder="e.g. Initial Intake & Assessment"
+                                className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:outline-none focus:border-blue-500"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-600">
+                              Step Description
+                            </label>
+                            <textarea
+                              rows={2}
+                              value={proc.description}
+                              onChange={(e) => updateProcessStep(idx, "description", e.target.value)}
+                              placeholder="e.g. Evaluating current skill levels, motivation factors, and communication baseline."
+                              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-normal text-xs text-slate-800 focus:outline-none focus:border-blue-500 leading-relaxed"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 6: FAQS (SAWAAL - JAWAAB) */}
               {activeTab === "faqs" && (
                 <div className="space-y-5 animate-in fade-in duration-150">
                   <div className="flex items-center justify-between">
@@ -1366,18 +1592,34 @@ export default function AdminServicesPage() {
                     </button>
                   </div>
 
-                  <div className="space-y-3.5">
-                    {formData.faqs.map((faq, idx) => (
-                      <div
-                        key={idx}
-                        className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 space-y-2.5 relative"
+                  {formData.faqs.length === 0 ? (
+                    <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl text-center space-y-2 bg-slate-50/50">
+                      <HelpCircle className="w-8 h-8 text-slate-400 mx-auto" />
+                      <p className="text-xs font-bold text-slate-700">No FAQs added yet</p>
+                      <p className="text-[11px] text-slate-500">
+                        Click &quot;Add FAQ&quot; to add frequently asked questions for parents.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={addFaq}
+                        className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 text-white rounded-xl text-xs font-bold hover:bg-purple-700 cursor-pointer shadow-xs"
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-black text-purple-600 uppercase tracking-wider flex items-center gap-1.5">
-                            <HelpCircle className="w-4 h-4" />
-                            <span>Question #{idx + 1}</span>
-                          </span>
-                          {formData.faqs.length > 1 && (
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add First FAQ</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3.5">
+                      {formData.faqs.map((faq, idx) => (
+                        <div
+                          key={idx}
+                          className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 space-y-2.5 relative"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-black text-purple-600 uppercase tracking-wider flex items-center gap-1.5">
+                              <HelpCircle className="w-4 h-4" />
+                              <span>Question #{idx + 1}</span>
+                            </span>
                             <button
                               type="button"
                               onClick={() => removeFaq(idx)}
@@ -1386,75 +1628,155 @@ export default function AdminServicesPage() {
                               <Trash2 className="w-3.5 h-3.5" />
                               <span>Remove</span>
                             </button>
-                          )}
-                        </div>
+                          </div>
 
-                        <div className="space-y-1">
-                          <label className="text-[11px] font-bold text-slate-600">Question</label>
-                          <input
-                            type="text"
-                            value={faq.question}
-                            onChange={(e) => updateFaq(idx, "question", e.target.value)}
-                            placeholder="e.g. What age group is eligible for speech therapy?"
-                            className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:outline-none focus:border-blue-500"
-                          />
-                        </div>
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-600">Question</label>
+                            <input
+                              type="text"
+                              value={faq.question}
+                              onChange={(e) => updateFaq(idx, "question", e.target.value)}
+                              placeholder="e.g. What age group is eligible for speech therapy?"
+                              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:outline-none focus:border-blue-500"
+                            />
+                          </div>
 
-                        <div className="space-y-1">
-                          <label className="text-[11px] font-bold text-slate-600">Answer</label>
-                          <textarea
-                            rows={2}
-                            value={faq.answer}
-                            onChange={(e) => updateFaq(idx, "answer", e.target.value)}
-                            placeholder="Clear clinical answer explaining the service..."
-                            className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-normal text-xs text-slate-800 focus:outline-none focus:border-blue-500 leading-relaxed"
-                          />
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-600">Answer</label>
+                            <textarea
+                              rows={2}
+                              value={faq.answer}
+                              onChange={(e) => updateFaq(idx, "answer", e.target.value)}
+                              placeholder="Clear clinical answer explaining the service..."
+                              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-normal text-xs text-slate-800 focus:outline-none focus:border-blue-500 leading-relaxed"
+                            />
+                          </div>
                         </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Step 6: Program Publishing & Display Order Settings (Placed in final step) */}
+                  <div className="border border-slate-200 rounded-2xl p-5 bg-slate-50/80 space-y-3 mt-6">
+                    <span className="font-black text-xs uppercase tracking-wider text-slate-800 block">
+                      Program Publishing & Display Settings
+                    </span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                      <div className="space-y-1.5">
+                        <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                          Display Order
+                        </label>
+                        <input
+                          type="number"
+                          value={formData.order}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              order: parseInt(e.target.value) || 0,
+                            }))
+                          }
+                          className="w-full p-3 bg-white border border-slate-200 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:border-blue-500"
+                        />
                       </div>
-                    ))}
+
+                      <div className="space-y-1.5">
+                        <label className="font-extrabold text-slate-700 uppercase tracking-wider text-[11px]">
+                          Status
+                        </label>
+                        <select
+                          value={formData.status}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              status: e.target.value as StatusType,
+                            }))
+                          }
+                          className="w-full p-3 bg-white border border-slate-300 rounded-2xl font-semibold text-slate-800 text-sm focus:outline-none focus:border-blue-500 cursor-pointer"
+                        >
+                          <option value="ACTIVE">ACTIVE (Live on website)</option>
+                          <option value="INACTIVE">INACTIVE (Hidden)</option>
+                          <option value="DRAFT">DRAFT (Under review)</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Modal Bottom Footer Bar */}
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between sticky bottom-0 bg-white">
-                <div>
-                  {saveSuccess && (
-                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 animate-in fade-in">
-                      <CheckCircle2 className="w-4 h-4" />
-                      Saved Successfully!
-                    </span>
-                  )}
-                </div>
-
+              {/* Modal Bottom Footer Bar (Back / Next Step Wizard Navigation) */}
+              <div className="pt-4 border-t border-slate-200 flex items-center justify-between sticky bottom-0 bg-white z-10 shrink-0">
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => setModalMode(null)}
-                    className="px-5 py-2.5 rounded-2xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors"
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
+                  <span className="text-[11px] font-extrabold text-slate-400">
+                    Step {currentTabIndex + 1} of {tabOrder.length}
+                  </span>
+                </div>
 
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-blue-600/25 transition-all disabled:opacity-50 cursor-pointer"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Saving...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4" />
-                        <span>
-                          {modalMode === "ADD" ? "Publish Clinical Program" : "Save Changes"}
-                        </span>
-                      </>
-                    )}
-                  </button>
+                <div className="flex items-center gap-2.5">
+                  {/* Back Button (Visible when step > 1) */}
+                  {currentTabIndex > 0 && (
+                    <button
+                      type="button"
+                      onClick={goToPrevTab}
+                      className="px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span>Back</span>
+                    </button>
+                  )}
+
+                  {/* Next Step Button (Visible on Steps 1 to 5) */}
+                  {currentTabIndex < tabOrder.length - 1 ? (
+                    <>
+                      {/* Secondary Quick Save if Editing */}
+                      {modalMode === "EDIT" && (
+                        <button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className="px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Save className="w-3.5 h-3.5 text-slate-500" />
+                          <span>Save Now</span>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={goToNextTab}
+                        className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider shadow-md shadow-blue-600/25 transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <span>Next Step</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </>
+                  ) : (
+                    /* Final Publish Button on Step 6 */
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-blue-600/25 transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          <span>
+                            {modalMode === "ADD" ? "Publish Clinical Program" : "Save Changes"}
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             </form>

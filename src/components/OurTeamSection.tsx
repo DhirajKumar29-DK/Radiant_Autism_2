@@ -123,16 +123,16 @@ export default function OurTeamSection() {
         {/* Section Header */}
         <ScrollReveal direction="up">
           <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 backdrop-blur-md text-blue-300 border border-blue-500/30 text-xs font-extrabold uppercase tracking-wider shadow-lg">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 backdrop-blur-md text-blue-300 border border-blue-500/30 text-xs font-black tracking-wide shadow-lg">
               <Award className="w-4 h-4 text-blue-400" />
-              <span>CLINICAL LEADERSHIP & STAFF</span>
+              <span>Clinical Leadership & Staff</span>
             </div>
 
-            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-black text-white tracking-tight leading-[1.12]">
               Meet Our Dedicated Clinical Team
             </h2>
 
-            <p className="text-slate-300 text-base sm:text-lg leading-relaxed font-medium">
+            <p className="text-slate-300 text-base sm:text-lg leading-[1.65] font-medium">
               Supervised by Registered Behaviour Analysts (RBA, Ontario) and delivered by compassionate speech, occupational, and behavior specialists.
             </p>
           </div>
@@ -201,14 +201,14 @@ export default function OurTeamSection() {
 
               <div className="text-center sm:text-left space-y-1.5 flex-1">
                 {selectedMember.badge && (
-                  <span className="inline-block px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-extrabold uppercase tracking-wider border border-blue-200">
+                  <span className="inline-block px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-black tracking-wide border border-blue-200">
                     {selectedMember.badge}
                   </span>
                 )}
                 <h3 className="text-2xl font-black text-slate-900 leading-tight">
                   {selectedMember.name}
                 </h3>
-                <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">
+                <p className="text-xs font-bold text-blue-600 tracking-wide">
                   {selectedMember.role}
                 </p>
               </div>

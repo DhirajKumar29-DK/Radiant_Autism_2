@@ -485,20 +485,18 @@ export default function AdminAboutPillarsPage() {
                             type="button"
                             onClick={() => openEditModal(idx)}
                             title="Edit Pillar"
-                            className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                            className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all inline-flex items-center justify-center font-bold cursor-pointer"
                           >
                             <Edit3 className="w-4 h-4" />
-                            <span className="text-[11px]">Edit</span>
                           </button>
 
                           <button
                             type="button"
                             onClick={() => confirmSingleDelete(item.id)}
                             title="Delete"
-                            className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                            className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 transition-all inline-flex items-center justify-center font-bold cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" />
-                            <span className="text-[11px]">Delete</span>
                           </button>
                         </div>
                       </td>
