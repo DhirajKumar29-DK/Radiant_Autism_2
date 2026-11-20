@@ -59,7 +59,7 @@ export default function AdminGalleryPage() {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(8);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Exact 3 fields for modal: title, category, image
   const [formData, setFormData] = useState({

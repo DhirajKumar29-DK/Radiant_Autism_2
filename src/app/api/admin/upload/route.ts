@@ -1,7 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { v2 as cloudinary } from "cloudinary";
 import { verifyAdminToken } from "@/modules/auth/auth.service";
+
+// Check if Cloudinary is configured
+const hasCloudinary = Boolean(
+  process.env.CLOUDINARY_CLOUD_NAME &&
+  process.env.CLOUDINARY_API_KEY &&
+  process.env.CLOUDINARY_API_SECRET
+);
+
+if (hasCloudinary) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure: true,
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,11 +65,47 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Ensure public/uploads directory exists
+    // 1. If Cloudinary is configured (Recommended for Live Vercel & Production)
+    if (hasCloudinary) {
+      const uploadResult = await new Promise<any>((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder: "radiant-autism",
+            resource_type: "image",
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        uploadStream.end(buffer);
+      });
+
+      return NextResponse.json({
+        success: true,
+        url: uploadResult.secure_url,
+        fileName: uploadResult.public_id,
+        size: uploadResult.bytes || file.size,
+        mimeType: file.type,
+      });
+    }
+
+    // 2. If running in a read-only environment (e.g. Vercel) without Cloudinary credentials
+    if (process.env.VERCEL || process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Cloudinary credentials missing. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in environment variables.",
+        },
+        { status: 500 }
+      );
+    }
+
+    // 3. Fallback for Localhost Development only
     const uploadsDir = path.join(process.cwd(), "public", "uploads");
     await mkdir(uploadsDir, { recursive: true });
 
-    // Clean filename
     const ext = path.extname(file.name) || ".jpg";
     const baseName = path
       .basename(file.name, ext)

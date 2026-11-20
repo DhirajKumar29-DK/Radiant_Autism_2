@@ -4,6 +4,22 @@
   body {
     font-family: var(--font-plus-jakarta), system-ui, -apple-system, sans-serif;
   }
+
+  button,
+  [type='button'],
+  [type='reset'],
+  [type='submit'],
+  a,
+  select {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [type='button']:disabled,
+  [type='reset']:disabled,
+  [type='submit']:disabled {
+    cursor: not-allowed;
+  }
 }
 
 /* Custom animations and effects */
