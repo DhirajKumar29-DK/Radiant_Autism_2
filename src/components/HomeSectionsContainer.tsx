@@ -9,16 +9,26 @@ import ServicesGrid from "@/components/ServicesGrid";
 import Testimonials from "@/components/Testimonials";
 import HomeGalleryPreview from "@/components/HomeGalleryPreview";
 
-export default function HomeSectionsContainer() {
-  const [sections, setSections] = useState({
-    hero: true,
-    about: true,
-    careApproach: true,
-    services: true,
-    testimonials: true,
-    process: true,
-    gallery: true,
-  });
+export default function HomeSectionsContainer({
+  initialAbout,
+  initialSlides,
+  initialNavSections,
+}: {
+  initialAbout?: any;
+  initialSlides?: any[];
+  initialNavSections?: any;
+}) {
+  const [sections, setSections] = useState(
+    initialNavSections || {
+      hero: true,
+      about: true,
+      careApproach: true,
+      services: true,
+      testimonials: true,
+      process: true,
+      gallery: true,
+    }
+  );
 
   useEffect(() => {
     const fetchSections = async () => {
@@ -39,8 +49,8 @@ export default function HomeSectionsContainer() {
 
   return (
     <div className="space-y-0">
-      {sections.hero && <Hero />}
-      {sections.about && <AboutSection />}
+      {sections.hero && <Hero initialSlides={initialSlides} />}
+      {sections.about && <AboutSection initialData={initialAbout} />}
       {sections.careApproach && <CareApproachSection />}
       {sections.services && <ServicesGrid limit={4} />}
       {sections.process && <OurApproachProcess />}

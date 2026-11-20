@@ -145,7 +145,7 @@ export default function AdminServicesPage() {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
   // Form State (100% clean, NO autofill/dummy data on Add)
   const [formData, setFormData] = useState({ ...emptyForm });

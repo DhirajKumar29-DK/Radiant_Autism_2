@@ -82,7 +82,7 @@ export default function AdminBlogsPage() {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
   // Advanced SEO Collapsible
   const [isSeoOpen, setIsSeoOpen] = useState(false);

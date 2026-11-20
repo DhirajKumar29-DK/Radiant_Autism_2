@@ -19,25 +19,22 @@ interface AboutData {
 }
 
 const DEFAULT_ABOUT: AboutData = {
-  badgeText: "About Radiant Autism Center",
-  title: "Compassionate, Modern & Person-Centered Care For Every Child",
+  badgeText: "ABOUT RADIANT AUTISM & SKILL CENTER",
+  title: "Dedicated Clinical Support for Every Child's Unique Potential",
   description1:
-    "At Radiant Autism Center, our mission is simple: to help every child build meaningful communication, motor independence, and daily life confidence through gentle, evidence-based care.",
-  description2:
-    "We work closely with families to deliver individualized support across ABA therapy, speech-language services, and occupational therapy in a welcoming, caring environment.",
+    "Radiant Autism & Skill Center is a multidisciplinary pediatric clinic dedicated to delivering research-backed, compassionate developmental therapies.\n\nSupervised by our Registered Behaviour Analyst (RBA, Ontario), our team collaborates closely with families to establish individualized milestones.",
+  description2: "",
   centerImage: "/about_center_photo.jpg",
   highlights: [
-    "Registered Behaviour Analyst (RBA, Ontario) Supervision",
-    "OAP Covered Programs & Services",
-    "Person-Centered & Compassionate ABA Therapy",
-    "Integrated Speech & Occupational Therapy Support",
-    "Tailored 1:1 and Group Skill Building",
-    "Close Family Collaboration & Parent Guidance",
+    "100% RBA Supervised Clinical Programs",
+    "Eligible for Ontario Autism Program (OAP) funding",
+    "Individualized 1:1 and peer-group social rooms",
+    "Family-centered progress reporting and collaboration",
   ],
 };
 
-export default function AboutSection() {
-  const [about, setAbout] = useState<AboutData>(DEFAULT_ABOUT);
+export default function AboutSection({ initialData }: { initialData?: AboutData }) {
+  const [about, setAbout] = useState<AboutData>(initialData || DEFAULT_ABOUT);
 
   useEffect(() => {
     let isMounted = true;
@@ -63,7 +60,7 @@ export default function AboutSection() {
               badgeText: data.about.badgeText || DEFAULT_ABOUT.badgeText,
               title: data.about.title || DEFAULT_ABOUT.title,
               description1: data.about.description1 || DEFAULT_ABOUT.description1,
-              description2: data.about.description2 || DEFAULT_ABOUT.description2,
+              description2: data.about.description2 || "",
               centerImage: data.about.centerImage || DEFAULT_ABOUT.centerImage,
               highlights: parsedHighlights,
             });
@@ -139,15 +136,12 @@ export default function AboutSection() {
                   {about.title}
                 </h2>
 
-                <div className="text-slate-600 text-base sm:text-lg leading-[1.75] whitespace-pre-line space-y-3 font-normal">
-                  {about.description1}
+                <div className="text-slate-600 text-base sm:text-lg leading-[1.75] font-normal space-y-4">
+                  {(about.description1 || "").split("\n\n").map((para, idx) => (
+                    <p key={idx}>{para}</p>
+                  ))}
+                  {about.description2 && <p>{about.description2}</p>}
                 </div>
-
-                {about.description2 && (
-                  <div className="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
-                    {about.description2}
-                  </div>
-                )}
 
                 {/* Highlights Grid */}
                 {about.highlights && about.highlights.length > 0 && (

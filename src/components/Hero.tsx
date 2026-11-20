@@ -8,7 +8,7 @@ import {
   Calendar,
 } from "lucide-react";
 
-export default function Hero() {
+export default function Hero({ initialSlides }: { initialSlides?: any[] }) {
   const defaultSlides = [
     {
       id: 1,
@@ -45,7 +45,9 @@ export default function Hero() {
     },
   ];
 
-  const [slides, setSlides] = useState(defaultSlides);
+  const [slides, setSlides] = useState(
+    initialSlides && initialSlides.length > 0 ? initialSlides : defaultSlides
+  );
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
