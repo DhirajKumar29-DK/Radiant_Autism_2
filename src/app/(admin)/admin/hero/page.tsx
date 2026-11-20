@@ -306,7 +306,7 @@ export default function HeroAdminPage() {
           {selectedIds.length > 0 && (
             <button
               onClick={triggerBulkDelete}
-              className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 font-bold text-xs shadow-xs transition-colors border border-rose-200"
+              className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 font-bold text-xs shadow-xs transition-colors border border-rose-200 cursor-pointer"
             >
               <Trash2 className="w-4 h-4" />
               <span>Delete Selected ({selectedIds.length})</span>
@@ -711,14 +711,14 @@ export default function HeroAdminPage() {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="px-6 py-2.5 border border-slate-200 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-100 transition-colors"
+                className="px-6 py-2.5 border border-slate-200 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 form="heroForm"
-                className="px-7 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-lg shadow-blue-600/30 transition-all"
+                className="px-7 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-lg shadow-blue-600/30 transition-all cursor-pointer"
               >
                 Save Hero
               </button>

@@ -1,24 +1,33 @@
 @import "tailwindcss";
 
+/* Universal cursor pointer for ALL buttons, interactive controls, inputs, tabs, and links */
+button,
+button *,
+[type='button'],
+[type='button'] *,
+[type='reset'],
+[type='reset'] *,
+[type='submit'],
+[type='submit'] *,
+a,
+a *,
+select,
+label[for],
+[role='button'] {
+  cursor: pointer !important;
+}
+
+button:disabled,
+button:disabled *,
+[type='button']:disabled,
+[type='reset']:disabled,
+[type='submit']:disabled {
+  cursor: not-allowed !important;
+}
+
 @layer base {
   body {
     font-family: var(--font-plus-jakarta), system-ui, -apple-system, sans-serif;
-  }
-
-  button,
-  [type='button'],
-  [type='reset'],
-  [type='submit'],
-  a,
-  select {
-    cursor: pointer;
-  }
-
-  button:disabled,
-  [type='button']:disabled,
-  [type='reset']:disabled,
-  [type='submit']:disabled {
-    cursor: not-allowed;
   }
 }
 
