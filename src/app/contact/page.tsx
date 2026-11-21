@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { isPageRouteActive } from "@/lib/page-visibility";
+import { isPageRouteActive, getPageSections } from "@/lib/page-visibility";
 import ContactForm from "@/components/ContactForm";
 import { MapPin, Clock, MessageSquare } from "lucide-react";
 
@@ -24,27 +24,27 @@ export const metadata: Metadata = {
 };
 
 export default async function ContactPage() {
-  const isPageActive = await isPageRouteActive("/contact");
+  const [isPageActive, sections, hero] = await Promise.all([
+    isPageRouteActive("/contact"),
+    getPageSections("contact"),
+    prisma.hero
+      .findFirst({
+        where: { pageKey: "contact", status: "ACTIVE" },
+        orderBy: { displayOrder: "asc" },
+      })
+      .catch(() => null),
+  ]);
+
   if (!isPageActive) {
     notFound();
-  }
-
-  let hero: any = null;
-  try {
-    hero = await prisma.hero.findFirst({
-      where: { pageKey: "contact", status: "ACTIVE" },
-      orderBy: { displayOrder: "asc" },
-    });
-  } catch (e) {
-    // Fallback
   }
 
   const bgImage = hero?.backgroundImage?.trim() || null;
 
   return (
     <div className="space-y-0 pb-16">
-      {/* Premium Photo Hero Banner (Rendered only if configured in Admin) */}
-      {hero && (
+      {/* 1. Premium Photo Hero Banner (Rendered only if configured in Admin) */}
+      {sections.hero !== false && hero && (
         <section className="relative py-20 md:py-28 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white overflow-hidden select-none">
           {/* Background Image with Dark Gradient Overlay (Shown only if configured by Admin) */}
           {bgImage && (
@@ -77,60 +77,64 @@ export default async function ContactPage() {
         </section>
       )}
 
-      {/* 4-Field Inquiry Form Component (Includes Compact Left Map) */}
-      <Suspense fallback={<div className="py-10 text-center text-slate-500">Loading form...</div>}>
-        <ContactForm />
-      </Suspense>
+      {/* 2. 4-Field Inquiry Form Component (Includes Compact Left Map) */}
+      {sections.bookingForm !== false && (
+        <Suspense fallback={<div className="py-10 text-center text-slate-500">Loading form...</div>}>
+          <ContactForm />
+        </Suspense>
+      )}
 
-      {/* Interactive Location & Hours Card */}
-      <section className="py-12 bg-white border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-slate-900 text-white rounded-3xl p-8 sm:p-12 shadow-xl grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
-                <MapPin className="w-5 h-5" />
+      {/* 3. Interactive Location & Hours Card */}
+      {sections.hoursCard !== false && (
+        <section className="py-12 bg-white border-t border-slate-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-slate-900 text-white rounded-3xl p-8 sm:p-12 shadow-xl grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                  <MapPin className="w-5 h-5" />
+                </div>
+                <h3 className="font-extrabold text-lg">Visit Center</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Radiant Autism & Skill Center<br />
+                  Main Healthcare Boulevard, Suite 400<br />
+                  Accessible facility with parking.
+                </p>
               </div>
-              <h3 className="font-extrabold text-lg">Visit Center</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Radiant Autism & Skill Center<br />
-                Main Healthcare Boulevard, Suite 400<br />
-                Accessible facility with parking.
-              </p>
-            </div>
 
-            <div className="space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
-                <Clock className="w-5 h-5" />
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <h3 className="font-extrabold text-lg">Operating Hours</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Monday - Friday: 8:00 AM - 6:00 PM<br />
+                  Saturday: 9:00 AM - 4:00 PM<br />
+                  Sunday: Closed (Emergency on call)
+                </p>
               </div>
-              <h3 className="font-extrabold text-lg">Operating Hours</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Monday - Friday: 8:00 AM - 6:00 PM<br />
-                Saturday: 9:00 AM - 4:00 PM<br />
-                Sunday: Closed (Emergency on call)
-              </p>
-            </div>
 
-            <div className="space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold">
-                <MessageSquare className="w-5 h-5" />
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold">
+                  <MessageSquare className="w-5 h-5" />
+                </div>
+                <h3 className="font-extrabold text-lg">Instant Connect</h3>
+                <p className="text-xs text-slate-300 leading-relaxed mb-3">
+                  Connect directly with our care intake officer on WhatsApp.
+                </p>
+                <a
+                  href="https://wa.me/18005557890?text=Hi%20Radiant%20Autism%20Center%2C%20I%20want%20to%20inquire%20about%20therapy%20services."
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Open WhatsApp Chat</span>
+                </a>
               </div>
-              <h3 className="font-extrabold text-lg">Instant Connect</h3>
-              <p className="text-xs text-slate-300 leading-relaxed mb-3">
-                Connect directly with our care intake officer on WhatsApp.
-              </p>
-              <a
-                href="https://wa.me/18005557890?text=Hi%20Radiant%20Autism%20Center%2C%20I%20want%20to%20inquire%20about%20therapy%20services."
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm"
-              >
-                <MessageSquare className="w-4 h-4" />
-                <span>Open WhatsApp Chat</span>
-              </a>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }

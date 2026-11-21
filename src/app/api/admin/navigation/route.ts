@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAdminToken } from "@/modules/auth/auth.service";
+import { DEFAULT_PAGE_SECTIONS, normalizeAllPageSections, invalidateNavCache } from "@/lib/page-visibility";
 
 const DEFAULT_NAV_ITEMS = [
   { id: "home", label: "Home", name: "Home", href: "/", path: "/", isVisible: true },
@@ -10,16 +11,6 @@ const DEFAULT_NAV_ITEMS = [
   { id: "blogs", label: "Articles & Blog", name: "Articles & Blog", href: "/blogs", path: "/blogs", isVisible: true },
   { id: "contact", label: "Contact Us", name: "Contact Us", href: "/contact", path: "/contact", isVisible: true },
 ];
-
-const DEFAULT_SECTIONS_VISIBILITY = {
-  hero: true,
-  about: true,
-  careApproach: true,
-  services: true,
-  testimonials: true,
-  process: true,
-  gallery: true,
-};
 
 function normalizeNavItems(raw: any[]): any[] {
   if (!Array.isArray(raw)) return DEFAULT_NAV_ITEMS;
@@ -41,20 +32,6 @@ function normalizeNavItems(raw: any[]): any[] {
   });
 }
 
-function normalizeSections(raw: any): any {
-  if (!raw || typeof raw !== "object") return DEFAULT_SECTIONS_VISIBILITY;
-
-  return {
-    hero: raw.hero !== undefined ? Boolean(raw.hero) : (raw.heroSlider !== undefined ? Boolean(raw.heroSlider) : true),
-    about: raw.about !== undefined ? Boolean(raw.about) : (raw.aboutSummary !== undefined ? Boolean(raw.aboutSummary) : true),
-    careApproach: raw.careApproach !== undefined ? Boolean(raw.careApproach) : (raw.ourApproach !== undefined ? Boolean(raw.ourApproach) : true),
-    services: raw.services !== undefined ? Boolean(raw.services) : (raw.servicesGrid !== undefined ? Boolean(raw.servicesGrid) : true),
-    testimonials: raw.testimonials !== undefined ? Boolean(raw.testimonials) : true,
-    process: raw.process !== undefined ? Boolean(raw.process) : true,
-    gallery: raw.gallery !== undefined ? Boolean(raw.gallery) : (raw.galleryPreview !== undefined ? Boolean(raw.galleryPreview) : true),
-  };
-}
-
 export async function GET() {
   try {
     let nav = await prisma.siteNavigation.findFirst();
@@ -63,7 +40,7 @@ export async function GET() {
       nav = await prisma.siteNavigation.create({
         data: {
           navItemsJson: JSON.stringify(DEFAULT_NAV_ITEMS),
-          sectionsVisibilityJson: JSON.stringify(DEFAULT_SECTIONS_VISIBILITY),
+          sectionsVisibilityJson: JSON.stringify(DEFAULT_PAGE_SECTIONS),
         },
       });
     }
@@ -77,15 +54,18 @@ export async function GET() {
 
     let parsedSections: any = {};
     try {
-      parsedSections = nav.sectionsVisibilityJson ? JSON.parse(nav.sectionsVisibilityJson) : DEFAULT_SECTIONS_VISIBILITY;
+      parsedSections = nav.sectionsVisibilityJson ? JSON.parse(nav.sectionsVisibilityJson) : DEFAULT_PAGE_SECTIONS;
     } catch {
-      parsedSections = DEFAULT_SECTIONS_VISIBILITY;
+      parsedSections = DEFAULT_PAGE_SECTIONS;
     }
+
+    const normalizedPageSections = normalizeAllPageSections(parsedSections);
 
     return NextResponse.json({
       success: true,
       navItems: normalizeNavItems(parsedNavItems),
-      sectionsVisibility: normalizeSections(parsedSections),
+      sectionsVisibility: normalizedPageSections.home, // backwards compat
+      pageSections: normalizedPageSections, // all pages map
     });
   } catch (error: unknown) {
     console.error("Error fetching site navigation:", error);
@@ -102,33 +82,40 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { navItems, sectionsVisibility } = body;
+    const { navItems, sectionsVisibility, pageSections } = body;
 
     const normalizedItems = normalizeNavItems(navItems);
-    const normalizedSections = normalizeSections(sectionsVisibility);
+
+    let combinedSections = pageSections;
+    if (!combinedSections && sectionsVisibility) {
+      combinedSections = { home: sectionsVisibility };
+    }
+    const normalizedPageSections = normalizeAllPageSections(combinedSections);
 
     const payload = {
       navItemsJson: JSON.stringify(normalizedItems),
-      sectionsVisibilityJson: JSON.stringify(normalizedSections),
+      sectionsVisibilityJson: JSON.stringify(normalizedPageSections),
     };
 
     let existing = await prisma.siteNavigation.findFirst();
-    let updated;
     if (existing) {
-      updated = await prisma.siteNavigation.update({
+      await prisma.siteNavigation.update({
         where: { id: existing.id },
         data: payload,
       });
     } else {
-      updated = await prisma.siteNavigation.create({
+      await prisma.siteNavigation.create({
         data: payload,
       });
     }
 
+    invalidateNavCache();
+
     return NextResponse.json({
       success: true,
       navItems: normalizedItems,
-      sectionsVisibility: normalizedSections,
+      sectionsVisibility: normalizedPageSections.home,
+      pageSections: normalizedPageSections,
     });
   } catch (error: unknown) {
     console.error("Error updating site navigation:", error);

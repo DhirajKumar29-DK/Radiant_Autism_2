@@ -1,6 +1,7 @@
 import React from "react";
 import type { Metadata } from "next";
 import prisma from "@/lib/prisma";
+import { getSiteNavigationRecord } from "@/lib/page-visibility";
 import HomeSectionsContainer from "@/components/HomeSectionsContainer";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,7 @@ export default async function HomePage() {
         where: { pageKey: "home", status: "ACTIVE" },
         orderBy: { displayOrder: "asc" },
       }),
-      prisma.siteNavigation.findFirst(),
+      getSiteNavigationRecord(),
     ]);
 
     if (aboutRecord) {
@@ -74,7 +75,8 @@ export default async function HomePage() {
 
     if (navRecord?.sectionsVisibilityJson) {
       try {
-        initialNavSections = JSON.parse(navRecord.sectionsVisibilityJson);
+        const parsed = JSON.parse(navRecord.sectionsVisibilityJson);
+        initialNavSections = parsed?.home || parsed;
       } catch (e) {
         console.error("Error parsing nav sections:", e);
       }

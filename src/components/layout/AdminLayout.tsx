@@ -184,10 +184,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           setAdminUser(data.admin);
           setIsCheckingAuth(false);
         } else {
-          router.replace("/login");
+          const search = typeof window !== "undefined" ? window.location.search : "";
+          const returnUrl = (pathname || "/admin") + search;
+          router.replace(`/login?redirect=${encodeURIComponent(returnUrl)}`);
         }
       } catch {
-        router.replace("/login");
+        const search = typeof window !== "undefined" ? window.location.search : "";
+        const returnUrl = (pathname || "/admin") + search;
+        router.replace(`/login?redirect=${encodeURIComponent(returnUrl)}`);
       }
     };
     checkAuth();

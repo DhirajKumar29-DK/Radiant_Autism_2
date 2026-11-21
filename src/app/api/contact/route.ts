@@ -56,6 +56,12 @@ export async function POST(req: NextRequest) {
     const userPass = process.env.EMAIL_PASS;
     const recipientEmail = process.env.TO_EMAIL || userEmail || "care@radiantautism.com";
 
+    // Dynamic base URL for direct Admin Portal button
+    const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
+    const proto = req.headers.get("x-forwarded-proto") || (host?.includes("localhost") ? "http" : "https");
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (host ? `${proto}://${host}` : "https://radiant-autism-nu.vercel.app");
+    const adminInquiryUrl = `${siteUrl}/admin/inquiries?ticket=${encodeURIComponent(ticketId)}`;
+
     // If EMAIL_USER and EMAIL_PASS are set, send live email notification via Nodemailer
     if (userEmail && userPass && userEmail !== "your-email@gmail.com") {
       const transporter = nodemailer.createTransport({
@@ -134,6 +140,27 @@ export async function POST(req: NextRequest) {
                      </div>`
                   : ""
               }
+
+              <!-- Direct 1-Click Action to Open in Admin Portal -->
+              <div style="margin-top: 26px; padding: 22px; background: #f0fdf4; border-radius: 14px; border: 1.5px solid #86efac; text-align: center;">
+                <div style="font-size: 11px; font-weight: 800; color: #15803d; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
+                  Clinical Management Portal
+                </div>
+                <div style="font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 14px;">
+                  Inquiry Ticket #${ticketId}
+                </div>
+                <div>
+                  <a href="${adminInquiryUrl}" target="_blank" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 13px 32px; border-radius: 10px; font-weight: 800; font-size: 14px; text-decoration: none; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35); letter-spacing: 0.3px;">
+                    Open Inquiry in Admin Panel &rarr;
+                  </a>
+                </div>
+                <p style="margin: 12px 0 0 0; font-size: 11px; color: #64748b;">
+                  Clicking opens this inquiry directly in the Admin Inquiries Desk to update status, view details, or add staff notes.
+                </p>
+                <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #bbf7d0; font-size: 11px; color: #94a3b8; word-break: break-all;">
+                  Direct Link: <a href="${adminInquiryUrl}" style="color: #2563eb; text-decoration: underline;">${adminInquiryUrl}</a>
+                </div>
+              </div>
             </div>
             <div class="footer">
               Radiant Autism & Skill Center • Automatic Web Consultation System

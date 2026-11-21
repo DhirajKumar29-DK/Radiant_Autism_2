@@ -48,7 +48,7 @@ export default function AdminDashboardPage() {
         if (res.ok) {
           const data = await res.json();
           setStats(data.stats);
-          setRecentAppointments(data.recentAppointments || []);
+          setRecentAppointments((data.recentAppointments || []).slice(0, 5));
         }
       } catch (err) {
         console.error("Dashboard error:", err);
@@ -182,18 +182,23 @@ export default function AdminDashboardPage() {
       <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs overflow-hidden">
         <div className="p-6 sm:px-8 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h3 className="text-lg font-black text-slate-900 tracking-tight">
-              Recent Consultation Requests
-            </h3>
+            <div className="flex items-center gap-2.5">
+              <h3 className="text-lg font-black text-slate-900 tracking-tight">
+                Recent Consultation Requests
+              </h3>
+              <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-extrabold text-[10px] border border-blue-200 tracking-wide uppercase">
+                Latest 5
+              </span>
+            </div>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Parents who booked through the website booking form
+              Parents who booked through the website booking form (showing up to 5 most recently updated)
             </p>
           </div>
           <Link
             href="/admin/inquiries"
             className="text-xs font-extrabold text-blue-600 hover:text-blue-700 flex items-center gap-1.5 transition-colors uppercase tracking-wider"
           >
-            <span>View All Inquiries</span>
+            <span>View All Inquiries ({stats.totalAppointments})</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -261,6 +266,21 @@ export default function AdminDashboardPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {recentAppointments.length > 0 && (
+          <div className="p-4 sm:px-8 bg-slate-50/80 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-600">
+            <span className="font-semibold text-[11px] text-slate-500">
+              Showing {recentAppointments.length} of {stats.totalAppointments} inquiries
+            </span>
+            <Link
+              href="/admin/inquiries"
+              className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors"
+            >
+              <span>Manage all inquiries in Inquiries Desk</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Calendar,
   Search,
@@ -50,7 +51,11 @@ interface Counts {
   cancelled: number;
 }
 
-export default function AdminInquiriesPage() {
+function AdminInquiriesContent() {
+  const searchParams = useSearchParams();
+  const ticketParam = searchParams?.get("ticket") || searchParams?.get("search") || "";
+  const [hasAutoOpened, setHasAutoOpened] = useState(false);
+
   const [inquiries, setInquiries] = useState<Appointment[]>([]);
   const [counts, setCounts] = useState<Counts>({
     all: 0,
@@ -61,8 +66,8 @@ export default function AdminInquiriesPage() {
     cancelled: 0,
   });
   const [activeTab, setActiveTab] = useState<string>("ALL");
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>(ticketParam);
+  const [debouncedSearch, setDebouncedSearch] = useState<string>(ticketParam);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [selectedInquiry, setSelectedInquiry] = useState<Appointment | null>(null);
@@ -72,6 +77,29 @@ export default function AdminInquiriesPage() {
   const [saveNotesSuccess, setSaveNotesSuccess] = useState<boolean>(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
   const [inquiryToDelete, setInquiryToDelete] = useState<Appointment | null>(null);
+
+  // Sync ticketParam if URL changes
+  useEffect(() => {
+    if (ticketParam) {
+      setSearchTerm(ticketParam);
+      setDebouncedSearch(ticketParam);
+    }
+  }, [ticketParam]);
+
+  // Auto-open inquiry detail modal when ticketParam is present
+  useEffect(() => {
+    if (ticketParam && inquiries.length > 0 && !hasAutoOpened) {
+      const match = inquiries.find(
+        (i) => i.ticketId.toLowerCase() === ticketParam.toLowerCase() || i.id === ticketParam
+      );
+      if (match) {
+        setSelectedInquiry(match);
+        setEditNotes(match.notes || "");
+        setSaveNotesSuccess(false);
+        setHasAutoOpened(true);
+      }
+    }
+  }, [ticketParam, inquiries, hasAutoOpened]);
 
   // Row selection
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -823,5 +851,20 @@ export default function AdminInquiriesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminInquiriesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="py-20 flex flex-col items-center justify-center space-y-3">
+          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+          <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Loading Inquiries...</p>
+        </div>
+      }
+    >
+      <AdminInquiriesContent />
+    </Suspense>
   );
 }

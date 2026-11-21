@@ -1,7 +1,7 @@
 import React from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { isPageRouteActive } from "@/lib/page-visibility";
+import { isPageRouteActive, getPageSections } from "@/lib/page-visibility";
 import GalleryClient from "@/components/GalleryClient";
 import prisma from "@/lib/prisma";
 
@@ -23,34 +23,35 @@ export const metadata: Metadata = {
 };
 
 export default async function GalleryPage() {
-  const isPageActive = await isPageRouteActive("/gallery");
+  const [isPageActive, sections, rawItems, rawHero] = await Promise.all([
+    isPageRouteActive("/gallery"),
+    getPageSections("gallery"),
+    prisma.galleryItem
+      .findMany({
+        where: { isActive: true, isDeleted: false },
+        orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+      })
+      .catch(() => []),
+    prisma.hero
+      .findFirst({
+        where: { pageKey: "gallery", status: "ACTIVE" },
+        orderBy: { displayOrder: "asc" },
+      })
+      .catch(() => null),
+  ]);
+
   if (!isPageActive) {
     notFound();
   }
 
-  let galleryItems = [];
-  let hero = null;
-  try {
-    const [rawItems, rawHero] = await Promise.all([
-      prisma.galleryItem.findMany({
-        where: {
-          isActive: true,
-          isDeleted: false,
-        },
-        orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-      }),
-      prisma.hero.findFirst({
-        where: { pageKey: "gallery", status: "ACTIVE" },
-        orderBy: { displayOrder: "asc" },
-      }),
-    ]);
-    galleryItems = JSON.parse(JSON.stringify(rawItems));
-    if (rawHero) {
-      hero = JSON.parse(JSON.stringify(rawHero));
-    }
-  } catch (error) {
-    console.error("Error fetching gallery items/hero:", error);
-  }
+  const galleryItems = JSON.parse(JSON.stringify(rawItems || []));
+  const hero = rawHero ? JSON.parse(JSON.stringify(rawHero)) : null;
 
-  return <GalleryClient initialItems={galleryItems} initialHero={hero} />;
+  return (
+    <GalleryClient
+      initialItems={galleryItems}
+      initialHero={hero}
+      initialSections={sections}
+    />
+  );
 }

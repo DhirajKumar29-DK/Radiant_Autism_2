@@ -50,7 +50,7 @@ export default function Navbar() {
       }
     };
     fetchNav();
-  }, [pathname]);
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 bg-slate-50/95 backdrop-blur-md border-b-2 border-slate-200/90 shadow-sm relative overflow-hidden">

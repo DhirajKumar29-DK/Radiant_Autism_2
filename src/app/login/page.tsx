@@ -1,11 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { HeartHandshake, Lock, Mail, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams?.get("redirect");
+  const targetDestination =
+    redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
+      ? redirectParam
+      : "/admin";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
@@ -26,7 +33,7 @@ export default function LoginPage() {
       try {
         const res = await fetch("/api/auth/me");
         if (res.ok) {
-          router.replace("/admin");
+          router.replace(targetDestination);
         } else {
           setIsCheckingAuth(false);
         }
@@ -35,7 +42,7 @@ export default function LoginPage() {
       }
     };
     checkAuth();
-  }, [router]);
+  }, [router, targetDestination]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +70,7 @@ export default function LoginPage() {
         } else {
           localStorage.removeItem("radiant_remember_email");
         }
-        router.push("/admin");
+        router.push(targetDestination);
       } else {
         setError(data.error || "Invalid email or password.");
       }
@@ -221,5 +228,22 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+          <div className="text-center space-y-3">
+            <Loader2 className="w-8 h-8 text-blue-500 animate-spin mx-auto" />
+            <p className="text-slate-400 text-xs font-semibold">Loading login portal...</p>
+          </div>
+        </div>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
   );
 }

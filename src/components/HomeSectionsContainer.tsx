@@ -18,8 +18,9 @@ export default function HomeSectionsContainer({
   initialSlides?: any[];
   initialNavSections?: any;
 }) {
+  const homeInitial = initialNavSections?.home || initialNavSections;
   const [sections, setSections] = useState(
-    initialNavSections || {
+    homeInitial || {
       hero: true,
       about: true,
       careApproach: true,
@@ -36,8 +37,9 @@ export default function HomeSectionsContainer({
         const res = await fetch("/api/admin/navigation", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
-          if (data.sectionsVisibility) {
-            setSections(data.sectionsVisibility);
+          const liveHome = data.pageSections?.home || data.sectionsVisibility;
+          if (liveHome) {
+            setSections(liveHome);
           }
         }
       } catch (err) {

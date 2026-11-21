@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { isPageRouteActive } from "@/lib/page-visibility";
+import { isPageRouteActive, getPageSections } from "@/lib/page-visibility";
 import AboutCentreDetail from "@/components/AboutCentreDetail";
 import OurTeamSection from "@/components/OurTeamSection";
 import ClinicalPillars from "@/components/ClinicalPillars";
@@ -27,27 +27,27 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
-  const isPageActive = await isPageRouteActive("/about");
+  const [isPageActive, sections, hero] = await Promise.all([
+    isPageRouteActive("/about"),
+    getPageSections("about"),
+    prisma.hero
+      .findFirst({
+        where: { pageKey: "about", status: "ACTIVE" },
+        orderBy: { displayOrder: "asc" },
+      })
+      .catch(() => null),
+  ]);
+
   if (!isPageActive) {
     notFound();
-  }
-
-  let hero: any = null;
-  try {
-    hero = await prisma.hero.findFirst({
-      where: { pageKey: "about", status: "ACTIVE" },
-      orderBy: { displayOrder: "asc" },
-    });
-  } catch (e) {
-    // Fallback to default content
   }
 
   const bgImage = hero?.backgroundImage?.trim() || null;
 
   return (
     <div className="space-y-0 pb-16">
-      {/* Premium Photo Hero Banner (Rendered only if configured in Admin) */}
-      {hero && (
+      {/* 1. Premium Photo Hero Banner (Rendered only if configured in Admin) */}
+      {sections.hero !== false && hero && (
         <section className="relative py-20 md:py-28 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white overflow-hidden select-none">
           {/* Background Image with Dark Gradient Overlay (Shown only if configured by Admin) */}
           {bgImage && (
@@ -91,25 +91,27 @@ export default async function AboutPage() {
         </section>
       )}
 
-      {/* About Centre & Purpose Built Spaces */}
-      <AboutCentreDetail />
+      {/* 2. About Centre & Purpose Built Spaces */}
+      {sections.facility !== false && <AboutCentreDetail />}
 
-      {/* Clinical Leadership & Our Team */}
-      <OurTeamSection />
+      {/* 3. Clinical Leadership & Our Team */}
+      {sections.team !== false && <OurTeamSection />}
 
-      {/* Luxury 4 Clinical Pillars Section */}
-      <ClinicalPillars />
+      {/* 4. Luxury 4 Clinical Pillars Section */}
+      {sections.pillars !== false && <ClinicalPillars />}
 
-      {/* Schedule Visit CTA */}
-      <div className="text-center pt-8">
-        <Link
-          href="/contact"
-          className="inline-flex items-center gap-2 px-9 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-xl shadow-blue-600/25 transition-all group"
-        >
-          <span>Schedule A Visit To Our Center</span>
-          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-        </Link>
-      </div>
+      {/* 5. Schedule Visit CTA Banner */}
+      {sections.ctaBanner !== false && (
+        <div className="text-center pt-8">
+          <Link
+            href="/contact"
+            className="inline-flex items-center gap-2 px-9 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-xl shadow-blue-600/25 transition-all group"
+          >
+            <span>Schedule A Visit To Our Center</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

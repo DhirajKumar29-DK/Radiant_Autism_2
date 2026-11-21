@@ -4,7 +4,7 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { isPageRouteActive } from "@/lib/page-visibility";
+import { isPageRouteActive, getPageSections } from "@/lib/page-visibility";
 import { BookOpen, Calendar, Clock, ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -32,36 +32,36 @@ function getInitials(name: string = "Radiant"): string {
 }
 
 export default async function BlogsPage() {
-  const isPageActive = await isPageRouteActive("/blogs");
+  const [isPageActive, sections, fetchedBlogs, fetchedHero] = await Promise.all([
+    isPageRouteActive("/blogs"),
+    getPageSections("blogs"),
+    prisma.blogPost
+      .findMany({
+        where: { status: "PUBLISHED", isDeleted: false },
+        orderBy: { createdAt: "desc" },
+      })
+      .catch(() => []),
+    prisma.hero
+      .findFirst({
+        where: { pageKey: "blogs", status: "ACTIVE" },
+        orderBy: { displayOrder: "asc" },
+      })
+      .catch(() => null),
+  ]);
+
   if (!isPageActive) {
     notFound();
   }
 
-  let blogs: any[] = [];
-  let hero: any = null;
-  try {
-    const [fetchedBlogs, fetchedHero] = await Promise.all([
-      prisma.blogPost.findMany({
-        where: { status: "PUBLISHED", isDeleted: false },
-        orderBy: { createdAt: "desc" },
-      }),
-      prisma.hero.findFirst({
-        where: { pageKey: "blogs", status: "ACTIVE" },
-        orderBy: { displayOrder: "asc" },
-      }),
-    ]);
-    blogs = fetchedBlogs;
-    hero = fetchedHero;
-  } catch (err) {
-    console.error("Error fetching blogs/hero:", err);
-  }
+  const blogs = fetchedBlogs || [];
+  const hero = fetchedHero;
 
   const bgImage = hero?.backgroundImage?.trim() || null;
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-24">
-      {/* Hero Banner (Rendered only if configured in Admin) */}
-      {hero && (
+      {/* 1. Hero Banner (Rendered only if configured in Admin) */}
+      {sections.hero !== false && hero && (
         <section className="relative py-20 md:py-28 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white overflow-hidden select-none">
           {bgImage && (
             <div className="absolute inset-0 z-0">
@@ -104,102 +104,129 @@ export default async function BlogsPage() {
         </section>
       )}
 
-      {/* Articles Grid (Matching Image 4 Layout) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
-        {blogs.length === 0 ? (
-          <div className="bg-white rounded-3xl p-16 text-center border border-slate-200/90 shadow-xs space-y-3">
-            <BookOpen className="w-10 h-10 text-slate-400 mx-auto" />
-            <h3 className="font-bold text-slate-800 text-base">New Articles Coming Soon</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
-              Our clinical team is currently preparing research articles and OAP guidance notes. Check back soon.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {blogs.map((blog) => {
-              const readingTime = getReadingTime(blog.content);
-              const authorInitials = getInitials(blog.authorName);
+      {/* 2. Articles Grid */}
+      {sections.blogGrid !== false && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
+          {blogs.length === 0 ? (
+            <div className="bg-white rounded-3xl p-16 text-center border border-slate-200/90 shadow-xs space-y-3">
+              <BookOpen className="w-10 h-10 text-slate-400 mx-auto" />
+              <h3 className="font-bold text-slate-800 text-base">New Articles Coming Soon</h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
+                Our clinical team is currently preparing research articles and OAP guidance notes. Check back soon.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {blogs.map((blog) => {
+                const readingTime = getReadingTime(blog.content);
+                const authorInitials = getInitials(blog.authorName);
 
-              return (
-                <article
-                  key={blog.id}
-                  className="bg-white rounded-3xl overflow-hidden border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-blue-400 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group"
-                >
-                  <div>
-                    {/* 16:9 Cover Image with Floating Category Pill */}
-                    <Link
-                      href={`/blogs/${blog.slug}`}
-                      className="block relative aspect-16/9 w-full overflow-hidden bg-slate-100"
-                    >
-                      <img
-                        src={blog.coverImage || "/hero_child_therapy.jpg"}
-                        alt={blog.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
-                      <span className="absolute top-4 left-4 bg-blue-600/95 backdrop-blur-xs text-white text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full shadow-md">
-                        {blog.category}
-                      </span>
-                    </Link>
-
-                    {/* Content Section */}
-                    <div className="p-6 space-y-3">
-                      {/* Date & Reading Time */}
-                      <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold">
-                        <span className="flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                          {new Date(blog.publishedAt || blog.createdAt).toLocaleDateString("en-CA", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
+                return (
+                  <article
+                    key={blog.id}
+                    className="bg-white rounded-3xl overflow-hidden border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-blue-400 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group"
+                  >
+                    <div>
+                      {/* 16:9 Cover Image with Floating Category Pill */}
+                      <Link
+                        href={`/blogs/${blog.slug}`}
+                        className="block relative aspect-16/9 w-full overflow-hidden bg-slate-100"
+                      >
+                        <img
+                          src={blog.coverImage || "/hero_child_therapy.jpg"}
+                          alt={blog.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
+                        <span className="absolute top-4 left-4 bg-blue-600/95 backdrop-blur-xs text-white text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full shadow-md">
+                          {blog.category}
                         </span>
-                        <span className="text-slate-300">•</span>
-                        <span className="flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 text-slate-400" />
-                          {readingTime}
+                      </Link>
+
+                      {/* Content Section */}
+                      <div className="p-6 space-y-3">
+                        {/* Date & Reading Time */}
+                        <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold">
+                          <span className="flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                            {new Date(blog.publishedAt || blog.createdAt).toLocaleDateString("en-CA", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </span>
+                          <span className="text-slate-300">•</span>
+                          <span className="flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5 text-slate-400" />
+                            {readingTime}
+                          </span>
+                        </div>
+
+                        {/* Title */}
+                        <h2 className="text-base sm:text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight line-clamp-2 leading-snug">
+                          <Link href={`/blogs/${blog.slug}`}>{blog.title}</Link>
+                        </h2>
+
+                        {/* Excerpt */}
+                        <p className="text-slate-500 text-xs font-normal line-clamp-3 leading-relaxed">
+                          {blog.excerpt || blog.content.replace(/<[^>]*>/g, " ").slice(0, 140) + "..."}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Card Footer: Author + Read Article */}
+                    <div className="p-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+                      {/* Author with Avatar circle */}
+                      <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                        <div className="w-7 h-7 rounded-full bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center font-black text-[11px] shrink-0">
+                          {authorInitials}
+                        </div>
+                        <span className="text-xs font-bold text-slate-700 truncate">
+                          {blog.authorName}
                         </span>
                       </div>
 
-                      {/* Title */}
-                      <h2 className="text-base sm:text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight line-clamp-2 leading-snug">
-                        <Link href={`/blogs/${blog.slug}`}>{blog.title}</Link>
-                      </h2>
-
-                      {/* Excerpt */}
-                      <p className="text-slate-500 text-xs font-normal line-clamp-3 leading-relaxed">
-                        {blog.excerpt || blog.content.replace(/<[^>]*>/g, " ").slice(0, 140) + "..."}
-                      </p>
+                      {/* Read Article Link */}
+                      <Link
+                        href={`/blogs/${blog.slug}`}
+                        className="inline-flex items-center gap-1.5 text-xs font-black text-blue-600 group-hover:text-blue-700 transition-colors uppercase tracking-wider shrink-0"
+                      >
+                        <span>Read Article</span>
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                      </Link>
                     </div>
-                  </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
 
-                  {/* Card Footer: Author + Read Article */}
-                  <div className="p-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                    {/* Author with Avatar circle */}
-                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                      <div className="w-7 h-7 rounded-full bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center font-black text-[11px] shrink-0">
-                        {authorInitials}
-                      </div>
-                      <span className="text-xs font-bold text-slate-700 truncate">
-                        {blog.authorName}
-                      </span>
-                    </div>
-
-                    {/* Read Article Link */}
-                    <Link
-                      href={`/blogs/${blog.slug}`}
-                      className="inline-flex items-center gap-1.5 text-xs font-black text-blue-600 group-hover:text-blue-700 transition-colors uppercase tracking-wider shrink-0"
-                    >
-                      <span>Read Article</span>
-                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                    </Link>
-                  </div>
-                </article>
-              );
-            })}
+      {/* 3. Free Parent Guide CTA */}
+      {sections.newsletterCta !== false && (
+        <section className="mt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="rounded-3xl p-8 sm:p-12 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border border-blue-800/40">
+            <div className="space-y-2 text-center md:text-left">
+              <span className="text-xs font-black uppercase tracking-wider text-sky-400 bg-blue-950/80 px-3 py-1 rounded-full border border-sky-400/20">
+                Ontario Autism Program (OAP) Guide
+              </span>
+              <h3 className="text-2xl sm:text-3xl font-black tracking-tight">
+                Need help navigating Ontario Autism funding?
+              </h3>
+              <p className="text-slate-300 text-xs sm:text-sm font-medium max-w-xl">
+                Our care coordinators help families manage OAP budgets, clinical documentation, and registered RBA therapy claims.
+              </p>
+            </div>
+            <Link
+              href="/contact"
+              className="px-8 py-3.5 rounded-2xl bg-blue-500 hover:bg-blue-400 text-white font-black text-xs uppercase tracking-wider shadow-lg transition-all shrink-0 cursor-pointer"
+            >
+              Get OAP Funding Guidance
+            </Link>
           </div>
-        )}
-      </section>
+        </section>
+      )}
     </div>
   );
 }

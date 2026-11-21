@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       prisma.teamMember.count({ where: { isActive: true } }),
       prisma.appointment.findMany({
         take: 5,
-        orderBy: { createdAt: "desc" },
+        orderBy: { updatedAt: "desc" },
       }),
     ]);
 

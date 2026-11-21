@@ -11,7 +11,19 @@ import {
   Sliders,
   Layers,
   HeartHandshake,
+  Home,
+  Info,
+  Activity,
+  PhoneCall,
+  Image as ImageIcon,
+  BookOpen,
 } from "lucide-react";
+import {
+  DEFAULT_PAGE_SECTIONS,
+  PageSectionsMap,
+  PageKey,
+  normalizeAllPageSections,
+} from "@/lib/page-visibility";
 
 interface NavItem {
   id: string;
@@ -20,27 +32,96 @@ interface NavItem {
   isVisible: boolean;
 }
 
-interface SectionsVisibility {
-  hero: boolean;
-  about: boolean;
-  careApproach: boolean;
-  services: boolean;
-  testimonials?: boolean;
-  process: boolean;
-  gallery: boolean;
-}
+const PAGE_CONFIG: Record<
+  PageKey,
+  {
+    name: string;
+    badge: string;
+    desc: string;
+    icon: React.ComponentType<{ className?: string }>;
+    sections: Array<{ key: string; label: string; desc: string }>;
+  }
+> = {
+  home: {
+    name: "Home Page",
+    badge: "/",
+    desc: "Controls content blocks displayed on the main homepage layout.",
+    icon: Home,
+    sections: [
+      { key: "hero", label: "Hero Banner Slider", desc: "Top headline, rotating images & CTA buttons" },
+      { key: "about", label: "About Clinic Preview", desc: "Founding clinical mission and credentials" },
+      { key: "careApproach", label: "Care Approach Section", desc: "6 RBA standards & clinical pillars cards" },
+      { key: "services", label: "Core Therapy Services", desc: "Preview grid of active therapy programs" },
+      { key: "process", label: "Intake Process Steps", desc: "How families start clinical therapy" },
+      { key: "gallery", label: "Sensory Gym Gallery", desc: "Facility and therapy room photos preview" },
+      { key: "testimonials", label: "Parent Testimonials", desc: "Family reviews and ratings above footer" },
+    ],
+  },
+  about: {
+    name: "About Us Page",
+    badge: "/about",
+    desc: "Controls sections on the About Us facility and leadership page.",
+    icon: Info,
+    sections: [
+      { key: "hero", label: "Top Hero Banner", desc: "Page headline, photo background & badge" },
+      { key: "facility", label: "Purpose-Built Facility & Spaces", desc: "Clinic photos, sensory gym features, clinic intro" },
+      { key: "team", label: "Our Clinical Team", desc: "RBA clinical director, supervisors & specialists" },
+      { key: "pillars", label: "4 Clinical Pillars", desc: "Multidisciplinary, RBA supervised, evidence-based care" },
+      { key: "ctaBanner", label: "Bottom Consultation CTA", desc: "Book facility tour banner at bottom of page" },
+    ],
+  },
+  services: {
+    name: "Services Page",
+    badge: "/services",
+    desc: "Controls sections on the Clinical Services directory page.",
+    icon: Activity,
+    sections: [
+      { key: "hero", label: "Top Hero Banner", desc: "Services headline and inquiry button" },
+      { key: "servicesGrid", label: "All Therapy Programs Grid", desc: "Comprehensive cards for ABA, SLP, OT, and Life Skills" },
+      { key: "ctaBanner", label: "Bottom Assessment CTA", desc: "Need guidance for your child CTA banner" },
+    ],
+  },
+  contact: {
+    name: "Contact Us Page",
+    badge: "/contact",
+    desc: "Controls sections on the Contact and Appointment booking page.",
+    icon: PhoneCall,
+    sections: [
+      { key: "hero", label: "Top Hero Banner", desc: "Contact page headline and information badge" },
+      { key: "bookingForm", label: "Book an Appointment Form", desc: "Inquiry form with DDL multi-select & compact map" },
+      { key: "hoursCard", label: "Hours, Location & WhatsApp Card", desc: "Operating hours, physical address and instant chat" },
+    ],
+  },
+  gallery: {
+    name: "Gallery Page",
+    badge: "/gallery",
+    desc: "Controls sections on the Facility & Clinic photo showcase page.",
+    icon: ImageIcon,
+    sections: [
+      { key: "hero", label: "Top Hero Banner", desc: "Gallery title and facility introduction" },
+      { key: "categoryFilter", label: "Category Filter Buttons", desc: "All, ABA Therapy, Sensory Gym, Group Rooms pills" },
+      { key: "photoGrid", label: "Photo Showcase Grid", desc: "Image grid with high-resolution lightbox preview" },
+      { key: "ctaBanner", label: "Book Facility Tour CTA", desc: "Visit our sensory gym in person CTA banner" },
+    ],
+  },
+  blogs: {
+    name: "Articles & Blog Page",
+    badge: "/blogs",
+    desc: "Controls sections on the Articles, Guides, and Blog directory page.",
+    icon: BookOpen,
+    sections: [
+      { key: "hero", label: "Top Hero Banner", desc: "Articles header and autism resources intro" },
+      { key: "featuredBlog", label: "Featured Article Highlight", desc: "Large spotlight card for the top clinical guide" },
+      { key: "blogGrid", label: "Recent Articles Grid", desc: "Article cards with read times and pagination" },
+      { key: "newsletterCta", label: "Parent Guide / Newsletter CTA", desc: "Free parent guide download banner" },
+    ],
+  },
+};
 
 export default function AdminNavigationPage() {
   const [navItems, setNavItems] = useState<NavItem[]>([]);
-  const [sections, setSections] = useState<SectionsVisibility>({
-    hero: true,
-    about: true,
-    careApproach: true,
-    services: true,
-    testimonials: true,
-    process: true,
-    gallery: true,
-  });
+  const [pageSections, setPageSections] = useState<PageSectionsMap>(DEFAULT_PAGE_SECTIONS);
+  const [activeTab, setActiveTab] = useState<PageKey>("home");
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -53,7 +134,11 @@ export default function AdminNavigationPage() {
       if (res.ok) {
         const data = await res.json();
         if (data.navItems) setNavItems(data.navItems);
-        if (data.sectionsVisibility) setSections(data.sectionsVisibility);
+        if (data.pageSections) {
+          setPageSections(normalizeAllPageSections(data.pageSections));
+        } else if (data.sectionsVisibility) {
+          setPageSections(normalizeAllPageSections({ home: data.sectionsVisibility }));
+        }
       }
     } catch (err) {
       console.error("Failed to load navigation settings:", err);
@@ -68,7 +153,7 @@ export default function AdminNavigationPage() {
 
   const saveChanges = async (
     items: NavItem[],
-    secs: SectionsVisibility,
+    allPageSecs: PageSectionsMap,
     showToast: boolean = true
   ) => {
     setIsSaving(true);
@@ -78,7 +163,8 @@ export default function AdminNavigationPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           navItems: items,
-          sectionsVisibility: secs,
+          pageSections: allPageSecs,
+          sectionsVisibility: allPageSecs.home,
         }),
       });
 
@@ -104,7 +190,7 @@ export default function AdminNavigationPage() {
       item.id === id ? { ...item, isVisible: !item.isVisible } : item
     );
     setNavItems(updated);
-    saveChanges(updated, sections, true);
+    saveChanges(updated, pageSections, true);
   };
 
   const handleLabelChange = (id: string, newLabel: string) => {
@@ -113,37 +199,50 @@ export default function AdminNavigationPage() {
     );
   };
 
-  const handleToggleSection = (sectionKey: keyof SectionsVisibility) => {
-    const updated = {
-      ...sections,
-      [sectionKey]: !sections[sectionKey],
+  const handleTogglePageSection = (page: PageKey, sectionKey: string) => {
+    const currentPageSecs = pageSections[page] as Record<string, boolean>;
+    const currentVal = currentPageSecs[sectionKey] !== false;
+    const updatedPageSecs = {
+      ...currentPageSecs,
+      [sectionKey]: !currentVal,
     };
-    setSections(updated);
-    saveChanges(navItems, updated, true);
+
+    const updatedAllPages: PageSectionsMap = {
+      ...pageSections,
+      [page]: updatedPageSecs,
+    } as PageSectionsMap;
+
+    setPageSections(updatedAllPages);
+    saveChanges(navItems, updatedAllPages, true);
   };
 
-  const handleSave = async (e?: React.FormEvent) => {
-    if (e && e.preventDefault) e.preventDefault();
-    await saveChanges(navItems, sections, true);
+  const handleSave = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    saveChanges(navItems, pageSections, true);
   };
 
-  const visibleNavLinks = navItems.filter((item) => item.isVisible);
+  const visibleNavLinks = navItems.filter((i) => i.isVisible);
+  const currentTabConfig = PAGE_CONFIG[activeTab];
+  const currentTabSections = (pageSections[activeTab] || {}) as Record<string, boolean>;
+  const activeSectionsCount = currentTabConfig.sections.filter(
+    (s) => currentTabSections[s.key] !== false
+  ).length;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6 select-none max-w-7xl mx-auto">
+      {/* Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/90 pb-5">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              Page Structure & Navigation
-            </h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-extrabold text-xs">
-              Live Website Controls
+            <span className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+              <Compass className="w-5 h-5" />
             </span>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Website Navigation & Page Sections Controls
+            </h1>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            Choose which links appear on the public header and which content sections are displayed on the homepage.
+            Toggle visibility of header menu items and individual page sections across the entire website.
           </p>
         </div>
 
@@ -165,7 +264,7 @@ export default function AdminNavigationPage() {
       ) : (
         <form onSubmit={handleSave} className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Left Controls: Navbar & Sections */}
+            {/* Left Controls: Navbar & Multi-Page Sections */}
             <div className="lg:col-span-7 space-y-8">
               {/* Part 1: Navbar Links */}
               <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-xs space-y-5">
@@ -207,7 +306,7 @@ export default function AdminNavigationPage() {
                             type="text"
                             value={item.label}
                             onChange={(e) => handleLabelChange(item.id, e.target.value)}
-                            onBlur={() => saveChanges(navItems, sections, true)}
+                            onBlur={() => saveChanges(navItems, pageSections, true)}
                             className="p-1.5 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 max-w-xs"
                           />
                           <span className="text-[10px] font-mono text-slate-400 font-bold">
@@ -244,52 +343,92 @@ export default function AdminNavigationPage() {
                 </div>
               </div>
 
-              {/* Part 2: Homepage Sections Visibility */}
-              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-xs space-y-5">
-                <div className="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              {/* Part 2: Multi-Page Sections Visibility Controls */}
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-xs space-y-6">
+                <div className="border-b border-slate-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <div className="flex items-center gap-2">
                       <Sliders className="w-5 h-5 text-teal-600" />
                       <h2 className="font-extrabold text-sm text-slate-900">
-                        Homepage Scroll Sections Visibility
+                        Page Content & Sections Visibility Controls
                       </h2>
                     </div>
                     <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                      Controls which content blocks appear on the homepage scroll layout.
+                      Enable or disable any section across all public website pages.
                     </p>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                     Auto-Saves Instantly
                   </span>
                 </div>
 
+                {/* Page Selection Tabs */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                  {(Object.keys(PAGE_CONFIG) as PageKey[]).map((pKey) => {
+                    const cfg = PAGE_CONFIG[pKey];
+                    const Icon = cfg.icon;
+                    const isActive = activeTab === pKey;
+                    const pSections = (pageSections[pKey] || {}) as Record<string, boolean>;
+                    const countActive = cfg.sections.filter((s) => pSections[s.key] !== false).length;
+
+                    return (
+                      <button
+                        key={pKey}
+                        type="button"
+                        onClick={() => setActiveTab(pKey)}
+                        className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+                          isActive
+                            ? "bg-slate-900 text-white shadow-md shadow-slate-900/20 scale-[1.02]"
+                            : "bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80"
+                        }`}
+                      >
+                        <Icon className={`w-3.5 h-3.5 ${isActive ? "text-sky-400" : "text-slate-400"}`} />
+                        <span>{cfg.name}</span>
+                        <span
+                          className={`text-[10px] px-1.5 py-0.2 rounded-md font-bold ${
+                            isActive
+                              ? "bg-white/20 text-white"
+                              : "bg-slate-200 text-slate-700"
+                          }`}
+                        >
+                          {countActive}/{cfg.sections.length}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Tab Header Description */}
+                <div className="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-200/70 flex items-center justify-between text-xs">
+                  <div>
+                    <span className="font-black text-blue-950 block">{currentTabConfig.name}</span>
+                    <span className="text-[11px] text-blue-700 font-medium">{currentTabConfig.desc}</span>
+                  </div>
+                  <span className="text-[11px] font-bold bg-white text-blue-800 border border-blue-200 px-2.5 py-1 rounded-xl shrink-0 shadow-2xs">
+                    {activeSectionsCount} of {currentTabConfig.sections.length} Active
+                  </span>
+                </div>
+
+                {/* Section Cards Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  {[
-                    { key: "hero", label: "Hero Banner Slider", desc: "Top headline & booking CTA" },
-                    { key: "about", label: "About Clinic Preview", desc: "Founding clinical mission" },
-                    { key: "careApproach", label: "Care Approach Section", desc: "RBA philosophy & pillars" },
-                    { key: "services", label: "Core Services Cards", desc: "ABA, Speech, OT cards" },
-                    { key: "process", label: "Intake Process Steps", desc: "How families start therapy" },
-                    { key: "gallery", label: "Sensory Gym Gallery", desc: "Facility photos preview" },
-                    { key: "testimonials", label: "Parent Testimonials", desc: "Family reviews above footer" },
-                  ].map((sec) => {
-                    const isVisible = sections[sec.key as keyof SectionsVisibility];
+                  {currentTabConfig.sections.map((sec) => {
+                    const isVisible = currentTabSections[sec.key] !== false;
                     return (
                       <div
                         key={sec.key}
-                        onClick={() => handleToggleSection(sec.key as keyof SectionsVisibility)}
-                        className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-3 ${
+                        onClick={() => handleTogglePageSection(activeTab, sec.key)}
+                        className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-3 select-none ${
                           isVisible
-                            ? "bg-white border-emerald-200/80 shadow-xs hover:border-emerald-300"
+                            ? "bg-white border-emerald-200/90 shadow-xs hover:border-emerald-300"
                             : "bg-slate-50 border-slate-200 opacity-60 hover:opacity-80"
                         }`}
                       >
-                        <div>
+                        <div className="space-y-0.5">
                           <p className="font-extrabold text-slate-900">{sec.label}</p>
-                          <p className="text-[11px] text-slate-500 font-medium">{sec.desc}</p>
+                          <p className="text-[11px] text-slate-500 font-medium leading-relaxed">{sec.desc}</p>
                         </div>
                         <span
-                          className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 ${
+                          className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shrink-0 ${
                             isVisible
                               ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
                               : "bg-slate-200 text-slate-600 border border-slate-300"
@@ -335,19 +474,19 @@ export default function AdminNavigationPage() {
                   ) : (
                     <>
                       <Save className="w-4 h-4" />
-                      <span>Save Navigation Settings</span>
+                      <span>Save All Settings</span>
                     </>
                   )}
                 </button>
               </div>
             </div>
 
-            {/* Right: Mockup Header & Site Preview */}
+            {/* Right: Mockup Header & Active Page Section Stack */}
             <div className="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs space-y-4 sticky top-6">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-1.5 text-slate-700 font-extrabold text-xs">
                   <Eye className="w-4 h-4 text-blue-600" />
-                  <span>Public Header Mockup</span>
+                  <span>Public Navigation Preview</span>
                 </div>
                 <span className="text-[10px] font-mono text-slate-400 uppercase">Live Preview</span>
               </div>
@@ -380,33 +519,33 @@ export default function AdminNavigationPage() {
                 </div>
               </div>
 
-              {/* Simulated Homepage Sections Flow */}
+              {/* Simulated Page Sections Flow */}
               <div className="space-y-2 pt-2">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                  Homepage Section Stack
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                    {currentTabConfig.name} Section Stack
+                  </span>
+                  <span className="text-[10px] font-mono text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-md">
+                    {currentTabConfig.badge}
+                  </span>
+                </div>
+
                 <div className="space-y-1.5 text-xs font-bold">
-                  {[
-                    { key: "hero", label: "1. Hero Banner" },
-                    { key: "about", label: "2. About Clinic" },
-                    { key: "careApproach", label: "3. Care Approach" },
-                    { key: "services", label: "4. Services Cards" },
-                    { key: "process", label: "5. Clinical Process" },
-                    { key: "gallery", label: "6. Sensory Gallery" },
-                    { key: "testimonials", label: "7. Parent Reviews (Above Footer)" },
-                  ].map((s) => {
-                    const isVisible = sections[s.key as keyof SectionsVisibility];
+                  {currentTabConfig.sections.map((s, idx) => {
+                    const isVisible = currentTabSections[s.key] !== false;
                     return (
                       <div
                         key={s.key}
-                        className={`p-2.5 rounded-xl border flex items-center justify-between ${
+                        className={`p-2.5 rounded-xl border flex items-center justify-between transition-all ${
                           isVisible
-                            ? "bg-blue-50/60 border-blue-200 text-blue-900"
-                            : "bg-slate-50 border-slate-200 text-slate-400 line-through"
+                            ? "bg-blue-50/70 border-blue-200 text-blue-900"
+                            : "bg-slate-50 border-slate-200 text-slate-400 line-through opacity-75"
                         }`}
                       >
-                        <span>{s.label}</span>
-                        <span className="text-[10px] font-mono">
+                        <span>{idx + 1}. {s.label}</span>
+                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md ${
+                          isVisible ? "bg-blue-100 text-blue-800" : "bg-slate-200 text-slate-600"
+                        }`}>
                           {isVisible ? "Active" : "Hidden"}
                         </span>
                       </div>

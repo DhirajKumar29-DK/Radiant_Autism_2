@@ -76,9 +76,22 @@ const DEFAULT_GALLERY_ITEMS: GalleryPhoto[] = [
 interface GalleryClientProps {
   initialItems?: GalleryPhoto[];
   initialHero?: any;
+  initialSections?: any;
 }
 
-export default function GalleryClient({ initialItems = [], initialHero = null }: GalleryClientProps) {
+export default function GalleryClient({
+  initialItems = [],
+  initialHero = null,
+  initialSections = null,
+}: GalleryClientProps) {
+  const [sections] = useState(
+    initialSections || {
+      hero: true,
+      categoryFilter: true,
+      photoGrid: true,
+      ctaBanner: true,
+    }
+  );
   const [items, setItems] = useState<GalleryPhoto[]>(
     initialItems.length > 0 ? initialItems : DEFAULT_GALLERY_ITEMS
   );
@@ -171,8 +184,8 @@ export default function GalleryClient({ initialItems = [], initialHero = null }:
 
   return (
     <div className="space-y-0 pb-16">
-      {/* Premium Photo Hero Banner (Rendered only if configured in Admin) */}
-      {heroData && (
+      {/* 1. Premium Photo Hero Banner (Rendered only if configured in Admin) */}
+      {sections.hero !== false && heroData && (
         <section className="relative py-20 md:py-28 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white overflow-hidden select-none">
           {/* Background Image with Dark Gradient Overlay (Shown only if configured by Admin) */}
           {heroData.backgroundImage?.trim() && (
@@ -226,75 +239,81 @@ export default function GalleryClient({ initialItems = [], initialHero = null }:
             />
           </ScrollReveal>
 
-          {/* Category Filter Buttons */}
-          <ScrollReveal direction="up" delay={100}>
-            <div className="flex flex-wrap justify-center gap-2.5 mb-12">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => {
-                    setActiveTab(cat);
-                    setSelectedIndex(null);
-                  }}
-                  type="button"
-                  className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold transition-all duration-300 cursor-pointer ${
-                    activeTab === cat
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25 scale-105"
-                      : "bg-white text-slate-700 hover:bg-slate-200/80 border border-slate-200/90 shadow-2xs"
-                  }`}
-                >
-                  {cat}
-                </button>
+          {/* 2. Category Filter Buttons */}
+          {sections.categoryFilter !== false && (
+            <ScrollReveal direction="up" delay={100}>
+              <div className="flex flex-wrap justify-center gap-2.5 mb-12">
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => {
+                      setActiveTab(cat);
+                      setSelectedIndex(null);
+                    }}
+                    type="button"
+                    className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold transition-all duration-300 cursor-pointer ${
+                      activeTab === cat
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25 scale-105"
+                        : "bg-white text-slate-700 hover:bg-slate-200/80 border border-slate-200/90 shadow-2xs"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </ScrollReveal>
+          )}
+
+          {/* 3. Pure Visual Image Grid */}
+          {sections.photoGrid !== false && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+              {filteredItems.map((item, idx) => (
+                <ScrollReveal key={item.id} delay={(idx % 3) * 120} direction="up">
+                  <div
+                    onClick={() => setSelectedIndex(idx)}
+                    className="group relative aspect-4/3 rounded-3xl overflow-hidden border-2 border-slate-200/90 shadow-md hover:shadow-2xl hover:border-blue-500 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer bg-slate-950"
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+
+                    <div className="absolute inset-0 bg-slate-950/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <span className="px-5 py-2.5 rounded-full bg-blue-600 text-white font-extrabold text-xs flex items-center gap-2 shadow-2xl backdrop-blur-md border border-blue-400/40 transform scale-90 group-hover:scale-100 transition-transform duration-300">
+                        <Eye className="w-4 h-4" />
+                        <span>View Photo</span>
+                      </span>
+                    </div>
+                  </div>
+                </ScrollReveal>
               ))}
             </div>
-          </ScrollReveal>
+          )}
 
-          {/* Pure Visual Image Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-            {filteredItems.map((item, idx) => (
-              <ScrollReveal key={item.id} delay={(idx % 3) * 120} direction="up">
-                <div
-                  onClick={() => setSelectedIndex(idx)}
-                  className="group relative aspect-4/3 rounded-3xl overflow-hidden border-2 border-slate-200/90 shadow-md hover:shadow-2xl hover:border-blue-500 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer bg-slate-950"
-                >
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-
-                  <div className="absolute inset-0 bg-slate-950/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <span className="px-5 py-2.5 rounded-full bg-blue-600 text-white font-extrabold text-xs flex items-center gap-2 shadow-2xl backdrop-blur-md border border-blue-400/40 transform scale-90 group-hover:scale-100 transition-transform duration-300">
-                      <Eye className="w-4 h-4" />
-                      <span>View Photo</span>
-                    </span>
-                  </div>
+          {/* 4. CTA at Bottom of Gallery */}
+          {sections.ctaBanner !== false && (
+            <ScrollReveal direction="up" delay={200}>
+              <div className="mt-16 text-center bg-slate-900 rounded-3xl p-8 sm:p-12 text-white shadow-2xl max-w-4xl mx-auto space-y-4 border border-slate-800 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+                <h3 className="text-2xl sm:text-3xl font-black leading-snug">
+                  Would You Like To Visit Our Center In Person?
+                </h3>
+                <p className="text-slate-300 text-sm max-w-xl mx-auto">
+                  Schedule a guided walkthrough of our sensory gym, therapy rooms, and meet our registered RBA clinicians.
+                </p>
+                <div className="pt-2">
+                  <Link
+                    href="/contact"
+                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-lg shadow-blue-600/30 transition-all"
+                  >
+                    <span>Schedule Facility Visit</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
                 </div>
-              </ScrollReveal>
-            ))}
-          </div>
-
-          {/* CTA at Bottom of Gallery */}
-          <ScrollReveal direction="up" delay={200}>
-            <div className="mt-16 text-center bg-slate-900 rounded-3xl p-8 sm:p-12 text-white shadow-2xl max-w-4xl mx-auto space-y-4 border border-slate-800 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
-              <h3 className="text-2xl sm:text-3xl font-black leading-snug">
-                Would You Like To Visit Our Center In Person?
-              </h3>
-              <p className="text-slate-300 text-sm max-w-xl mx-auto">
-                Schedule a guided walkthrough of our sensory gym, therapy rooms, and meet our registered RBA clinicians.
-              </p>
-              <div className="pt-2">
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-lg shadow-blue-600/30 transition-all"
-                >
-                  <span>Schedule Facility Visit</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
               </div>
-            </div>
-          </ScrollReveal>
+            </ScrollReveal>
+          )}
         </div>
       </section>
 
