@@ -55,8 +55,10 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   ShieldCheck,
 };
 
-export default function ClinicalPillars() {
-  const [pillars, setPillars] = useState<PillarItem[]>(DEFAULT_PILLARS);
+export default function ClinicalPillars({ initialPillars }: { initialPillars?: PillarItem[] }) {
+  const [pillars, setPillars] = useState<PillarItem[]>(() =>
+    initialPillars && initialPillars.length > 0 ? initialPillars : DEFAULT_PILLARS
+  );
 
   useEffect(() => {
     let isMounted = true;

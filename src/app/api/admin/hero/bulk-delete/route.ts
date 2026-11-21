@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAdminToken } from "@/modules/auth/auth.service";
+import { revalidatePublicPages } from "@/lib/revalidate";
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,6 +20,8 @@ export async function POST(request: NextRequest) {
     await prisma.hero.deleteMany({
       where: { id: { in: ids } },
     });
+
+    revalidatePublicPages();
 
     return NextResponse.json({ success: true, message: `Successfully deleted ${ids.length} slides` });
   } catch (error: unknown) {

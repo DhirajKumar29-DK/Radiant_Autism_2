@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAdminToken } from "@/modules/auth/auth.service";
 import { DEFAULT_PAGE_SECTIONS, normalizeAllPageSections, invalidateNavCache } from "@/lib/page-visibility";
+import { revalidatePublicPages } from "@/lib/revalidate";
 
 const DEFAULT_NAV_ITEMS = [
   { id: "home", label: "Home", name: "Home", href: "/", path: "/", isVisible: true },
@@ -110,6 +111,7 @@ export async function PUT(request: NextRequest) {
     }
 
     invalidateNavCache();
+    revalidatePublicPages();
 
     return NextResponse.json({
       success: true,

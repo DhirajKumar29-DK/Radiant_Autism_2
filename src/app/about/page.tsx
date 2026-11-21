@@ -9,7 +9,7 @@ import OurTeamSection from "@/components/OurTeamSection";
 import ClinicalPillars from "@/components/ClinicalPillars";
 import { ArrowRight } from "lucide-react";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "About Us | Radiant Autism Center",
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
-  const [isPageActive, sections, hero] = await Promise.all([
+  const [isPageActive, sections, hero, aboutRecord, rawTeam] = await Promise.all([
     isPageRouteActive("/about"),
     getPageSections("about"),
     prisma.hero
@@ -36,11 +36,66 @@ export default async function AboutPage() {
         orderBy: { displayOrder: "asc" },
       })
       .catch(() => null),
+    prisma.aboutSection
+      .findFirst({
+        where: { status: "ACTIVE", isDeleted: false },
+      })
+      .catch(() => null),
+    prisma.teamMember
+      .findMany({
+        where: { isActive: true },
+        orderBy: { order: "asc" },
+      })
+      .catch(() => []),
   ]);
 
   if (!isPageActive) {
     notFound();
   }
+
+  let initialFacilityPoints: string[] | undefined;
+  let initialHighlights: string[] | undefined;
+  let initialPillars: any[] | undefined;
+
+  if (aboutRecord) {
+    if (aboutRecord.facilityPointsJson) {
+      try {
+        const parsed = JSON.parse(aboutRecord.facilityPointsJson);
+        if (Array.isArray(parsed) && parsed.length > 0) initialFacilityPoints = parsed;
+      } catch {}
+    }
+    if (aboutRecord.highlightsJson) {
+      try {
+        const parsed = JSON.parse(aboutRecord.highlightsJson);
+        if (Array.isArray(parsed) && parsed.length > 0) initialHighlights = parsed;
+      } catch {}
+    }
+    if (aboutRecord.pillarsJson) {
+      try {
+        const parsed = JSON.parse(aboutRecord.pillarsJson);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const activeOnly = parsed.filter((p: any) => !p.status || p.status === "ACTIVE");
+          initialPillars = activeOnly.length > 0 ? activeOnly : parsed;
+        }
+      } catch {}
+    }
+  }
+
+  const initialDetail = aboutRecord
+    ? {
+        badgeText: aboutRecord.badgeText || undefined,
+        imageBadge: aboutRecord.imageBadge || undefined,
+        title: aboutRecord.title || undefined,
+        description1: aboutRecord.description1 || undefined,
+        description2: aboutRecord.description2 || undefined,
+        centerImage: aboutRecord.centerImage || undefined,
+        highlights: initialHighlights,
+        facilityHeading: aboutRecord.facilityHeading || undefined,
+        facilityDesc: aboutRecord.facilityDesc || undefined,
+        facilityImage: aboutRecord.facilityImage || undefined,
+        facilityPoints: initialFacilityPoints,
+      }
+    : undefined;
 
   const bgImage = hero?.backgroundImage?.trim() || null;
 
@@ -92,13 +147,13 @@ export default async function AboutPage() {
       )}
 
       {/* 2. About Centre & Purpose Built Spaces */}
-      {sections.facility !== false && <AboutCentreDetail />}
+      {sections.facility !== false && <AboutCentreDetail initialData={initialDetail} />}
 
       {/* 3. Clinical Leadership & Our Team */}
-      {sections.team !== false && <OurTeamSection />}
+      {sections.team !== false && <OurTeamSection initialMembers={rawTeam} />}
 
       {/* 4. Luxury 4 Clinical Pillars Section */}
-      {sections.pillars !== false && <ClinicalPillars />}
+      {sections.pillars !== false && <ClinicalPillars initialPillars={initialPillars} />}
 
       {/* 5. Schedule Visit CTA Banner */}
       {sections.ctaBanner !== false && (

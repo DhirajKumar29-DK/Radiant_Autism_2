@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAdminToken } from "@/modules/auth/auth.service";
+import { revalidatePublicPages } from "@/lib/revalidate";
 
 export async function PUT(
   request: NextRequest,
@@ -37,6 +38,8 @@ export async function PUT(
       data: dataToUpdate,
     });
 
+    revalidatePublicPages(["/about"]);
+
     return NextResponse.json({ success: true, teamMember: updated });
   } catch (error: unknown) {
     console.error("Error updating team member:", error);
@@ -65,6 +68,8 @@ export async function DELETE(
         status: "INACTIVE",
       },
     });
+
+    revalidatePublicPages(["/about"]);
 
     return NextResponse.json({ success: true, message: "Team member deleted successfully (soft delete)" });
   } catch (error: unknown) {

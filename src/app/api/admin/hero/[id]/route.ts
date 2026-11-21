@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAdminToken } from "@/modules/auth/auth.service";
+import { revalidatePublicPages } from "@/lib/revalidate";
 import { HeroStatus } from "@prisma/client";
 
 export async function GET(
@@ -62,6 +63,8 @@ export async function PUT(
       data: dataToUpdate,
     });
 
+    revalidatePublicPages();
+
     return NextResponse.json({ success: true, hero: updated, data: updated });
   } catch (error: unknown) {
     console.error("Error updating hero:", error);
@@ -84,6 +87,8 @@ export async function DELETE(
     await prisma.hero.delete({
       where: { id },
     });
+
+    revalidatePublicPages();
 
     return NextResponse.json({ success: true, message: "Hero slide deleted successfully" });
   } catch (error: unknown) {

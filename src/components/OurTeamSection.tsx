@@ -82,8 +82,10 @@ const DEFAULT_MEMBERS: TeamMember[] = [
   },
 ];
 
-export default function OurTeamSection() {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(DEFAULT_MEMBERS);
+export default function OurTeamSection({ initialMembers }: { initialMembers?: TeamMember[] }) {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() =>
+    initialMembers && initialMembers.length > 0 ? initialMembers : DEFAULT_MEMBERS
+  );
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
 
   useEffect(() => {

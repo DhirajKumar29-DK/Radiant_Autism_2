@@ -86,6 +86,7 @@ export default function Navbar() {
                 <Link
                   key={`${link.path}-${idx}`}
                   href={link.path}
+                  prefetch={true}
                   className={`px-4 py-2 rounded-xl text-xs font-black transition-all duration-200 ${
                     isActive
                       ? "bg-white text-blue-700 shadow-sm border border-slate-200/90"
@@ -102,6 +103,7 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             <Link
               href="/contact"
+              prefetch={true}
               className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs tracking-wider shadow-md shadow-blue-600/25 hover:shadow-lg hover:shadow-blue-600/35 transition-all duration-300 transform hover:-translate-y-0.5"
             >
               <PhoneCall className="w-4 h-4" />
@@ -132,6 +134,7 @@ export default function Navbar() {
               <Link
                 key={`mobile-${link.path}-${idx}`}
                 href={link.path}
+                prefetch={true}
                 onClick={() => setIsOpen(false)}
                 className={`flex items-center justify-between px-4 py-3 rounded-xl text-base font-semibold transition-all ${
                   isActive

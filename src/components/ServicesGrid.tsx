@@ -100,8 +100,43 @@ const DEFAULT_SERVICES = [
     },
   ];
 
-export default function ServicesGrid({ limit }: { limit?: number }) {
-  const [services, setServices] = useState<any[]>(DEFAULT_SERVICES);
+function formatDbService(s: any) {
+  let parsedFeatures: string[] = [];
+  try {
+    if (s.features) {
+      const parsed = typeof s.features === "string" ? JSON.parse(s.features) : s.features;
+      parsedFeatures = Array.isArray(parsed) ? parsed : [];
+    }
+  } catch {
+    parsedFeatures = [];
+  }
+
+  return {
+    id: s.slug || s.id,
+    title: s.title,
+    badge: s.badge || "Clinical Care",
+    badgeBg: s.badgeBg || "bg-blue-600",
+    iconBg: s.iconBg || s.badgeBg || "bg-blue-600",
+    bulletColor: s.bulletColor || "text-blue-600",
+    icon: iconMap[s.iconName || "Brain"] || Brain,
+    image: s.image || "/hero_child_therapy.jpg",
+    imgAlt: s.title,
+    description: s.shortDescription || s.tagline || "",
+    features:
+      parsedFeatures.length > 0
+        ? parsedFeatures
+        : ["Clinical Supervision", "Individualized Goals"],
+  };
+}
+
+export default function ServicesGrid({ limit, initialServices }: { limit?: number; initialServices?: any[] }) {
+  const [services, setServices] = useState<any[]>(() => {
+    if (initialServices && Array.isArray(initialServices) && initialServices.length > 0) {
+      const active = initialServices.filter((s: any) => s.isActive !== false).map(formatDbService);
+      if (active.length > 0) return active;
+    }
+    return DEFAULT_SERVICES;
+  });
 
   useEffect(() => {
     const loadServices = async () => {
@@ -112,34 +147,7 @@ export default function ServicesGrid({ limit }: { limit?: number }) {
           if (data.services && Array.isArray(data.services) && data.services.length > 0) {
             const activeOnly = data.services
               .filter((s: any) => s.isActive)
-              .map((s: any) => {
-                let parsedFeatures: string[] = [];
-                try {
-                  if (s.features) {
-                    const parsed = JSON.parse(s.features);
-                    parsedFeatures = Array.isArray(parsed) ? parsed : [];
-                  }
-                } catch {
-                  parsedFeatures = [];
-                }
-
-                return {
-                  id: s.slug,
-                  title: s.title,
-                  badge: s.badge || "Clinical Care",
-                  badgeBg: s.badgeBg || "bg-blue-600",
-                  iconBg: s.iconBg || s.badgeBg || "bg-blue-600",
-                  bulletColor: s.bulletColor || "text-blue-600",
-                  icon: iconMap[s.iconName || "Brain"] || Brain,
-                  image: s.image || "/hero_child_therapy.jpg",
-                  imgAlt: s.title,
-                  description: s.shortDescription || s.tagline || "",
-                  features:
-                    parsedFeatures.length > 0
-                      ? parsedFeatures
-                      : ["Clinical Supervision", "Individualized Goals"],
-                };
-              });
+              .map(formatDbService);
 
             if (activeOnly.length > 0) {
               setServices(activeOnly);

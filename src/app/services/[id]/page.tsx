@@ -25,6 +25,12 @@ import { getServiceBySlug } from "@/lib/services";
 import ScrollReveal from "@/common/ScrollReveal";
 import SectionHeading from "@/common/SectionHeading";
 
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  return Object.keys(SERVICES_DATA).map((id) => ({ id }));
+}
+
 interface ServicePageProps {
   params: Promise<{ id: string }> | { id: string } | any;
 }

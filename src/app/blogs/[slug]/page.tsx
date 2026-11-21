@@ -12,6 +12,20 @@ import {
   ArrowRight,
 } from "lucide-react";
 
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  try {
+    const blogs = await prisma.blogPost.findMany({
+      where: { status: "PUBLISHED", isDeleted: false },
+      select: { slug: true },
+    });
+    return blogs.map((b) => ({ slug: b.slug }));
+  } catch {
+    return [];
+  }
+}
+
 interface BlogPageProps {
   params: Promise<{ slug: string }> | { slug: string } | any;
 }

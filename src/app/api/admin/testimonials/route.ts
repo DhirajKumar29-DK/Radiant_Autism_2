@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { revalidatePublicPages } from "@/lib/revalidate";
 
 export async function GET() {
   try {
@@ -47,6 +48,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    revalidatePublicPages(["/"]);
+
     return NextResponse.json({ success: true, testimonial }, { status: 201 });
   } catch (error) {
     console.error("Error creating testimonial:", error);
@@ -78,6 +81,8 @@ export async function DELETE(req: NextRequest) {
         status: "INACTIVE",
       },
     });
+
+    revalidatePublicPages(["/"]);
 
     return NextResponse.json({
       success: true,

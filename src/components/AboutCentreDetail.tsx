@@ -43,8 +43,11 @@ const DEFAULT_DETAIL: AboutDetailData = {
   ],
 };
 
-export default function AboutCentreDetail() {
-  const [detail, setDetail] = useState<AboutDetailData>(DEFAULT_DETAIL);
+export default function AboutCentreDetail({ initialData }: { initialData?: Partial<AboutDetailData> }) {
+  const [detail, setDetail] = useState<AboutDetailData>(() => ({
+    ...DEFAULT_DETAIL,
+    ...(initialData || {}),
+  }));
 
   useEffect(() => {
     let isMounted = true;

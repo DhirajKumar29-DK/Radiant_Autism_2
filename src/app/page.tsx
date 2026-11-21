@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { getSiteNavigationRecord } from "@/lib/page-visibility";
 import HomeSectionsContainer from "@/components/HomeSectionsContainer";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Radiant Autism Center | ABA & Skill Therapy",

@@ -6,7 +6,7 @@ import { isPageRouteActive, getPageSections } from "@/lib/page-visibility";
 import ContactForm from "@/components/ContactForm";
 import { MapPin, Clock, MessageSquare } from "lucide-react";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Contact Us | Radiant Autism Center",

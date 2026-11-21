@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAdminToken } from "@/modules/auth/auth.service";
+import { revalidatePublicPages } from "@/lib/revalidate";
 
 export async function GET(
   request: NextRequest,
@@ -95,6 +96,8 @@ export async function PUT(
       data: dataToUpdate,
     });
 
+    revalidatePublicPages(["/", "/services"]);
+
     return NextResponse.json({ success: true, service: updatedService });
   } catch (error: unknown) {
     console.error("Error updating service:", error);
@@ -123,6 +126,8 @@ export async function DELETE(
         status: "INACTIVE",
       },
     });
+
+    revalidatePublicPages(["/", "/services"]);
 
     return NextResponse.json({ success: true, message: "Service soft deleted successfully" });
   } catch (error: unknown) {

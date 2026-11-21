@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAdminToken } from "@/modules/auth/auth.service";
+import { revalidatePublicPages } from "@/lib/revalidate";
 
 export async function GET() {
   try {
@@ -115,6 +116,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    revalidatePublicPages(["/", "/services"]);
+
     return NextResponse.json({ success: true, service: newService });
   } catch (error: unknown) {
     console.error("Error creating service:", error);
@@ -149,6 +152,8 @@ export async function DELETE(request: NextRequest) {
         status: "INACTIVE",
       },
     });
+
+    revalidatePublicPages(["/", "/services"]);
 
     return NextResponse.json({
       success: true,

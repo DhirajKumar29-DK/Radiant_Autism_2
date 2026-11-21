@@ -6,7 +6,7 @@ import prisma from "@/lib/prisma";
 import { isPageRouteActive, getPageSections } from "@/lib/page-visibility";
 import ServicesGrid from "@/components/ServicesGrid";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Clinical Services | Radiant Autism Center",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ServicesPage() {
-  const [isPageActive, sections, hero] = await Promise.all([
+  const [isPageActive, sections, hero, services] = await Promise.all([
     isPageRouteActive("/services"),
     getPageSections("services"),
     prisma.hero
@@ -33,6 +33,12 @@ export default async function ServicesPage() {
         orderBy: { displayOrder: "asc" },
       })
       .catch(() => null),
+    prisma.service
+      .findMany({
+        where: { isActive: true },
+        orderBy: { order: "asc" },
+      })
+      .catch(() => []),
   ]);
 
   if (!isPageActive) {
@@ -89,7 +95,7 @@ export default async function ServicesPage() {
       )}
 
       {/* 2. Services Grid (All Services) */}
-      {sections.servicesGrid !== false && <ServicesGrid />}
+      {sections.servicesGrid !== false && <ServicesGrid initialServices={services} />}
 
       {/* 3. Bottom Consultation & Assessment CTA Banner */}
       {sections.ctaBanner !== false && (

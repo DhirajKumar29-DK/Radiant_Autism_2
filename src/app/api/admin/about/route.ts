@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAdminToken } from "@/modules/auth/auth.service";
+import { revalidatePublicPages } from "@/lib/revalidate";
 
 export async function GET() {
   try {
@@ -133,6 +134,8 @@ export async function PUT(request: NextRequest) {
       });
     }
 
+    revalidatePublicPages(["/", "/about"]);
+
     return NextResponse.json({ success: true, about: updated });
   } catch (error: unknown) {
     console.error("Error updating about section:", error);
@@ -158,6 +161,8 @@ export async function DELETE(request: NextRequest) {
         },
       });
     }
+
+    revalidatePublicPages(["/", "/about"]);
 
     return NextResponse.json({
       success: true,

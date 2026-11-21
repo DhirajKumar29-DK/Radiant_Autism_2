@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAdminToken } from "@/modules/auth/auth.service";
+import { revalidatePublicPages } from "@/lib/revalidate";
 
 export async function GET() {
   try {
@@ -51,6 +52,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    revalidatePublicPages(["/", "/gallery"]);
+
     return NextResponse.json({ success: true, item: newItem });
   } catch (error: unknown) {
     console.error("Error creating gallery item:", error);
@@ -85,6 +88,8 @@ export async function DELETE(request: NextRequest) {
         status: "INACTIVE",
       },
     });
+
+    revalidatePublicPages(["/", "/gallery"]);
 
     return NextResponse.json({
       success: true,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAdminToken } from "@/modules/auth/auth.service";
+import { revalidatePublicPages } from "@/lib/revalidate";
 
 export async function GET() {
   try {
@@ -8,6 +9,8 @@ export async function GET() {
       where: { isDeleted: false },
       orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
     });
+
+    revalidatePublicPages(["/about"]);
 
     return NextResponse.json({ success: true, team });
   } catch (error: unknown) {
@@ -52,6 +55,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    revalidatePublicPages(["/about"]);
+
     return NextResponse.json({ success: true, teamMember: newMember });
   } catch (error: unknown) {
     console.error("Error creating team member:", error);
@@ -83,6 +88,8 @@ export async function DELETE(request: NextRequest) {
         status: "INACTIVE",
       },
     });
+
+    revalidatePublicPages(["/about"]);
 
     return NextResponse.json({ success: true, message: `Successfully deleted ${ids.length} staff member(s)` });
   } catch (error: unknown) {
