@@ -81,7 +81,7 @@ interface FaqPair {
   answer: string;
 }
 
-type TabType = "general" | "overview" | "checklist" | "benefits" | "process" | "faqs";
+type TabType = "general" | "overview" | "checklist" | "process";
 
 const emptyForm = {
   title: "",
@@ -119,7 +119,7 @@ export default function AdminServicesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const tabOrder: TabType[] = ["general", "overview", "checklist", "benefits", "process", "faqs"];
+  const tabOrder: TabType[] = ["general", "overview", "checklist", "process"];
   const currentTabIndex = tabOrder.indexOf(activeTab);
 
   const goToNextTab = () => {
@@ -689,7 +689,7 @@ export default function AdminServicesPage() {
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            Manage comprehensive clinical landing pages, parent checklists, outcomes, and FAQs.
+            Manage comprehensive clinical landing pages, parent checklists, and step-by-step process.
           </p>
         </div>
 
@@ -880,7 +880,7 @@ export default function AdminServicesPage() {
                   </span>
                 </h3>
                 <p className="text-xs text-slate-500 font-medium">
-                  Manage hero info, clinical methodology, parent checklist, outcome cards, and FAQs.
+                  Manage hero info, clinical methodology, parent checklist, and step-by-step process.
                 </p>
                 {modalMode === "EDIT" && formData.slug && (
                   <Link
@@ -945,19 +945,6 @@ export default function AdminServicesPage() {
 
               <button
                 type="button"
-                onClick={() => setActiveTab("benefits")}
-                className={`shrink-0 py-2 px-3.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-extrabold ${
-                  activeTab === "benefits"
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/25"
-                    : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
-                }`}
-              >
-                <Award className="w-4 h-4 shrink-0" />
-                <span>4. Outcome Cards ({formData.keyBenefits.length})</span>
-              </button>
-
-              <button
-                type="button"
                 onClick={() => setActiveTab("process")}
                 className={`shrink-0 py-2 px-3.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-extrabold ${
                   activeTab === "process"
@@ -966,20 +953,7 @@ export default function AdminServicesPage() {
                 }`}
               >
                 <Compass className="w-4 h-4 shrink-0" />
-                <span>5. Step-By-Step Process ({formData.clinicalProcess.length})</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab("faqs")}
-                className={`shrink-0 py-2 px-3.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-extrabold ${
-                  activeTab === "faqs"
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/25"
-                    : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
-                }`}
-              >
-                <HelpCircle className="w-4 h-4 shrink-0" />
-                <span>6. FAQs & Settings ({formData.faqs.length})</span>
+                <span>4. Step-By-Step Process ({formData.clinicalProcess.length})</span>
               </button>
             </div>
 
@@ -1374,99 +1348,7 @@ export default function AdminServicesPage() {
                 </div>
               )}
 
-              {/* TAB 4: OUTCOMES & BENEFITS (4 CARDS) */}
-              {activeTab === "benefits" && (
-                <div className="space-y-5 animate-in fade-in duration-150">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-black text-slate-900 text-sm">
-                        Key Clinical Benefits & Developmental Outcomes
-                      </h4>
-                      <p className="text-xs text-slate-500 font-medium">
-                        Numbered cards (01, 02, 03, 04) showing measurable child progress and developmental gains.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={addBenefitCard}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 text-white rounded-xl text-xs font-extrabold hover:bg-blue-700 transition-all shadow-sm cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add Outcome Card</span>
-                    </button>
-                  </div>
-
-                  {formData.keyBenefits.length === 0 ? (
-                    <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl text-center space-y-2 bg-slate-50/50">
-                      <Award className="w-8 h-8 text-slate-400 mx-auto" />
-                      <p className="text-xs font-bold text-slate-700">No outcome cards added yet</p>
-                      <p className="text-[11px] text-slate-500">
-                        Click &quot;Add Outcome Card&quot; to add key clinical outcome cards (01, 02, etc.).
-                      </p>
-                      <button
-                        type="button"
-                        onClick={addBenefitCard}
-                        className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 cursor-pointer shadow-xs"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>Add First Outcome Card</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-3.5">
-                      {formData.keyBenefits.map((item, idx) => (
-                        <div
-                          key={idx}
-                          className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 space-y-2.5 relative"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-black text-blue-600 uppercase tracking-wider flex items-center gap-1.5">
-                              <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-black text-xs">
-                                0{idx + 1}
-                              </span>
-                              <span>Outcome Card #{idx + 1}</span>
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => removeBenefitCard(idx)}
-                              className="text-rose-500 hover:bg-rose-50 p-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1 cursor-pointer transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span>Remove</span>
-                            </button>
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-[11px] font-bold text-slate-600">Card Title</label>
-                            <input
-                              type="text"
-                              value={item.title}
-                              onChange={(e) => updateBenefitCard(idx, "title", e.target.value)}
-                              placeholder="e.g. Verbal & Communication Growth"
-                              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:outline-none focus:border-blue-500"
-                            />
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-[11px] font-bold text-slate-600">
-                              Description
-                            </label>
-                            <textarea
-                              rows={2}
-                              value={item.description}
-                              onChange={(e) => updateBenefitCard(idx, "description", e.target.value)}
-                              placeholder="e.g. Building functional language, speech, and alternative communication tools."
-                              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-normal text-xs text-slate-800 focus:outline-none focus:border-blue-500 leading-relaxed"
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* TAB 5: STEP-BY-STEP PROCESS */}
+              {/* TAB 4: STEP-BY-STEP PROCESS */}
               {activeTab === "process" && (
                 <div className="space-y-5 animate-in fade-in duration-150">
                   <div className="flex items-center justify-between">
@@ -1567,96 +1449,8 @@ export default function AdminServicesPage() {
                       ))}
                     </div>
                   )}
-                </div>
-              )}
 
-              {/* TAB 6: FAQS (SAWAAL - JAWAAB) */}
-              {activeTab === "faqs" && (
-                <div className="space-y-5 animate-in fade-in duration-150">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-black text-slate-900 text-sm">
-                        Frequently Asked Questions (Parents FAQ)
-                      </h4>
-                      <p className="text-xs text-slate-500 font-medium">
-                        Answer common parent inquiries regarding eligibility, OAP funding, and therapy schedules.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={addFaq}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 text-white rounded-xl text-xs font-extrabold hover:bg-blue-700 transition-all shadow-sm cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add FAQ</span>
-                    </button>
-                  </div>
-
-                  {formData.faqs.length === 0 ? (
-                    <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl text-center space-y-2 bg-slate-50/50">
-                      <HelpCircle className="w-8 h-8 text-slate-400 mx-auto" />
-                      <p className="text-xs font-bold text-slate-700">No FAQs added yet</p>
-                      <p className="text-[11px] text-slate-500">
-                        Click &quot;Add FAQ&quot; to add frequently asked questions for parents.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={addFaq}
-                        className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 text-white rounded-xl text-xs font-bold hover:bg-purple-700 cursor-pointer shadow-xs"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>Add First FAQ</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-3.5">
-                      {formData.faqs.map((faq, idx) => (
-                        <div
-                          key={idx}
-                          className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 space-y-2.5 relative"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-black text-purple-600 uppercase tracking-wider flex items-center gap-1.5">
-                              <HelpCircle className="w-4 h-4" />
-                              <span>Question #{idx + 1}</span>
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => removeFaq(idx)}
-                              className="text-rose-500 hover:bg-rose-50 p-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1 cursor-pointer transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span>Remove</span>
-                            </button>
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-[11px] font-bold text-slate-600">Question</label>
-                            <input
-                              type="text"
-                              value={faq.question}
-                              onChange={(e) => updateFaq(idx, "question", e.target.value)}
-                              placeholder="e.g. What age group is eligible for speech therapy?"
-                              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:outline-none focus:border-blue-500"
-                            />
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-[11px] font-bold text-slate-600">Answer</label>
-                            <textarea
-                              rows={2}
-                              value={faq.answer}
-                              onChange={(e) => updateFaq(idx, "answer", e.target.value)}
-                              placeholder="Clear clinical answer explaining the service..."
-                              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-normal text-xs text-slate-800 focus:outline-none focus:border-blue-500 leading-relaxed"
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Step 6: Program Publishing & Display Order Settings (Placed in final step) */}
+                  {/* Program Publishing & Display Order Settings (Placed in final step) */}
                   <div className="border border-slate-200 rounded-2xl p-5 bg-slate-50/80 space-y-3 mt-6">
                     <span className="font-black text-xs uppercase tracking-wider text-slate-800 block">
                       Program Publishing & Display Settings

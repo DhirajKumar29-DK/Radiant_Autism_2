@@ -24,7 +24,6 @@ import { SERVICES_DATA, ServiceDetail } from "@/data/servicesData";
 import { getServiceBySlug } from "@/lib/services";
 import ScrollReveal from "@/common/ScrollReveal";
 import SectionHeading from "@/common/SectionHeading";
-import ServiceFaqAccordion from "@/components/ServiceFaqAccordion";
 
 interface ServicePageProps {
   params: Promise<{ id: string }> | { id: string } | any;
@@ -342,43 +341,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
         </div>
       </section>
 
-      {/* 4. Key Clinical Outcomes & Benefits Grid */}
-      <section className="py-12 md:py-16 bg-gradient-to-b from-slate-50 via-sky-50/30 to-slate-50 border-t border-slate-200/80 relative overflow-hidden">
-        {/* Subtle decorative orb */}
-        <div className="absolute top-0 right-1/4 w-80 h-80 bg-sky-200/25 rounded-full blur-3xl pointer-events-none" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <ScrollReveal direction="up">
-            <SectionHeading
-              badgeText="Target Outcomes"
-              badgeVariant="green"
-              title="Key Clinical Benefits & Developmental Outcomes"
-              subtitle="Every goal is systematically tracked using data-backed metrics to ensure clear, visible progress."
-            />
-          </ScrollReveal>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
-            {service.keyBenefits.map((item, idx) => (
-              <ScrollReveal key={idx} delay={idx * 100} direction="up">
-                <div className="bg-white/95 backdrop-blur-xs rounded-3xl p-7 sm:p-8 border-2 border-slate-200/90 shadow-sm hover:shadow-xl hover:shadow-blue-600/10 hover:border-blue-500 transition-all duration-300 flex items-start gap-5 group">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black text-lg flex items-center justify-center shrink-0 shadow-md shadow-blue-600/25 group-hover:scale-110 transition-transform">
-                    0{idx + 1}
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors">
-                      {item.title}
-                    </h3>
-                    <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
-                      {item.description}
-                    </p>
-                  </div>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 5. 4-Step Clinical Process */}
+      {/* 4. 4-Step Clinical Process */}
       <section className="py-12 md:py-16 bg-gradient-to-b from-white via-blue-50/25 to-white border-t border-slate-200/80 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <ScrollReveal direction="up">
@@ -417,28 +380,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
         </div>
       </section>
 
-      {/* 6. Frequently Asked Questions (FAQs) */}
-      {service.faqs && service.faqs.length > 0 && (
-        <section className="py-12 md:py-16 bg-gradient-to-b from-slate-50 via-purple-50/20 to-indigo-50/30 border-t border-slate-200/80 relative overflow-hidden">
-          <div className="absolute bottom-0 right-10 w-96 h-96 bg-purple-200/15 rounded-full blur-3xl pointer-events-none" />
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <ScrollReveal direction="up">
-              <SectionHeading
-                badgeText="Parents FAQ"
-                badgeVariant="purple"
-                title="Frequently Asked Questions About This Therapy"
-                subtitle="Clear answers to common questions asked by parents before starting therapy."
-              />
-            </ScrollReveal>
-
-            <ScrollReveal direction="up" delay={100}>
-              <ServiceFaqAccordion faqs={service.faqs} />
-            </ScrollReveal>
-          </div>
-        </section>
-      )}
-
-      {/* 7. Bottom Call-To-Action Banner */}
+      {/* 5. Bottom Call-To-Action Banner */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-14">
         <ScrollReveal direction="up">
           <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 rounded-3xl p-8 sm:p-12 text-white relative overflow-hidden shadow-2xl border border-blue-900/40">
@@ -479,7 +421,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
         </ScrollReveal>
       </section>
 
-      {/* 8. Other Related Services */}
+      {/* 6. Other Related Services */}
       <section className="py-12 md:py-16 bg-gradient-to-b from-slate-50/80 to-slate-100/50 border-t border-slate-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
