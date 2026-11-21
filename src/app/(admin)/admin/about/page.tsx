@@ -17,6 +17,7 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  Check,
 } from "lucide-react";
 
 type StatusType = "ACTIVE" | "INACTIVE" | "DRAFT";
@@ -71,6 +72,8 @@ export default function AdminAboutOverviewPage() {
     status: "ACTIVE" as StatusType,
   });
   const [newHighlight, setNewHighlight] = useState("");
+  const [editingHighlightIndex, setEditingHighlightIndex] = useState<number | null>(null);
+  const [editingHighlightValue, setEditingHighlightValue] = useState("");
 
   const fetchAboutData = async () => {
     setIsLoading(true);
@@ -129,6 +132,8 @@ export default function AdminAboutOverviewPage() {
       status: about.status || "ACTIVE",
     });
     setNewHighlight("");
+    setEditingHighlightIndex(null);
+    setEditingHighlightValue("");
     setSaveSuccess(false);
     setIsModalOpen(true);
   };
@@ -147,6 +152,31 @@ export default function AdminAboutOverviewPage() {
       ...prev,
       highlights: prev.highlights.filter((_, i) => i !== index),
     }));
+    if (editingHighlightIndex === index) {
+      setEditingHighlightIndex(null);
+      setEditingHighlightValue("");
+    }
+  };
+
+  const handleStartEditHighlight = (index: number, text: string) => {
+    setEditingHighlightIndex(index);
+    setEditingHighlightValue(text);
+  };
+
+  const handleSaveEditHighlight = (index: number) => {
+    if (!editingHighlightValue.trim()) return;
+    setFormData((prev) => {
+      const copy = [...prev.highlights];
+      copy[index] = editingHighlightValue.trim();
+      return { ...prev, highlights: copy };
+    });
+    setEditingHighlightIndex(null);
+    setEditingHighlightValue("");
+  };
+
+  const handleCancelEditHighlight = () => {
+    setEditingHighlightIndex(null);
+    setEditingHighlightValue("");
   };
 
   // Selection handlers
@@ -583,23 +613,76 @@ export default function AdminAboutOverviewPage() {
                   </button>
                 </div>
 
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                   {formData.highlights.map((item, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 gap-3"
+                      className={`p-2.5 rounded-xl border transition-all ${
+                        editingHighlightIndex === idx
+                          ? "bg-blue-50/80 border-blue-300 ring-2 ring-blue-500/20"
+                          : "bg-slate-50 border border-slate-200/80 hover:border-slate-300"
+                      }`}
                     >
-                      <div className="flex items-center gap-2 text-xs font-semibold text-slate-800 flex-1">
-                        <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
-                        <span>{item}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveHighlight(idx)}
-                        className="text-slate-400 hover:text-red-600 p-1 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {editingHighlightIndex === idx ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={editingHighlightValue}
+                            onChange={(e) => setEditingHighlightValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleSaveEditHighlight(idx);
+                              } else if (e.key === "Escape") {
+                                handleCancelEditHighlight();
+                              }
+                            }}
+                            autoFocus
+                            className="flex-1 px-3 py-1.5 bg-white border border-blue-400 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleSaveEditHighlight(idx)}
+                            title="Save changes"
+                            className="p-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors cursor-pointer"
+                          >
+                            <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCancelEditHighlight}
+                            title="Cancel"
+                            className="p-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-600 transition-colors cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 text-xs font-semibold text-slate-800 flex-1">
+                            <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+                            <span>{item}</span>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleStartEditHighlight(idx, item)}
+                              title="Edit Highlight"
+                              className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveHighlight(idx)}
+                              title="Delete Highlight"
+                              className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

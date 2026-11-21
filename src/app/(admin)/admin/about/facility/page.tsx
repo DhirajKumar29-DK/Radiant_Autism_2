@@ -14,6 +14,7 @@ import {
   Building,
   Save,
   CheckCircle2,
+  Check,
 } from "lucide-react";
 
 type StatusType = "ACTIVE" | "INACTIVE" | "DRAFT";
@@ -63,6 +64,8 @@ export default function AdminAboutFacilityPage() {
     status: "ACTIVE" as StatusType,
   });
   const [newPoint, setNewPoint] = useState("");
+  const [editingPointIndex, setEditingPointIndex] = useState<number | null>(null);
+  const [editingPointValue, setEditingPointValue] = useState("");
 
   const fetchFacilityData = async () => {
     setIsLoading(true);
@@ -114,6 +117,8 @@ export default function AdminAboutFacilityPage() {
       status: facility.status || "ACTIVE",
     });
     setNewPoint("");
+    setEditingPointIndex(null);
+    setEditingPointValue("");
     setSaveSuccess(false);
     setIsModalOpen(true);
   };
@@ -132,6 +137,31 @@ export default function AdminAboutFacilityPage() {
       ...prev,
       facilityPoints: prev.facilityPoints.filter((_, i) => i !== index),
     }));
+    if (editingPointIndex === index) {
+      setEditingPointIndex(null);
+      setEditingPointValue("");
+    }
+  };
+
+  const handleStartEditPoint = (index: number, text: string) => {
+    setEditingPointIndex(index);
+    setEditingPointValue(text);
+  };
+
+  const handleSaveEditPoint = (index: number) => {
+    if (!editingPointValue.trim()) return;
+    setFormData((prev) => {
+      const copy = [...prev.facilityPoints];
+      copy[index] = editingPointValue.trim();
+      return { ...prev, facilityPoints: copy };
+    });
+    setEditingPointIndex(null);
+    setEditingPointValue("");
+  };
+
+  const handleCancelEditPoint = () => {
+    setEditingPointIndex(null);
+    setEditingPointValue("");
   };
 
   const toggleSelectAll = () => {
@@ -537,23 +567,76 @@ export default function AdminAboutFacilityPage() {
                   </button>
                 </div>
 
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                   {formData.facilityPoints.map((item, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 gap-3"
+                      className={`p-2.5 rounded-xl border transition-all ${
+                        editingPointIndex === idx
+                          ? "bg-blue-50/80 border-blue-300 ring-2 ring-blue-500/20"
+                          : "bg-slate-50 border border-slate-200/80 hover:border-slate-300"
+                      }`}
                     >
-                      <div className="flex items-center gap-2 text-xs font-semibold text-slate-800 flex-1">
-                        <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
-                        <span>{item}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemovePoint(idx)}
-                        className="text-slate-400 hover:text-red-600 p-1 rounded-lg transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {editingPointIndex === idx ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={editingPointValue}
+                            onChange={(e) => setEditingPointValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleSaveEditPoint(idx);
+                              } else if (e.key === "Escape") {
+                                handleCancelEditPoint();
+                              }
+                            }}
+                            autoFocus
+                            className="flex-1 px-3 py-1.5 bg-white border border-blue-400 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleSaveEditPoint(idx)}
+                            title="Save changes"
+                            className="p-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors cursor-pointer"
+                          >
+                            <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCancelEditPoint}
+                            title="Cancel"
+                            className="p-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-600 transition-colors cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 text-xs font-semibold text-slate-800 flex-1">
+                            <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+                            <span>{item}</span>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleStartEditPoint(idx, item)}
+                              title="Edit Point"
+                              className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePoint(idx)}
+                              title="Delete Point"
+                              className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
